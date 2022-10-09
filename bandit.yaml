@@ -1,0 +1,14 @@
+exclude_dirs:
+    - .venv
+    - .virtualenv
+    - venv
+    - virtualenv
+    - test
+    - tests
+
+targets:
+  - textology
+  - examples
+
+skips:
+  - B101

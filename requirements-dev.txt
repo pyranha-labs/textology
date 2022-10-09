@@ -1,0 +1,7 @@
+bandit
+pycodestyle
+pydocstyle
+pylint
+pytest
+pytest-cov
+pytest-xdist

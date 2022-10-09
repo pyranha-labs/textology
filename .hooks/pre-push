@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# This file is symlinked into ${REPO}/.git/hooks, which are run from the ${REPO} directory.
+# This means that scripts placed in this file should have paths that are represented
+# as if they are being run from the ${REPO} base directory.
+
+# The current working directory with pre-push hooks is the git root, no manual search required.
+make qa || exit 1
