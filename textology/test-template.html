@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snapshot Test Results</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.blue_grey-indigo.min.css"
+          integrity="sha384-DLBPDpup1LcYULKS5rEF8Dr9IzueN9ArLkDqK0iL2bh6aQ8dVENHd9DOrvCDrJhM" crossorigin="anonymous">
+    <script src="https://code.getmdl.io/1.3.0/material.min.js"
+            integrity="sha384-KxJ0gpu9LJdUtdV6oe5/l3PSF37awRaWGFhnKt8hq6vS3/Wlzy1YPuJzIwg/ljkW"
+            crossorigin="anonymous"></script>
+    <style>
+        body {
+            background: #dedede;
+            margin: 0;
+            padding: 0;
+        }
+
+        .content {
+            margin: 0;
+            padding: 12px 12px 0;
+        }
+
+        .overlay-container {
+            position: relative;
+        }
+
+        .flex-column {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .test-img-wrapper {
+            flex: 1;
+            margin: 8px;
+        }
+
+        .test-img-diff {
+            mix-blend-mode: difference;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .test-img-header {
+            flex: 1;
+            margin-top: 0;
+            margin-bottom: 0;
+            text-align: center;
+        }
+
+        .result-card {
+            width: 100%;
+            margin-bottom: 12px;
+        }
+
+        .full-dialog {
+            width: calc(100% - 64px);
+            height: calc(100% - 64px);
+            max-width: 1920px;
+            max-height: 1080px;
+        }
+
+        .wide-dialog {
+            width: 66%;
+            min-width: 512px;
+            max-width: 1024px;
+            max-height: 768px;
+        }
+
+        .test-info-dialog-body {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .test-info-title {
+            font-size: 2.0rem;
+            padding: 8px 8px 0;
+        }
+
+        .test-info-subtitle {
+            padding: 0 0 12px;
+        }
+
+        .test-info-tabs {
+            width: calc(100% - 16px);
+            padding-left: 8px;
+        }
+
+        .test-info-img-header {
+            margin-top: 12px;
+        }
+
+        .test-info-env-table {
+            margin: auto;
+        }
+
+        .test-info-env-table tr {
+            height: 32px !important;
+        }
+
+        .test-info-env-table td {
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            height: 32px !important;
+        }
+
+        .test-info-btn {
+            padding: 0;
+            min-width: 0;
+            aspect-ratio: 1;
+        }
+
+        .test-info-btn-icon {
+            font-size: 12pt;
+        }
+
+        .missing-img-placeholder {
+            border: black 1px dashed;
+            height: 100%;
+            padding: 0;
+        }
+
+        .missing-img-text {
+            width: calc(100% - 32px);
+            padding: 12px
+        }
+
+        .help-arg-body {
+            padding-left: 24px;
+            margin-bottom: 0;
+        }
+
+        .no-margin {
+            margin: 0 !important;
+        }
+
+        .no-vertical-padding {
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+        }
+
+        #test-details-header-wrapper {
+            display: flex;
+            flex-flow: wrap-reverse;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header">
+        <div class="mdl-layout__header-row">
+            <span class="mdl-layout-title">Snapshot Test Results</span>
+            <div class="mdl-layout-spacer"></div>
+            <span id="page-subtitle" class="mdl-layout-subtitle">
+                {{ fail_count }} Failures
+            </span>
+        </div>
+    </header>
+
+    <div class="mdl-layout__drawer">
+        <span class="mdl-layout-title">Snapshot Tests</span>
+        <nav id="test-nav-links" class="mdl-navigation">
+            <a class="mdl-navigation__link" href="">Link to test 1</a>
+        </nav>
+    </div>
+
+    <main class="mdl-layout__content flex-column">
+        <div id="results" class="content">
+            <div id="result-template" class="mdl-card mdl-shadow--2dp result-card">
+                <div id="test-card-{{ index }}" class="mdl-card__title"
+                     style="display: flow-root; padding-bottom: 8px;">
+                    <h2 class="mdl-card__title-text">{{ name }}</h2>
+                    <div class="mdl-card__subtitle-text">
+                        {{ path }}:{{ line }}
+                    </div>
+                </div>
+
+                <div style="display: flex; width: 100%">
+                    <h5 class="test-img-header">Result</h5>
+                    <h5 class="test-img-header">Expected</h5>
+                </div>
+                <div style="display: flex">
+                    <div class="test-img-wrapper">
+                        {{ result }}
+                    </div>
+                    <div class="test-img-wrapper">
+                        {{ expected }}
+                    </div>
+                </div>
+
+                <div class="mdl-card__actions mdl-card--border" style="display: flex">
+                    <button class="mdl-button mdl-js-button mdl-button--primary"
+                            onclick="showTestDetailsDialog('{{ index }}')">
+                        Details
+                    </button>
+
+                    <div class="mdl-layout-spacer"></div>
+
+                    <button id="test-menu-{{ index }}" class="mdl-button mdl-js-button mdl-button--icon">
+                        <i class="material-icons">more_vert</i>
+                    </button>
+
+                    <ul class="mdl-menu mdl-menu--top-right mdl-js-menu mdl-js-ripple-effect"
+                        data-mdl-for="test-menu-{{ index }}">
+                        <li class="mdl-menu__item" onclick="saveTestResult('{{ index }}')">
+                            Download Result
+                        </li>
+                        <li class="mdl-menu__item" onclick="showTestDetailsDialog('{{ index }}')">
+                            View Details
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div style="flex: 1;"></div>
+
+        <footer id="test-footer" class="mdl-mega-footer no-vertical-padding">
+            <div class="mdl-mega-footer__middle-section">
+                <div class="mdl-mega-footer__drop-down-section">
+                    <h1 class="mdl-mega-footer__heading">Links</h1>
+                    <ul class="mdl-mega-footer__link-list" style="margin-bottom: 16px">
+                        <li><a href="#test-card-0">Top</a></li>
+                        <li><a href="javascript:showDialog('help');">Help</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mdl-mega-footer__bottom-section no-margin">
+                <div class="mdl-logo">Snapshot Tests</div>
+                <ul class="mdl-mega-footer__link-list">
+                    <li><a>Report created at {{ timestamp }}.</a></li>
+                </ul>
+            </div>
+        </footer>
+
+        <dialog id="test-details" class="mdl-dialog full-dialog">
+            <div class="test-info-dialog-body">
+                <div id="test-details-header-wrapper">
+                    <h4 id="test-details-header" class="mdl-dialog__title test-info-title">Details: </h4>
+                    <div class="mdl-layout-spacer"></div>
+                    <button class="mdl-button mdl-js-button mdl-button--icon"
+                            onclick="closeDialog('test-details')">
+                        <i class="material-icons">close</i>
+                    </button>
+                </div>
+
+                <div class="mdl-tabs mdl-js-tabs mdl-js-ripple-effect test-info-tabs">
+                    <div class="mdl-tabs__tab-bar">
+                        <a href="#results-panel" class="mdl-tabs__tab is-active" autofocus>Results</a>
+                        <a href="#values-panel" class="mdl-tabs__tab">Values</a>
+                    </div>
+
+                    <div class="mdl-tabs__panel is-active" id="results-panel">
+                        <h2 class="mdl-card__title-text test-info-img-header">Result</h2>
+                        <div id="test-details-result-subtitle" class="mdl-card__subtitle-text test-info-subtitle">
+                            {{ path }}:{{ line }}
+                        </div>
+                        <div id="test-details-result-image">
+                            {{ result }}
+                        </div>
+
+                        <h2 class="mdl-card__title-text test-info-img-header">Expected</h2>
+                        <div id="test-details-expected-subtitle" class="mdl-card__subtitle-text test-info-subtitle">
+                            {{ expectedPath }}
+                        </div>
+                        <div id="test-details-expected-image">
+                            {{ expected }}
+                        </div>
+
+                        <h2 class="mdl-card__title-text test-info-img-header">Difference</h2>
+                        <div class="mdl-card__subtitle-text test-info-subtitle">
+                            Result - Expected
+                        </div>
+                        <div>
+                            <div class="overlay-container">
+                                <div id="test-details-diff-expected-image" class="test-img-diff">
+                                    {{ expected }}
+                                </div>
+                            </div>
+                            <div id="test-details-diff-result-image">
+                                {{ result }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mdl-tabs__panel" id="values-panel">
+                        <div id="test-details-values-table">
+                            {{ table }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mdl-layout-spacer"></div>
+
+                <div class="mdl-dialog__actions">
+                    <button class="mdl-button close" onclick="closeDialog('test-details')">
+                        Close
+                    </button>
+                </div>
+            </div>
+            <div id="test-details-snackbar" class="mdl-js-snackbar mdl-snackbar">
+                <div class="mdl-snackbar__text"></div>
+                <button class="mdl-snackbar__action" type="button"></button>
+            </div>
+        </dialog>
+
+        <dialog id="help" class="mdl-dialog wide-dialog">
+            <h4 class="mdl-dialog__title">Help</h4>
+            <div class="mdl-dialog__content">
+                <b>How are snapshots created?</b><br>
+                Snapshot files are created by default with the following format:<br>
+                <code class="mdl-color-text--primary">
+                    &lt;parent folder of test&gt;/snapshots/&lt;name of test&gt;.svg
+                </code><br>
+                <br>
+                This can be overridden by using the
+                <code class="mdl-color-text--primary">compare_to</code>
+                argument when calling the
+                <code class="mdl-color-text--primary">compare_snapshots</code>
+                fixture. If a test is renamed/moved, the original snapshot must be moved manually, or
+                <code class="mdl-color-text--primary">--txtology-snap-update</code>
+                can be used with pytest to recreate.<br>
+                <br>
+                <b>What pytest options are available?</b><br>
+                <code class="mdl-color-text--primary">--txtology-snap-report</code><br>
+                <p class="help-arg-body">
+                    Path to store the final HTML report with snapshot test results.
+                </p>
+                <code class="mdl-color-text--primary">--txtology-snap-root</code>
+                <p class="help-arg-body">
+                    Path to store snapshot testing files, such as reports and pytest shared worker results.
+                </p>
+                <code class="mdl-color-text--primary">--txtology-snap-template</code>
+                <p class="help-arg-body">
+                    Custom template to use for the HTML report with snapshot test results.
+                </p>
+                <code class="mdl-color-text--primary">--txtology-snap-update</code><br>
+                <p class="help-arg-body">
+                    Update snapshot files to the new test results if they do not match.
+                </p>
+                <br>
+                For more information on available arguments, run:<br>
+                <code class="mdl-color-text--primary">pytest --help</code>
+            </div>
+            <div class="mdl-dialog__actions">
+                <button type="button" class="mdl-button close" onclick="closeDialog('help')">
+                    Close
+                </button>
+            </div>
+        </dialog>
+        <div id="snackbar" class="mdl-js-snackbar mdl-snackbar">
+            <div class="mdl-snackbar__text"></div>
+            <button class="mdl-snackbar__action" type="button"></button>
+        </div>
+    </main>
+</div>
+
+<script type="application/javascript">
+    let testResult = "DUMMIES";
+    const testDummies = {
+        "timestamp": "2022-02-02 02:02:02",
+        "test_count": 2,
+        "environment": {
+            "cpus": 4,
+            "cwd": "/development/textology",
+            "host": "test-machine",
+            "platform": "linux-macOS-windows",
+            "timezone": "-0000",
+            "user": "testdummy",
+            "processor": "x86_64",
+        },
+        "libraries": {
+            "pytest": "0.0.0",
+            "pytest_asyncio": "1.1.1",
+            "textology": "2.2.2",
+            "textual": "3.3.3"
+        },
+        "python": {
+            "compiler": "Clang",
+            "implementation": "CPython",
+            "version": "3.10.0"
+        },
+        "items": [
+            {
+                "name": "test_app1",
+                "path": "/test/test_path1.py",
+                "line": "123",
+                "result": '<img src="test/snapshots/test_basic_app.svg">',
+                "expected": '<img src="test/snapshots/test_basic_app.svg">',
+                "expectedPath": "/test/snapshots/test_app1.svg",
+                "app": {
+                    "title": "BasicApp",
+                    "python_class": "<class 'textology.test.basic_app.BasicApp'>",
+                    "driver_class": "<class 'textual.drivers.linux_driver.LinuxDriver'>",
+                    "classes": "-dark-mode",
+                    "css_path": [],
+                    "console": {
+                        "size": [
+                            204,
+                            56
+                        ]
+                    }
+                }
+            },
+            {
+                "name": "test_app2",
+                "path": "/test/test_path2.py",
+                "line": "456",
+                "result": '<img src="test/snapshots/test_basic_app.svg">',
+                "expected": null,
+                "expectedPath": "/test/snapshots/test_app2.svg",
+                "app": {
+                    "title": "BasicApp",
+                    "python_class": "<class 'textology.test.basic_app.BasicApp'>",
+                    "driver_class": "<class 'textual.drivers.linux_driver.LinuxDriver'>",
+                    "classes": "-dark-mode",
+                    "css_path": [],
+                    "console": {
+                        "size": [
+                            204,
+                            56
+                        ]
+                    }
+                }
+            },
+        ]
+    };
+    if (testResult === "DUMMIES") {
+        testResult = testDummies;
+    }
+
+    /**
+     * Close a named dialog.
+     *
+     * @param {string} id ID of a dialog currently visible to the user.
+     */
+    function closeDialog(id) {
+        document.querySelector(`#${id}`).close();
+    }
+
+    /**
+     * Save text to the clipboard and show message to user.
+     *
+     * @param {string} value The payload to save to the user's clipboard.
+     */
+    async function copy(value) {
+        let result = await copyToClipboard(`${value}`);
+        if (result === "granted") {
+            showToast("test-details-snackbar", `Copied ${value} to clipboard.`);
+        } else {
+            showToast("test-details-snackbar", "Could not copy to clipboard. Check console for more details.");
+        }
+    }
+
+    /**
+     * Save a test result value to the clipboard and show a message to user.
+     *
+     * @param {string} name The name of the test value to copy.
+     * @param {string} value The payload to save to the user's clipboard.
+     */
+    async function copyTestValue(name, value) {
+        let result = await copyToClipboard(`${value}`);
+        if (result === "granted") {
+            showToast("test-details-snackbar", `Copied ${name}"s value to clipboard.`);
+        } else {
+            showToast("test-details-snackbar", "Could not copy value to clipboard. Check console for more details.");
+        }
+    }
+
+    /**
+     * Save text to the clipboard.
+     *
+     * @param {string} text The payload to save to the user's clipboard.
+     * @returns {Promise<string>} The permission result from the copy request, indicating if successful.
+     */
+    function copyToClipboard(text) {
+        return new Promise(resolve => {
+            navigator.permissions.query({name: "clipboard-write"})
+                .then((result) => {
+                    if (result.state === "granted") {
+                        navigator.clipboard.writeText(text)
+                            .then(() => {
+                                console.log("Text copied to clipboard");
+                            })
+                            .catch((err) => {
+                                console.error(`Could not copy text: ${err}`);
+                            });
+                    } else if (result.state === "denied") {
+                        console.error("Clipboard access is not supported");
+                    }
+                    resolve(result.state);
+                });
+        });
+    }
+
+    /**
+     * Escape HTML characters in a string to allow them to be displayed in other HTML elements
+     *
+     * @param {string} original Text with one of more HTML characters that need to be escaped for proper display.
+     * @returns {string} New string with all HTML characters escaped.
+     */
+    function escapeHtml(original) {
+        return original
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+    /**
+     * Find important values from a test for display.
+     *
+     * @param {number} index Test index to load values for.
+     * @returns {object} All values from the test that should be shown to a user for quick reference.
+     */
+    function findTestValues(index) {
+        let test = testResult.items[index];
+        let values = {
+            "test.path": test.path,
+            "test.name": test.name,
+            "test.line": test.line,
+            "test.snapshot.path": test.expectedPath,
+        };
+        for (const [name, value] of Object.entries(flatten(test.app))) {
+            values[`app.${name}`] = value;
+        }
+        for (const [name, value] of Object.entries(flatten(testResult.libraries))) {
+            values[`version.${name}`] = value;
+        }
+        for (const [name, value] of Object.entries(flatten(testResult.python))) {
+            values[`python.${name}`] = value;
+        }
+        for (const [name, value] of Object.entries(flatten(testResult.environment))) {
+            values[`env.${name}`] = value;
+        }
+        return values;
+    }
+
+    /**
+     * Convert a nested object into a flat object with multipart keys.
+     *
+     * @param {object} obj Original object with one or more nested levels of objects.
+     * @param {string} baseKey Root key to prefix new keys with if not the first level.
+     * @returns {object} Single level object with all keys from all levels.
+     */
+    function flatten(obj, baseKey) {
+        let flat = {};
+        Object.keys(obj).forEach((key) => {
+            let value = obj[key];
+            if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+                Object.assign(flat, flatten(value, key));
+            } else {
+                flat[baseKey ? `${baseKey}.${key}` : key] = value;
+            }
+        });
+        return flat;
+    }
+
+    /**
+     * Replace template values with variables.
+     *
+     * @param {string} template Text with templated values to replace (variables surrounding by double curly brackets).
+     * @param {object} variables Key/value pairs to replace in the template.
+     * @returns {string} The final result with all requested values injected if matching keys found in template.
+     */
+    function format(template, variables) {
+        for (const [key, value] of Object.entries(variables)) {
+            template = template.replaceAll(new RegExp(`\{\{\\s*${key}\\s*\}\}`, "g"), value);
+        }
+        return template;
+    }
+
+    /**
+     * Update footer with details about the test results.
+     *
+     * @param {object} testResult Full metadata from the test run.
+     */
+    function loadFooter(testResult) {
+        let footerEl = document.getElementById("test-footer");
+        footerEl.outerHTML = format(footerEl.outerHTML, {
+            "timestamp": testResult.timestamp,
+        });
+    }
+
+    /**
+     * Update topbar/header with details about the test results.
+     *
+     * @param {object} testResult Full metadata from the test run.
+     */
+    function loadHeader(testResult) {
+        let subtitleEl = document.getElementById("page-subtitle");
+        subtitleEl.outerHTML = format(subtitleEl.outerHTML, {
+            fail_count: testResult.items.length,
+        });
+    }
+
+    /**
+     * Update navigation menu with details about the test results.
+     *
+     * @param {object} testResult Full metadata from the test run.
+     */
+    function loadMenu(testResult) {
+        let links = "";
+        for (const [index, test] of Object.entries(testResult.items)) {
+            links += `<a class="mdl-navigation__link" href="#test-card-${index}">${test.name}</a>`;
+        }
+        document.getElementById("test-nav-links").innerHTML = links;
+    }
+
+    /**
+     * Load details about a test into the detail's dialog.
+     *
+     * @param {number} index Test index to load values for.
+     */
+    function loadTestDetails(index) {
+        let test = testResult.items[index];
+        document.getElementById("test-details-header").innerHTML = `Details: ${test.name}`;
+
+        document.getElementById("test-details-result-subtitle").innerHTML = `${test.path}:${test.line}`;
+        if (test.result) {
+            document.getElementById("test-details-result-image").innerHTML = test.result;
+        }
+
+        document.getElementById("test-details-expected-subtitle").innerHTML = test.expectedPath;
+        if (test.expected) {
+            document.getElementById("test-details-expected-image").innerHTML = test.expected;
+        }
+
+        document.getElementById("test-details-diff-result-image").innerHTML = test.result;
+        if (test.expected) {
+            document.getElementById("test-details-diff-expected-image").innerHTML = test.expected;
+        }
+
+        let rows = "";
+        for (const [name, value] of Object.entries(findTestValues(index))) {
+            rows += `<tr>
+                <td class="mdl-data-table__cell--non-numeric no-vert-padding">${name}</td>
+                <td class="mdl-data-table__cell--non-numeric no-vert-padding">${escapeHtml(String(value))}</td>
+                <td class="no-vert-padding">
+                    <button class="mdl-button mdl-js-button mdl-js-ripple-effect test-info-btn"
+                            onclick="copyTestValue('${name}', '${String(value)}')">
+                        <i class="material-icons test-info-btn-icon">content_copy</i>
+                    </button>
+                </td>
+            </tr>`;
+        }
+        document.getElementById("test-details-values-table").innerHTML = `<div class="mdl-dialog__content">
+            <table class="mdl-data-table mdl-js-data-table test-info-env-table">
+                <thead>
+                <tr>
+                    <th class="mdl-data-table__cell--non-numeric">Name</th>
+                    <th class="mdl-data-table__cell--non-numeric">Value</th>
+                </tr>
+                </thead>
+                <tbody>
+                ${rows}
+                </tbody>
+            </table>
+        </div>`;
+    }
+
+    /**
+     * Update all elements with details about the test results.
+     *
+     * @param {object} testResult Full metadata from the test run.
+     */
+    function loadTests(testResult) {
+        loadHeader(testResult);
+        loadMenu(testResult);
+        loadFooter(testResult);
+
+        let templateEl = document.getElementById("result-template");
+        let testTemplate = templateEl.outerHTML;
+        templateEl.remove();
+
+        let body = "";
+        for (const [index, test] of Object.entries(testResult.items)) {
+            test.index = index;
+            if (!test.expected) {
+                test.expected = format(`<div class="missing-img-placeholder flex-column">
+                    <div class="mdl-card__supporting-text missing-img-text">
+                        <b>No Snapshot</b><br>
+                        The following location was checked for a snapshot, but was not found:<br>
+                        <code class="mdl-color-text--primary">{{ expectedPath }}</code><br>
+                        <br>
+                        If the result is accurate, it can be saved by running:<br>
+                        <code class="mdl-color-text--primary">
+                            # Update this test only:<br>
+                            pytest --txtology-snap-update {{ path }} -k {{ name }}<br>
+                            <br>
+                            # Update all tests: <br>
+                            pytest --txtology-snap-update
+                        </code>
+                        <br>
+                        <br>
+                        Or to manually set the snapshot path, call the
+                        <code class="mdl-color-text--primary">compare_snapshots</code>
+                        fixture with the following argument:<br>
+                        <code class="mdl-color-text--primary">compare_to="path to file"</code>
+                    </div>
+                    <button class="mdl-button mdl-js-button mdl-button--primary"
+                            onclick="showDialog('help');">
+                        Help
+                    </button>
+                </div>`, test)
+            }
+            body += format(testTemplate, test);
+        }
+        document.getElementById("results").innerHTML = body;
+    }
+
+    /**
+     * Save the result image from a test to local machine.
+     *
+     * @param {number} index Test index to load values for.
+     */
+    function saveTestResult(index) {
+        let test = testResult.items[parseInt(index)];
+        if (!test.result) {
+            return;
+        }
+        console.log("Saving result image for", index, test.name);
+        saveTextFile(test.result, `${test.name}.svg`);
+    }
+
+    /**
+     * Save a text file to the local machine.
+     *
+     * @param {string} content Text content to save to the file.
+     * @param {string} fileName Base name of the file when saved.
+     */
+    function saveTextFile(content, fileName) {
+        const link = document.createElement("a");
+        const file = new Blob([content], {type: "text/plain"});
+        link.href = URL.createObjectURL(file);
+        link.download = fileName;
+        link.click();
+        URL.revokeObjectURL(link.href);
+    }
+
+    /**
+     * Show a named dialog.
+     *
+     * @param {string} id ID of a dialog to show to the user.
+     */
+    function showDialog(id) {
+        const dialog = document.querySelector(`#${id}`);
+        if (!dialog.showModal) {
+            dialogPolyfill.registerDialog(dialog);
+        }
+        dialog.showModal();
+    }
+
+    /**
+     * Show a dialog with details about a specific test.
+     *
+     * @param {number} index Test index from results to show details for.
+     */
+    function showTestDetailsDialog(index) {
+        loadTestDetails(index);
+        showDialog("test-details");
+    }
+
+    /**
+     * Show a short message to user.
+     *
+     * @param {string} snackbar ID of the snackbar to show the message in.
+     * @param {string} message Message to display.
+     */
+    function showToast(snackbar, message) {
+        let data = {
+            message: message,
+            timeout: 2000,
+        };
+        document.getElementById(snackbar).MaterialSnackbar.showSnackbar(data);
+    }
+
+    loadTests(testResult);
+</script>
+</body>
+</html>
