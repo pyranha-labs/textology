@@ -1,4 +1,9 @@
-# Textology
+<div align="center">
+  <img src="https://github.com/dfrtz/textology/blob/main/docs/banner.svg" width="450">
+</div>
+
+-----------------
+
 
 [![os: windows mac linux](https://img.shields.io/badge/os-linux_|_macos_|_windows-blue)](https://docs.python.org/3.10/)
 [![python: 3.10+](https://img.shields.io/badge/python-3.10_|_3.11-blue)](https://docs.python.org/3.10/)
@@ -13,35 +18,57 @@
 [![security: bandit](https://img.shields.io/badge/security-bandit-black)](https://github.com/PyCQA/bandit)
 [![license: MIT](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
+
+# Textology
+
 ### The study of making interactive UIs with text.
 
-Textology helps create TUIs by extending the amazing functionality of [Textual](https://github.com/Textualize/textual)
-and [Rich](https://github.com/Textualize/rich), with design principles from other widely used Python libraries
-and UI frameworks.
+Why should GUIs have all the fun? Textology helps create TUIs by extending the amazing functionality of
+[Textual](https://github.com/Textualize/textual) and [Rich](https://github.com/Textualize/rich),
+with design principles from other well known Python libraries and UI frameworks.
 
-Commonly known as Terminal (Text) User Interfaces, or "Tooeys", the end goal of a TUI is to provide as close
-as possible to a traditional GUI experience with only "text". Why? Because not all environments allow full graphical
-library access, HTTP access, etc. Specifically, Textology is inspired by the work of Dash/FastAPI/Flask and their use
-of routing, context managers, and observation patterns. Textology also receives inspiration from other UI frameworks
-external to Python, such as iOS, Android, and Web frameworks.
+Commonly known as Text (or Terminal) User Interfaces, the goal of a TUI (Tooey) is to provide as close
+as possible to a traditional GUI experience straight from a terminal. Why? Not all environments allow full graphical
+library access, web access, etc. Specifically, Textology is inspired by the designs of frameworks such as
+Dash/FastAPI/Flask and their use of routing, context managers, and observation patterns. Textology also receives
+inspiration from other UI frameworks external to Python, such as iOS, Android, and Web frameworks. Most importantly
+however, Textology is an extension of Textual: it does not replace Textual, but rather provides additional options
+on top of the core framework.
 
-Before using Textology, be comfortable with Textual. Textology is NOT a replacement for Textual, but rather an
+Before using Textology, be comfortable with Textual. Textology is NOT a replacement for Textual, it is an
 extension. Callbacks, widgets, screens, event lifecycles, etc., from Textual still apply to Textology extended
-applications. For other advanced features, be familiar with Dash/FastAPI/Flask principles.
+widgets and applications. For other advanced features, familiarity with Dash/FastAPI/Flask principles will help.
+Examples are included for advanced features, such as callback based applications.
 
 
-## Compatability
+## Table Of Contents
+
+  * [Compatibility](#compatibility)
+  * [Key Features](#top-features)
+  * [Getting Started](#getting-started)
+    * [Installation](#installation)
+    * [Extended Applications](#extended-applications)
+    * [Extended Widgets](#extended-widgets)
+
+
+## Compatibility
 
 Textology follows [Textual Compatibility](https://github.com/Textualize/textual#compatibility) guidelines with one
 exception: Python3.10 minimum requirement.
 
 
-## Key Features
+## Top Features
 
-- Extended basic widgets, such as Buttons with ability to declare callbacks inline, and ListItems with metadata objects.
-- New widgets, such as ListItemHeaders (non-interactive ListItems), and HorizontalMenus (walkable list of ListViews).
+- Extended basic widgets, such as:
+  - Buttons with ability to declare callbacks inline, and track click counts
+  - ListItems with metadata objects and ability to disable event messages
+- New widgets, such as:
+  - ListItemHeaders (non-interactive ListItems)
+  - HorizontalMenus (walkable list of ListViews with peeking at following lists)
 - "Observer" application, with "event driven architecture" to detect changes and automatically update elements in UI.
-- "Browser" application with history of addresses visited and ability to navigate forwards/backwards.
+- Enhanced testing support
+  - Parallel tests via python-xdist
+  - Custom testing arguments, such as updating snapshots on failures
 
 
 ## Getting Started
@@ -58,7 +85,105 @@ For dev requirements, use the additional `[dev]` package, which installs Textual
 pip install textology[dev]
 ```
 
-### Applications
+### Extended Applications
 
-Examples of basic applications based around routes, callbacks, and standard Textual applications can be found in
-[Examples](./examples).
+Some Textology app classes, such as `ObservedApp`, can replace any regular Textual App, and be used as is without any
+extensions turned on. Here is an example of the most commonly used extended application, `ObservedApp`, and its
+primary extended functionality being used. More detailed examples of applications based around routes, callbacks,
+and standard Textual applications can be found in [Examples](https://github.com/dfrtz/textology/examples).
+
+- Observer/callback application (automatic attribute monitoring and updates by element IDs without manual queries):
+```python
+from textology.apps import ObservedApp
+from textology.observers import Modified, Select, Update
+from textology.widgets import Button, Container, Label
+
+class SimpleApp(ObservedApp):
+    def compose(self):
+        yield Container(
+            Button('Ping', id='ping-btn'),
+            Button('Pong', id='pong-btn'),
+            Button('Sing-a-long', id='sing-btn'),
+            Container(
+                id="content",
+            ),
+        )
+
+app = SimpleApp()
+
+@app.when(
+    Modified("ping-btn", "n_clicks"),
+    Update("content", "children"),
+)
+def ping(clicks):
+    return Label(f"Ping pressed {clicks}")
+
+@app.when(
+    Modified("pong-btn", "n_clicks"),
+    Update("content", "children"),
+)
+def pong(clicks):
+    return Label(f"Pong pressed {clicks}")
+
+@app.when(
+    Modified("sing-btn", "n_clicks"),
+    Select("ping-btn", "n_clicks"),
+    Select("pong-btn", "n_clicks"),
+    Update("content", "children"),
+)
+def song(song_clicks, ping_clicks, pong_clicks):
+    if not ping_clicks or not pong_clicks:
+        return Label(f"Press Ping and Pong first to complete the song!")
+    return Label(f"Ping, pong, sing-a-long song pressed {song_clicks}")
+
+app.run()
+```
+
+### Extended Widgets
+
+Native Textual widgets can be directly swapped out with Textology extended equivalents. They can then be used as is
+(standard Textual usage), or with extensions (via extra keyword arguments).
+
+- Basic swap (no extensions):
+```python
+# Replace:
+from textual.widgets import Button
+
+# With
+from textology.widgets import Button
+```
+
+- Instance callback extension (avoid global watchers, name/ID checks in the event watchers, and event chaining):
+```python
+from textology.widgets import Button
+
+def on_click(event):
+    print("Don't press my buttons...")
+
+button = Button(
+    on_button_pressed=on_click,
+)
+```
+
+- Instance style extension (set styles directly at instantiation based on logic):
+```python
+from textology.widgets import Button
+
+feeling_blue = True
+
+button = Button(
+    styles={
+        "background": "blue" if feeling_blue else "green",
+    },
+)
+```
+
+- Instance message disable extension (avoid unused event chains, such as in large ListViews):
+```python
+from textual import events
+from textology.widgets import ListItem
+
+item = ListItem(
+    disable_messages=[events.Mount, events.Show],
+)
+```
