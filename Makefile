@@ -25,7 +25,8 @@ venv:
 # Check source code format for consistent patterns.
 .PHONY: format
 format:
-	$(PYTHON_BIN) -m black --check --diff $(GIT_DIR)
+	$(PYTHON_BIN) -m black --check --diff --line-length=120 $(GIT_DIR) || echo Please run "black --line-length=120" against files to update their format.
+	isort -c $(GIT_DIR) || echo Please run "isort" against files to update their format.
 
 # Check for common lint/complexity issues.
 .PHONY: lint

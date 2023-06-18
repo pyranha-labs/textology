@@ -1,7 +1,6 @@
 """Logging utilities."""
 
 import logging
-
 from typing import Any
 
 
@@ -10,7 +9,7 @@ class NullLogger(logging.Logger):
 
     def __getattribute__(self, name: str) -> Any:
         """Null route all attribute requests."""
-        if name != '_null_route':
+        if name != "_null_route":
             return self._null_route
         return super().__getattribute__(name)
 

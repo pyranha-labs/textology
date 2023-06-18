@@ -8,9 +8,9 @@ class History:
     """Historical view of collection of values."""
 
     def __init__(
-            self,
-            history: list | None = None,
-            max_length: int = 32,
+        self,
+        history: list | None = None,
+        max_length: int = 32,
     ) -> None:
         """Initialize the history object.
 
@@ -22,8 +22,8 @@ class History:
         self._index: int = max(len(self._history) - 1, 0)
 
     def add(
-            self,
-            value: str,
+        self,
+        value: str,
     ) -> None:
         """Add a new value to the history.
 
@@ -71,8 +71,8 @@ class History:
         return self.remove(len(self._history) - 1)
 
     def remove(
-            self,
-            index: int,
+        self,
+        index: int,
     ) -> Any:
         """Remove a value from the history.
 

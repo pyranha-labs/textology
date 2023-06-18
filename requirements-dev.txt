@@ -1,8 +1,9 @@
-bandit
-pycodestyle
-pydocstyle
-pylint
-pytest
-pytest-asyncio
-pytest-cov
-pytest-xdist
+textual[dev]>=0.27.0
+bandit>=1.7.5
+pycodestyle>=2.10.0
+pydocstyle>=6.3.0
+pylint>=2.17.4
+pytest>=7.3.2
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+pytest-xdist>=3.3.1

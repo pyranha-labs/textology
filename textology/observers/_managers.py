@@ -10,6 +10,7 @@ from typing import Any
 from typing import Callable
 
 from textology.logging import NullLogger
+
 from ._dependencies import Modified
 from ._dependencies import NoUpdate
 from ._dependencies import Select
@@ -135,7 +136,9 @@ class ObserverManager:
                     args.append(old_value if isinstance(dep, Select) else new_value)
                 else:
                     try:
-                        args.append(self.get_callback_arg(observer.observer_id, dep.component_id, dep.component_property))
+                        args.append(
+                            self.get_callback_arg(observer.observer_id, dep.component_id, dep.component_property)
+                        )
                     except Exception as error:  # pylint: disable=broad-exception-caught
                         args_setup_error = error
                         break
@@ -194,7 +197,7 @@ class ObserverManager:
         """
         component = self.get_component(component_id)
         if not component:
-            raise PreventUpdate(f'Skipping callback for {observer_id}: Component {component_id} not available')
+            raise PreventUpdate(f"Skipping callback for {observer_id}: Component {component_id} not available")
         return getattr(component, component_property)
 
     @abc.abstractmethod

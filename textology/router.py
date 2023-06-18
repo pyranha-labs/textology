@@ -4,16 +4,11 @@ from __future__ import annotations
 
 import logging
 import re
-
 from functools import total_ordering
-from typing import (
-    Any,
-    Callable,
-)
-from urllib.parse import (
-    urlparse,
-    parse_qs,
-)
+from typing import Any
+from typing import Callable
+from urllib.parse import parse_qs
+from urllib.parse import urlparse
 
 from .logging import NullLogger
 
@@ -22,9 +17,9 @@ class Request:
     """User request for a URL."""
 
     def __init__(
-            self,
-            url: str,
-            method: str = 'GET',
+        self,
+        url: str,
+        method: str = "GET",
     ) -> None:
         """Initialize a user request.
 
@@ -42,8 +37,8 @@ class Route:
     """Weighted path for routing, comparing, and collecting variables from user requested paths."""
 
     def __init__(
-            self,
-            path: str,
+        self,
+        path: str,
     ) -> None:
         """Initialize route.
 
@@ -54,41 +49,41 @@ class Route:
         self.static_weights: list[list[int]] = []
         self.path: str = path
         self.variables: list[str] = []
-        regex = ''
-        for index, part in enumerate(path.strip('/').split('/')):
-            dynamic_part = part.startswith('{')
+        regex = ""
+        for index, part in enumerate(path.strip("/").split("/")):
+            dynamic_part = part.startswith("{")
             if dynamic_part:
-                if not part.endswith('}'):
-                    raise ValueError(f'Variable ({part}) missing closing }} in path: {path}')
-                var_name = part.strip('{}')
+                if not part.endswith("}"):
+                    raise ValueError(f"Variable ({part}) missing closing }} in path: {path}")
+                var_name = part.strip("{}")
                 if var_name in self.variables:
-                    raise ValueError(f'Variable ({var_name}) duplicated in path: {path}')
+                    raise ValueError(f"Variable ({var_name}) duplicated in path: {path}")
                 self.variables.append(var_name)
-                regex += fr'/(?P<{var_name}>[^/]+)'
+                regex += rf"/(?P<{var_name}>[^/]+)"
             else:
                 self.static_weights.append([index, len(part)])
-                regex += f'/{part}'
-        self.pattern: re.Pattern = re.compile(fr'^{regex}$')
+                regex += f"/{part}"
+        self.pattern: re.Pattern = re.compile(rf"^{regex}$")
         self.static: bool = not self.variables
 
     def __eq__(
-            self,
-            other: Route,
+        self,
+        other: Route,
     ) -> bool:
         """Verify if another route is equal to this route."""
         return self.compare_to(other) == 0
 
     def __lt__(
-            self,
-            other: Route,
+        self,
+        other: Route,
     ) -> bool:
         """Verify if another route is less than this route."""
         return self.compare_to(other) < 0
 
     @staticmethod
     def compare_complexity(  # pylint: disable=too-many-return-statements,too-many-branches
-            left: Route,
-            right: Route,
+        left: Route,
+        right: Route,
     ) -> int:
         """Check the complexity of two routes by comparing their static and dynamic parts.
 
@@ -181,7 +176,7 @@ class Route:
             Variables from the route's path/pattern.
         """
         # Trim trailing slashes for consistent endpoints.
-        path = path.rstrip('/')
+        path = path.rstrip("/")
         match = self.pattern.match(path)
         values = match.groupdict() if match else {}
         return values
@@ -192,11 +187,11 @@ class Endpoint:
     """Routing for user requests based on a path/method combo to a callback."""
 
     def __init__(
-            self,
-            methods: list[str],
-            route: Route | str,
-            handler: Callable,
-            refresh_allowed: bool = True,
+        self,
+        methods: list[str],
+        route: Route | str,
+        handler: Callable,
+        refresh_allowed: bool = True,
     ) -> None:
         """Initialize endpoint to route requests based on available methods.
 
@@ -215,15 +210,15 @@ class Endpoint:
         self.refresh_allowed = refresh_allowed
 
     def __eq__(
-            self,
-            other: Endpoint,
+        self,
+        other: Endpoint,
     ) -> bool:
         """Verify if another endpoint is equal to this endpoint based on routes."""
         return self.route.compare_to(other.route) == 0
 
     def __lt__(
-            self,
-            other: Endpoint,
+        self,
+        other: Endpoint,
     ) -> bool:
         """Verify if another endpoint is less than this endpoint based on routes."""
         return self.route.compare_to(other.route) < 0
@@ -240,8 +235,8 @@ class Router:
     """
 
     def __init__(
-            self,
-            logger: logging.Logger | None = None,
+        self,
+        logger: logging.Logger | None = None,
     ) -> None:
         """Initialize route endpoint trackers and handlers.
 
@@ -253,24 +248,24 @@ class Router:
         self.weighted_endpoints: list[Endpoint] = []
         self.dynamic_endpoints: dict[str, dict[str, Endpoint]] = {}  # dynamic_endpoints[path][method]
         self.static_endpoints: dict[str, dict[str, Endpoint]] = {}  # static_endpoints[path][method]
-        self.endpoint_not_allowed: Endpoint = Endpoint([], '', self._default_not_allowed_handler)
-        self.endpoint_not_found: Endpoint = Endpoint([], '', self._default_not_found_handler)
+        self.endpoint_not_allowed: Endpoint = Endpoint([], "", self._default_not_allowed_handler)
+        self.endpoint_not_found: Endpoint = Endpoint([], "", self._default_not_found_handler)
         self.error_handler = self._default_error_handler
 
     def _add(
-            self,
-            path: str,
-            methods: list[str],
-            handler: Callable,
-            refresh_allowed: bool = True,
+        self,
+        path: str,
+        methods: list[str],
+        handler: Callable,
+        refresh_allowed: bool = True,
     ) -> Endpoint:
         """Register a function as capable of accepting requests to a specific path/method combo."""
-        if not path.startswith('/'):
-            raise ValueError(f'Missing required leading slash in path: {path}')
+        if not path.startswith("/"):
+            raise ValueError(f"Missing required leading slash in path: {path}")
         # Trim trailing slashes for consistent endpoints.
-        path = path.rstrip('/')
+        path = path.rstrip("/")
         methods = [method.upper() for method in methods]
-        if '{' not in path and '}' not in path:
+        if "{" not in path and "}" not in path:
             # Add directly to static route map for maximum performance. No custom logic to match inline variables.
             endpoint = self._add_static_route(path, methods, handler, refresh_allowed=refresh_allowed)
         else:
@@ -279,11 +274,11 @@ class Router:
         return endpoint
 
     def _add_dynamic_route(
-            self,
-            path: str,
-            methods: list[str],
-            handler: Callable,
-            refresh_allowed: bool = True,
+        self,
+        path: str,
+        methods: list[str],
+        handler: Callable,
+        refresh_allowed: bool = True,
     ) -> Endpoint:
         """Register a function as capable of accepting requests with dynamic variables."""
         endpoint = Endpoint(methods, path, handler, refresh_allowed=refresh_allowed)
@@ -294,21 +289,21 @@ class Router:
             self.dynamic_endpoints[pattern] = endpoint_methods
         for method in methods:
             if method in endpoint_methods:
-                raise ValueError(f'Method ({method}) already registered for path: {path}')
+                raise ValueError(f"Method ({method}) already registered for path: {path}")
             # Add to the weighted list, which is used to path matching.
             self.weighted_endpoints.append(endpoint)
             # Add to the method mapped endpoints, which is used for finding adjacent patterns when one match is found.
             endpoint_methods[method] = endpoint
             self.weighted_endpoints = sorted(self.weighted_endpoints)
-            self.logger.debug(f'Registered dynamic route for {method} {path}')
+            self.logger.debug(f"Registered dynamic route for {method} {path}")
         return endpoint
 
     def _add_static_route(
-            self,
-            path: str,
-            methods: list[str],
-            handler: Callable,
-            refresh_allowed: bool = True,
+        self,
+        path: str,
+        methods: list[str],
+        handler: Callable,
+        refresh_allowed: bool = True,
     ) -> Endpoint:
         """Register a function as capable of accepting requests with no dynamic variables."""
         endpoint_methods = self.static_endpoints.get(path, {})
@@ -317,44 +312,44 @@ class Router:
         endpoint = Endpoint(methods, Route(path), handler, refresh_allowed=refresh_allowed)
         for method in methods:
             if method in endpoint_methods:
-                raise ValueError(f'Method ({method}) already registered for path: {path}')
+                raise ValueError(f"Method ({method}) already registered for path: {path}")
             endpoint_methods[method] = endpoint
-            self.logger.debug(f'Registered static route for {method} {path}')
+            self.logger.debug(f"Registered static route for {method} {path}")
         return endpoint
 
     def _default_error_handler(
-            self,
-            request: Request,
-            error: BaseException,
+        self,
+        request: Request,
+        error: BaseException,
     ) -> None:
         """Default handler for when all unknown error occur that are not handled elsewhere."""
         if not isinstance(error, Exception):
             # Unhandled fatal error; reraise.
             raise error
         # Show full exception if available to logger, otherwise use standard error logging.
-        if hasattr(self.logger, 'exception'):
-            self.logger.exception(f'Internal Error during {request.method} {request.url.path} {error}')
+        if hasattr(self.logger, "exception"):
+            self.logger.exception(f"Internal Error during {request.method} {request.url.path} {error}")
         else:
-            self.logger.error(f'Internal Error during {request.method} {request.url.path} {error}')
+            self.logger.error(f"Internal Error during {request.method} {request.url.path} {error}")
 
     def _default_not_allowed_handler(
-            self,
-            request: Request,
+        self,
+        request: Request,
     ) -> None:
         """Default handler for when a request is made with a method that is not allowed for the endpoint."""
-        self.logger.warning(f'Method Not Allowed {request.method} {request.url.path}')
+        self.logger.warning(f"Method Not Allowed {request.method} {request.url.path}")
 
     def _default_not_found_handler(
-            self,
-            request: Request,
+        self,
+        request: Request,
     ) -> None:
         """Default handler for when a request is made to a path that is not found."""
-        self.logger.warning(f'Not found {request.url.path}')
+        self.logger.warning(f"Not found {request.url.path}")
 
     def endpoint(
-            self,
-            path: str,
-            method: str,
+        self,
+        path: str,
+        method: str,
     ) -> Endpoint:
         """Find the best endpoint to use with a specific path/method combination.
 
@@ -366,7 +361,7 @@ class Router:
             The endpoint registered to the path/method combination if found, or endpoint for missing resources if not.
         """
         # Trim trailing slashes for consistent endpoints.
-        path = path.rstrip('/')
+        path = path.rstrip("/")
         endpoint = self.endpoint_not_found
         # Look in static endpoints first due to performance of exact matches.
         methods = self.static_endpoints.get(path)
@@ -379,29 +374,27 @@ class Router:
                     if method in weighted_endpoint.methods:
                         endpoint = weighted_endpoint
                     else:
-                        endpoint = self.dynamic_endpoints.get(
-                            weighted_endpoint.route.pattern.pattern, {}
-                        ).get(
+                        endpoint = self.dynamic_endpoints.get(weighted_endpoint.route.pattern.pattern, {}).get(
                             method, self.endpoint_not_allowed
                         )
                     break
         return endpoint
 
     def _get_endpoint_kwargs(
-            self,
-            endpoint: Endpoint,
-            request: Request,
+        self,
+        endpoint: Endpoint,
+        request: Request,
     ) -> dict:
         """Collect dynamic arguments that should be sent to the endpoint based on variables in the handler."""
         kwargs = {}
-        if 'request' in endpoint.handler_vars:
-            kwargs['request'] = request
+        if "request" in endpoint.handler_vars:
+            kwargs["request"] = request
         return kwargs
 
     def route(
-            self,
-            path: str,
-            methods: list[str] = ('GET', ),
+        self,
+        path: str,
+        methods: list[str] = ("GET",),
     ) -> Callable:
         """Create a decorator that will register a path/method combination to a callback.
 
@@ -417,16 +410,18 @@ class Router:
         Returns:
             A decorator that will register a function as capable of accepting requests to a specific path/method combo.
         """
+
         def _decorator(func: Callable) -> Callable:
             """Wrapper for calling "add" as a decorator on a function."""
             self._add(path, methods, func)
             return func
+
         return _decorator
 
     def serve(
-            self,
-            url: str,
-            method: str = 'GET',
+        self,
+        url: str,
+        method: str = "GET",
     ) -> Any:
         """Serve a user request by matching a path and method against available endpoints.
 
@@ -445,7 +440,7 @@ class Router:
         path = request.url.path
         endpoint = self.endpoint(path, method)
         result = None
-        self.logger.debug(f'Serving new request: {method} {url}')
+        self.logger.debug(f"Serving new request: {method} {url}")
         try:
             kwargs = self._get_endpoint_kwargs(endpoint, request)
             if not endpoint.route.static:
@@ -456,5 +451,5 @@ class Router:
             try:
                 self.error_handler(request, base_error)
             except Exception as error:  # pylint: disable=broad-exception-caught
-                self.logger.error(f'Failed to handle error with error handler {method} {request.url.path} {error}')
+                self.logger.error(f"Failed to handle error with error handler {method} {request.url.path} {error}")
         return result

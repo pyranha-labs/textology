@@ -2,12 +2,12 @@
 
 """Basic example of set up and loop for an input/output application."""
 
-from textology.observers import Select
 from textology.observers import Modified
-from textology.observers import Update
 from textology.observers import ObservedObject
 from textology.observers import ObservedValue
 from textology.observers import ObserverManager
+from textology.observers import Select
+from textology.observers import Update
 
 
 class Component(ObservedObject):
