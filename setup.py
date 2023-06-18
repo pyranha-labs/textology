@@ -13,7 +13,7 @@ def _find_version(module_path: str, file: str = "__init__.py") -> str:
     """Locate semantic version from a text file in a compatible format with setuptools."""
     # Do not import the module within the library, as this can cause an infinite import. Read manually.
     init_file = os.path.join(ROOT_DIR, module_path, file)
-    with open(init_file, "rt") as file_in:
+    with open(init_file, "rt", encoding="utf-8") as file_in:
         for line in file_in.readlines():
             if "__version__" in line:
                 # Example:
@@ -25,8 +25,8 @@ def _find_version(module_path: str, file: str = "__init__.py") -> str:
 def read_requirements_file(extra_type: str | None) -> list[str]:
     """Read local requirement file basic on the type."""
     extra_type = f"-{extra_type}" if extra_type else ""
-    with open(f"requirements{extra_type}.txt", encoding="utf-8") as fp:
-        lines = (line.strip() for line in fp)
+    with open(f"requirements{extra_type}.txt", encoding="utf-8") as input_file:
+        lines = (line.strip() for line in input_file)
         return [req for req in lines if req and not req.startswith("#")]
 
 
@@ -70,6 +70,16 @@ setup(
     ],
     test_suite="pytest",
     packages=find_packages(ROOT_DIR, include=["textology*"], exclude=["*test", "tests*"]),
+    package_data={"textology": ["test-template.html"]},
+    data_files=[
+        (
+            "",
+            [
+                "requirements.txt",
+                "requirements-dev.txt",
+            ],
+        )
+    ],
     python_requires=">=3.10",
     install_requires=read_requirements_file(None),
     extras_require={

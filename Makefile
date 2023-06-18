@@ -31,7 +31,7 @@ format:
 # Check for common lint/complexity issues.
 .PHONY: lint
 lint:
-	pylint --rcfile setup.cfg $(NAME) examples
+	pylint --rcfile setup.cfg $(NAME) examples setup.py
 
 # Check documentation and code style to ensure they match expected formats.
 .PHONY: style
@@ -57,3 +57,16 @@ qa: lint style typing security format
 .PHONY: test
 test:
 	pytest -n auto $(GIT_DIR)
+
+
+##### Builds #####
+
+# Package the library into a pip installable.
+.PHONY: wheel
+wheel:
+	$(PYTHON_BIN) setup.py sdist
+
+# Clean the packages from all builds.
+.PHONY: clean
+clean:
+	rm -r $(GIT_DIR)/dist $(GIT_DIR)/textology.egg-info
