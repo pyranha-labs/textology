@@ -44,12 +44,13 @@ style:
 typing:
 	mypy --config-file $(SETUP_CFG) $(GIT_DIR)
 
-# Check typehints for static typing best practices.
+# Check for common security issues/best practices.
 .PHONY: security
 security:
 	bandit -r -c=$(GIT_DIR)/bandit.yaml $(GIT_DIR)
 
-# Run full QA suite against source code.
+# Check full code quality suite (minus unit tests) against source.
+# Does not enforce unit tests to simplify pushes, unit tests should be automated via pipelines with standardized env.
 .PHONY: qa
 qa: lint style typing security format
 

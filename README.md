@@ -49,6 +49,7 @@ Examples are included for advanced features, such as callback based applications
     * [Installation](#installation)
     * [Extended Applications](#extended-applications)
     * [Extended Widgets](#extended-widgets)
+    * [Extended Testing](#extended-testing)
 
 
 ## Compatibility
@@ -187,3 +188,36 @@ item = ListItem(
     disable_messages=[events.Mount, events.Show],
 )
 ```
+
+### Extended Testing
+
+Don't want to serialize your pytests? Looking for the ability to quickly visualize differences when UIs change?
+You came to the right place. Textology extends Textual SVG snapshot capabilities to add support for parallel processing
+during tests (python-xdist), and custom options such as auto updating SVG snapshots on failures. In order to use the
+pytest extensions automagically, add the following to a `conftest.py` in the root of the project. This will enable
+usage of the `compare_snapshots` fixture, and HTML report generation on failure, automatically.
+
+```python
+pytest_plugins = ("textology.pytest_utils",)
+```
+
+- Basic snapshot test:
+```python
+import pytest
+from textual import App
+from textual.widgets import Button
+
+@pytest.mark.asyncio
+async def test_snapshot_with_app(compare_snapshots) -> None:
+    class BasicApp(App):
+        def compose(self):
+            yield Button("Click me!", id="btn")
+    assert await compare_snapshots(BasicApp())
+```
+
+Other advanced testing features include:
+- Ability to pass and App, App Pilot, or a module containing an instantiated App or Pilot, to fixtures
+- Custom snapshot paths, including reusing the same snapshot across multiple tests
+- Automatic SVG updates with `pytest --txtology-snap-update`
+
+View all options by running `pytest -h` and referring to `Custom options:` section.
