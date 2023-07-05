@@ -72,7 +72,7 @@ class BrowserApp(App):
         """Default compose with provided layout.
 
         Yields:
-            Layout Widget set on instantiation.
+            Layout widget set on instantiation.
         """
         yield self.layout
 

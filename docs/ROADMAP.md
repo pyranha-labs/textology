@@ -11,6 +11,7 @@ Core features and functionality.
 - [x] Observers
     * [x] General manager for registering input/output callbacks based on observing values
     * [x] ObserverApp utilizing observer manager for automating reactive attribute events
+    * [x] ObserverApp compatibility layer with Dash syntax (allow Dash style callback declarations)
     * [ ] Observer dependency filters (greater than, less than, equals, where, etc.)
     * [ ] Wildcard/variable observers similar to routes (all, match)
     * [ ] Background callbacks

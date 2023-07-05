@@ -11,6 +11,7 @@ from typing import Callable
 
 from textology.logging import NullLogger
 
+from ._dependencies import Dependency
 from ._dependencies import Modified
 from ._dependencies import NoUpdate
 from ._dependencies import Select
@@ -262,7 +263,7 @@ class ObserverManager:
 
     def when(
         self,
-        *args: Any,
+        *args: Dependency,
     ) -> Callable:
         """Register a callback that triggers when observed values change.
 
