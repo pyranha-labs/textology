@@ -1,5 +1,6 @@
+
 <div align="center">
-  <img src="https://github.com/dfrtz/textology/blob/main/docs/banner.svg" width="450">
+  <img src="https://raw.githubusercontent.com/dfrtz/textology/main/docs/banner.svg" width="450">
 </div>
 
 -----------------
@@ -35,10 +36,11 @@ inspiration from other UI frameworks external to Python, such as iOS, Android, a
 however, Textology is an extension of Textual: it does not replace Textual, but rather provides additional options
 on top of the core framework.
 
-Before using Textology, be comfortable with Textual. Textology is NOT a replacement for Textual, it is an
+Before using Textology, be comfortable with Textual. For tutorials, guides, etc., refer to the
+[Textual Documentation](https://textual.textualize.io/guide/). Textology is NOT a replacement for Textual, it is an
 extension. Callbacks, widgets, screens, event lifecycles, etc., from Textual still apply to Textology extended
 widgets and applications. For other advanced features, familiarity with Dash/FastAPI/Flask principles will help.
-Examples are included for advanced features, such as callback based applications.
+Examples for Textology extensions, such as callback based applications, are included in this documentation.
 
 
 ## Table Of Contents
@@ -66,7 +68,7 @@ exception: Python3.10 minimum requirement.
 - New widgets, such as:
   - ListItemHeaders (non-interactive ListItems)
   - HorizontalMenus (walkable list of ListViews with peeking at following lists)
-- "Observer" application, with "event driven architecture" to detect changes and automatically update elements in UI.
+- "Observer" apps, with "event driven architecture" to detect changes and automatically update UI elements.
 - Enhanced testing support
   - Parallel tests via python-xdist
   - Custom testing arguments, such as updating snapshots on failures
@@ -150,7 +152,7 @@ Native Textual widgets can be directly swapped out with Textology extended equiv
 # Replace:
 from textual.widgets import Button
 
-# With
+# With:
 from textology.widgets import Button
 ```
 
@@ -208,10 +210,10 @@ from textual import App
 from textual.widgets import Button
 
 @pytest.mark.asyncio
-async def test_snapshot_with_app(compare_snapshots) -> None:
+async def test_snapshot_with_app(compare_snapshots):
     class BasicApp(App):
         def compose(self):
-            yield Button("Click me!", id="btn")
+            yield Button("Click me!")
     assert await compare_snapshots(BasicApp())
 ```
 

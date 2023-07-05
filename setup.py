@@ -32,11 +32,10 @@ def read_requirements_file(extra_type: str | None) -> list[str]:
 
 setup(
     name="textology",
-    description="Extensions for creating Terminal User Interfaces",
+    description="Textual extensions for creating Terminal User Interfaces",
     long_description=Path("README.md").read_text(encoding="utf-8"),
     long_description_content_type="text/markdown",
     version=_find_version("textology"),
-    maintainer="David Fritz",
     author="David Fritz",
     url="https://github.com/dfrtz/textology",
     project_urls={
