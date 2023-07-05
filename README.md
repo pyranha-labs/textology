@@ -142,6 +142,54 @@ def song(song_clicks, ping_clicks, pong_clicks):
 app.run()
 ```
 
+- <details>
+  <summary>Observer/callback application (Same as above, but with Dash compatibility object and calls)</summary>
+
+    ```python
+    from textology.dash_compat import DashCompatApp, Input, Output, State
+    from textology.widgets import Button, Container, Label
+
+    app = DashCompatApp(
+        layout=Container(
+            Button('Ping', id='ping-btn'),
+            Button('Pong', id='pong-btn'),
+            Button('Sing-a-long', id='sing-btn'),
+            Container(
+                id="content",
+            ),
+        )
+    )
+
+    @app.callback(
+        Input("ping-btn", "n_clicks"),
+        Output("content", "children"),
+    )
+    def ping(clicks):
+        return Label(f"Ping pressed {clicks}")
+
+    @app.callback(
+        Input("pong-btn", "n_clicks"),
+        Output("content", "children"),
+    )
+    def pong(clicks):
+        return Label(f"Pong pressed {clicks}")
+
+    @app.callback(
+        Input("sing-btn", "n_clicks"),
+        State("ping-btn", "n_clicks"),
+        State("pong-btn", "n_clicks"),
+        Output("content", "children"),
+    )
+    def song(song_clicks, ping_clicks, pong_clicks):
+        if not ping_clicks or not pong_clicks:
+            return Label(f"Press Ping and Pong first to complete the song!")
+        return Label(f"Ping, pong, sing-a-long song pressed {song_clicks}")
+
+    app.run()
+    ```
+
+ </details>
+
 ### Extended Widgets
 
 Native Textual widgets can be directly swapped out with Textology extended equivalents. They can then be used as is
@@ -209,11 +257,12 @@ import pytest
 from textual import App
 from textual.widgets import Button
 
+class BasicApp(App):
+    def compose(self):
+        yield Button("Click me!")
+
 @pytest.mark.asyncio
 async def test_snapshot_with_app(compare_snapshots):
-    class BasicApp(App):
-        def compose(self):
-            yield Button("Click me!")
     assert await compare_snapshots(BasicApp())
 ```
 
