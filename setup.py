@@ -76,12 +76,21 @@ setup(
             [
                 "requirements.txt",
                 "requirements-dev.txt",
+                "requirements-full-dev.txt",
             ],
         )
     ],
     python_requires=">=3.10",
     install_requires=read_requirements_file(None),
     extras_require={
-        "dev": read_requirements_file("dev"),
+        "dev": [
+            *read_requirements_file(None),
+            *read_requirements_file("dev"),
+        ],
+        "full-dev": [
+            *read_requirements_file(None),
+            *read_requirements_file("dev"),
+            *read_requirements_file("full-dev"),
+        ],
     },
 )

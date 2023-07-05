@@ -16,7 +16,7 @@ setup:
 venv:
 	$(PYTHON_BIN) -m venv $(GIT_DIR)/.venv && \
 	source $(GIT_DIR)/.venv/bin/activate && \
-	pip install -r requirements-dev.txt -r requirements.txt && \
+	pip install -r requirements-full-dev.txt -r requirements-dev.txt -r requirements.txt && \
 	echo $(GIT_DIR) > .venv/lib/python3.10/site-packages/textology.pth
 
 
