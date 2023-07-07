@@ -69,17 +69,7 @@ setup(
     ],
     test_suite="pytest",
     packages=find_packages(ROOT_DIR, include=["textology*"], exclude=["*test", "tests*"]),
-    package_data={"textology": ["test-template.html"]},
-    data_files=[
-        (
-            "",
-            [
-                "requirements.txt",
-                "requirements-dev.txt",
-                "requirements-full-dev.txt",
-            ],
-        )
-    ],
+    include_package_data=True,
     python_requires=">=3.10",
     install_requires=read_requirements_file(None),
     extras_require={
