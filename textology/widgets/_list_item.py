@@ -40,15 +40,16 @@ class ListItem(WidgetExtension, widgets.ListItem):
             id: The ID of the widget in the DOM.
             classes: The CSS classes for the widget.
             disabled: Whether the widget is disabled or not.
-            data: Metadata about the list item that can be used by later events, highlight selections, etc.
-                If no child is provided for display, the data will be searched for a "name" key to use in a Label.
+            data: Optional data associated with the list item.
+                If no child is provided for display, the data will be searched for a "label" key to use in a Label.
             extension_configs: Widget extension configurations, such as dynamically provided local callbacks by name.
         """
-        if not children and (data and "name" in data):
-            children = [Label(data["name"], disable_messages=LIST_ITEM_EVENT_IGNORES)]
+        if not children and (data and "label" in data):
+            children = [Label(data["label"], disable_messages=LIST_ITEM_EVENT_IGNORES)]
 
         super().__init__(*children, name=name, id=id, classes=classes, disabled=disabled)
         if "disable_messages" not in extension_configs:
             extension_configs["disable_messages"] = LIST_ITEM_EVENT_IGNORES
         self.__extend_widget__(**extension_configs)
         self.data = data
+        self.menu_index = None

@@ -17,6 +17,7 @@ from ._label import Label
 from ._list_item import LIST_ITEM_EVENT_IGNORES
 from ._list_item import ListItem
 from ._list_item_header import ListItemHeader
+from ._list_item_meta import ListItemMeta
 from ._list_view import ListView
 from ._location import Location
 from ._modal_dialog import ModalDialog

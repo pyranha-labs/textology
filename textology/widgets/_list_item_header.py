@@ -30,6 +30,7 @@ class ListItemHeader(ListItem):
         classes: str | None = None,
         disabled: bool = False,
         disable_click: bool = True,
+        data: Any = None,
         **extension_configs: Any,
     ) -> None:
         """Initialize a ListItemHeader with extension arguments.
@@ -40,7 +41,9 @@ class ListItemHeader(ListItem):
             id: The ID of the widget in the DOM.
             classes: The CSS classes for the widget.
             disabled: Whether the widget is disabled or not.
-            disable_click: Whether clicking the widget it disabled
+            disable_click: Whether clicking the widget it disabled.
+            data: Optional data associated with the list item.
+                If no child is provided for display, the data will be searched for a "label" key to use in a Label.
             extension_configs: Widget extension configurations, such as dynamically provided local callbacks by name.
         """
         super().__init__(
@@ -49,6 +52,7 @@ class ListItemHeader(ListItem):
             id=id,
             classes=classes,
             disabled=disabled,
+            data=data,
             **extension_configs,
         )
         self.disable_click = disable_click
