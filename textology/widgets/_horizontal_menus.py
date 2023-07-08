@@ -11,6 +11,7 @@ from textual.widget import Widget
 from ._extensions import WidgetExtension
 from ._list_item import ListItem
 from ._list_item_header import ListItemHeader
+from ._list_item_meta import ListItemMeta
 from ._list_view import ListView
 
 
@@ -31,29 +32,42 @@ class HorizontalMenus(WidgetExtension, containers.HorizontalScroll):
 
     def __init__(
         self,
-        *children: Widget,
+        *children: Widget | ListItem | ListItemMeta,
         name: str | None = None,
         id: str | None = None,
         classes: str | None = None,
         disabled: bool = False,
         can_focus: bool = False,
-        menu_creator: Callable[[int, list[ListItem]], Widget] = None,
+        menu_creator: Callable[[int, list[ListItem]], Widget] | None = None,
         **extension_configs: Any,
     ) -> None:
         """Initialize horizontal menus.
 
         Args:
-            *children: Initial menus to display.
+            *children: Initial menus, or menu items, to display.
                 Each "menu" widget must contain a ListView, but does not have to be a ListView itself.
+                If children are ListItem or ListItemMeta objects, an initial ListView will be made with menu_creator.
             name: The name of the widget.
             id: The ID of the widget in the DOM.
             classes: The CSS classes for the widget.
             disabled: Whether the widget is disabled or not.
-            can_focus: Whether the widget can be focused, or only the children.
+            can_focus: Whether the parent widget can be focused, or only the children widgets.
                 If enabled, it will take focus after all the nested ListViews, but before the next sibling.
             menu_creator: Called to create new sub-menus when an item with children is highlighted.
             extension_configs: Widget extension configurations, such as dynamically provided local callbacks by name.
         """
+        self.menu_creator = menu_creator or self._default_menu_creator
+        if any(isinstance(child, (ListItem, ListItemMeta)) for child in children):
+            if not all(isinstance(child, (ListItem, ListItemMeta)) for child in children):
+                raise ValueError("All initial children must be of same type: ListItem, ListItemMeta, or ListView")
+            for child in children:
+                child.menu_index = 0
+            children = [
+                self.menu_creator(
+                    0,
+                    [child.to_item() if isinstance(child, ListItemMeta) else child for child in children],
+                )
+            ]
         super().__init__(
             *children,
             name=name,
@@ -63,7 +77,6 @@ class HorizontalMenus(WidgetExtension, containers.HorizontalScroll):
         )
         self.__extend_widget__(**extension_configs)
         self.can_focus = can_focus
-        self.menu_creator = menu_creator
         self.menus = []
         for child in children or []:
             menu = None
@@ -80,8 +93,7 @@ class HorizontalMenus(WidgetExtension, containers.HorizontalScroll):
 
     def _add_menu(self, items: list[ListItem]) -> None:
         """Create and add a menu to the list of available menus."""
-        new_menu = self.menu_creator(len(self.menus), items)
-        if new_menu:
+        if new_menu := self.menu_creator(len(self.menus), items):
             self.mount(new_menu)
             list_view = None
             if isinstance(new_menu, ListView):
@@ -95,7 +107,20 @@ class HorizontalMenus(WidgetExtension, containers.HorizontalScroll):
                 raise ValueError("Menus must contain a ListView widget for navigation")
             self.menus.append(list_view)
 
-    def _find_highlighted(self) -> ListItem:
+    @staticmethod
+    def _default_menu_creator(menu_index: int, items: list) -> ListView | None:
+        """Default menu factory to create submenus when another submenu highlight changes."""
+        return (
+            ListView(
+                *items,
+                initial_index=None,
+                classes=f"--horizontal-menu-{menu_index}",
+            )
+            if any(not isinstance(item, ListItemHeader) for item in items)
+            else None
+        )
+
+    def _find_highlighted(self) -> ListItem | None:
         """Find the rightmost highlighted (most recent) item across the menu hierarchy."""
         for menu in reversed(self.menus):
             highlighted = menu.highlighted_child
@@ -159,6 +184,8 @@ class HorizontalMenus(WidgetExtension, containers.HorizontalScroll):
             index: Position of the menu to create or update.
             items: New items to show in the menu at the provided index.
         """
+        for item in items:
+            item.menu_index = index
         if index >= len(self.menus):
             self._add_menu(items)
         else:
@@ -171,3 +198,19 @@ class HorizontalMenus(WidgetExtension, containers.HorizontalScroll):
         self.remove_menus(index if non_headers else index - 1)
         if index < len(self.menus):
             self.menus[index].replace(new_items)
+
+    def watch_highlighted(self, old_value: ListItem | None, new_value: ListItem | None) -> None:
+        """Monitor the highlighted item to update the submenus.
+
+        Args:
+            old_value: Previously highlighted list item.
+            new_value: Newly highlighted list item.
+        """
+        if new_value == old_value or not new_value:
+            return
+        menu_items = new_value.data.get("menu_items")
+        if menu_items:
+            list_items = [item.to_item() for item in menu_items]
+            self.show_menu(new_value.menu_index + 1, list_items)
+        else:
+            self.remove_menus(new_value.menu_index)
