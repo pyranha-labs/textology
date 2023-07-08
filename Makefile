@@ -25,8 +25,10 @@ venv:
 # Check source code format for consistent patterns.
 .PHONY: format
 format:
-	$(PYTHON_BIN) -m black --check --diff --line-length=120 $(GIT_DIR) || echo Please run "black --line-length=120" against files to update their format.
-	isort -c $(GIT_DIR) || echo Please run "isort" against files to update their format.
+	$(PYTHON_BIN) -m black --check --diff --line-length=120 $(GIT_DIR) && echo Code format good to go! || \
+		(echo "Please run black against files to update their format:\nblack --line-length=120 $(GIT_DIR)"; exit 1)
+	isort -c $(GIT_DIR) && echo Import format good to go! || \
+		(echo "Please run isort against files to update their format:\nisort $(GIT_DIR)"; exit 1)
 
 # Check for common lint/complexity issues.
 .PHONY: lint
@@ -36,8 +38,8 @@ lint:
 # Check documentation and code style to ensure they match expected formats.
 .PHONY: style
 style:
-	pydocstyle --config $(SETUP_CFG) --count $(GIT_DIR)
-	pycodestyle --config $(SETUP_CFG) --count $(GIT_DIR)
+	pydocstyle --config $(SETUP_CFG) --count $(GIT_DIR) && echo Doc style good to go!
+	pycodestyle --config $(SETUP_CFG) --count $(GIT_DIR) && echo Code style good to go!
 
 # Check typehints for static typing best practices.
 .PHONY: typing
@@ -47,7 +49,7 @@ typing:
 # Check for common security issues/best practices.
 .PHONY: security
 security:
-	bandit -r -c=$(GIT_DIR)/bandit.yaml $(GIT_DIR)
+	bandit -r -c=$(GIT_DIR)/bandit.yaml $(GIT_DIR) && echo Security good to go!
 
 # Check full code quality suite (minus unit tests) against source.
 # Does not enforce unit tests to simplify pushes, unit tests should be automated via pipelines with standardized env.
