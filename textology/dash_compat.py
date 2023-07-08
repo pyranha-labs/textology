@@ -10,13 +10,7 @@ it will be included here, but this is not Dash. In order to access the full rang
 developers should leverage the native classes and designs from the standard library.
 """
 
-import logging
 from typing import Callable
-
-from textual.app import ComposeResult
-from textual.app import CSSPathType
-from textual.driver import Driver
-from textual.widget import Widget
 
 from textology.apps import ObservedApp
 
@@ -32,45 +26,6 @@ class DashCompatApp(ObservedApp):
 
     Compatibility alias for ObservedApp class.
     """
-
-    def __init__(
-        self,
-        layout: Callable | Widget | None = None,
-        driver_class: type[Driver] | None = None,
-        css_path: CSSPathType | None = None,
-        watch_css: bool = False,
-        logger: logging.Logger | None = None,
-    ) -> None:
-        """Initialize an application with a layout and tracking for input/output callbacks.
-
-        Args:
-            layout: Primary content window, or function to create primary content window.
-            driver_class: Driver class or `None` to auto-detect.
-                This will be used by some Textual tools.
-            css_path: Path to CSS or `None` to use the `CSS_PATH` class variable.
-                To load multiple CSS files, pass a list of strings or paths which will be loaded in order.
-            watch_css: Reload CSS if the files changed.
-                This is set automatically if you are using `textual run` with the `dev` switch.
-            logger: Custom logger to send callback messages to.
-
-        Raises:
-            CssPathError: When the supplied CSS path(s) are an unexpected type.
-        """
-        super().__init__(
-            driver_class=driver_class,
-            css_path=css_path,
-            watch_css=watch_css,
-            logger=logger,
-        )
-        self.layout = layout
-
-    def compose(self) -> ComposeResult:
-        """Default compose with provided layout.
-
-        Yields:
-            Layout widget set on instantiation.
-        """
-        yield self.layout if not isinstance(self.layout, Callable) else self.layout()
 
     def callback(
         self,

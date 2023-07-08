@@ -110,18 +110,16 @@ from textology.apps import ObservedApp
 from textology.observers import Modified, Select, Update
 from textology.widgets import Button, Container, Label
 
-class SimpleApp(ObservedApp):
-    def compose(self):
-        yield Container(
-            Button('Ping', id='ping-btn'),
-            Button('Pong', id='pong-btn'),
-            Button('Sing-a-long', id='sing-btn'),
-            Container(
-                id="content",
-            ),
-        )
-
-app = SimpleApp()
+app = ObservedApp(
+    layout=Container(
+        Button('Ping', id='ping-btn'),
+        Button('Pong', id='pong-btn'),
+        Button('Sing-a-long', id='sing-btn'),
+        Container(
+            id="content",
+        ),
+    )
+)
 
 @app.when(
     Modified("ping-btn", "n_clicks"),
