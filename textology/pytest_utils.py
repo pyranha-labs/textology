@@ -5,6 +5,7 @@ import os
 import platform
 import sqlite3
 import time
+from dataclasses import dataclass
 from datetime import datetime
 from os import PathLike
 from pathlib import Path
@@ -26,12 +27,18 @@ OPT_SNAP_ROOT = "--txtology-snap-root"
 OPT_SNAP_TEMPLATE = "--txtology-snap-template"
 OPT_SNAP_UPDATE = "--txtology-snap-update"
 
-TXTOLOGY_APP_KEY = pytest.StashKey[App]()
-TXTOLOGY_EXPECTED_SVG_KEY = pytest.StashKey[str]()
-TXTOLOGY_EXPECTED_PATH_KEY = pytest.StashKey[str]()
-TXTOLOGY_RESULT_SVG_KEY = pytest.StashKey[str]()
-TXTOLOGY_SNAPSHOT_TEST = pytest.StashKey[bool]()
-TXTOLOGY_SNAPSHOT_TEST_PASS = pytest.StashKey[bool]()
+TXTOLOGY_SNAPSHOTS = pytest.StashKey[list]()
+
+
+@dataclass
+class SnapshotFailure:
+    """Class for keeping track of a single snapshot failure in a test."""
+
+    pilot: Pilot
+    result: bool = False
+    result_svg: str | None = None
+    expected_svg: str | None = None
+    expected_path: str | None = None
 
 
 async def auto_pilot(
@@ -75,10 +82,11 @@ async def capture_snapshot(
     return svg
 
 
-async def compare_snapshots(
+async def compare_snapshots(  # pylint: disable=too-many-arguments
     request: FixtureRequest,
     pilot: Pilot,
     compare_to: str | PathLike | None = None,
+    test_suffix: str | None = None,
     press: Iterable[str] = (),
     snap_title: str = None,
     wait_for_animation: bool = True,
@@ -94,6 +102,8 @@ async def compare_snapshots(
         pilot: Active test pilot for an application.
         compare_to: Path to a saved snapshot.
             Defaults to: <directory of test file>/snapshots/<name of test>.svg
+        test_suffix: Optional suffix to add to the snapshot image name after the name of the test.
+            Mutually exclusive with "compare_to" full path being provided.
         press: Key presses to run before waiting for animations to complete.
         snap_title: The title of the exported screenshot or None to use app title.
         wait_for_animation: Whether to wait for animations to complete before returning.
@@ -101,6 +111,8 @@ async def compare_snapshots(
     Returns:
         True if the currently saved snapshot matches the newly generated snapshot, false otherwise.
     """
+    if compare_to and test_suffix:
+        raise ValueError("Cannot provide both a full compare_to path and test_suffix in snapshot tests")
     result_svg = await capture_snapshot(
         pilot,
         press=press,
@@ -110,7 +122,10 @@ async def compare_snapshots(
 
     expected_svg = None
     if not compare_to:
-        compare_to = Path(request.fspath).parent / "snapshots" / f"{request.node.name}.svg"
+        image_name = request.node.name
+        if test_suffix:
+            image_name = f"{image_name}_{test_suffix}"
+        compare_to = Path(request.fspath).parent / "snapshots" / f"{image_name}.svg"
     if os.path.exists(compare_to):
         expected_svg = Path(compare_to).read_text(encoding="UTF-8")
 
@@ -122,13 +137,17 @@ async def compare_snapshots(
         result = True
 
     node = request.node
-    node.stash[TXTOLOGY_SNAPSHOT_TEST] = True
-    node.stash[TXTOLOGY_SNAPSHOT_TEST_PASS] = result
     if result is False:
-        node.stash[TXTOLOGY_APP_KEY] = pilot.app
-        node.stash[TXTOLOGY_RESULT_SVG_KEY] = result_svg
-        node.stash[TXTOLOGY_EXPECTED_SVG_KEY] = expected_svg
-        node.stash[TXTOLOGY_EXPECTED_PATH_KEY] = str(compare_to)
+        node.stash[TXTOLOGY_SNAPSHOTS] = node.stash.get(TXTOLOGY_SNAPSHOTS, [])
+        node.stash[TXTOLOGY_SNAPSHOTS].append(
+            SnapshotFailure(
+                pilot=pilot,
+                result=result,
+                result_svg=result_svg,
+                expected_svg=expected_svg,
+                expected_path=str(compare_to),
+            )
+        )
     return result
 
 
@@ -149,6 +168,7 @@ async def compare_snapshots_fixture(request: FixtureRequest) -> Callable:
     async def _compare_snapshots(
         app_or_pilot_or_module: App | Pilot | ModuleType,
         compare_to: str | PathLike | None = None,
+        test_suffix: str | None = None,
         press: Iterable[str] = (),
         snap_title: str = None,
         wait_for_animation: bool = True,
@@ -162,6 +182,8 @@ async def compare_snapshots_fixture(request: FixtureRequest) -> Callable:
             app_or_pilot_or_module: Application, application test pilot, or module containing either.
             compare_to: Path to a saved snapshot.
                 Defaults to: <directory of test file>/snapshots/<name of test>.py
+            test_suffix: Optional suffix to add to the snapshot image name after the name of the test.
+                Mutually exclusive with "compare_to" full path being provided.
             press: Key presses to run before waiting for animations to complete.
             snap_title: The title of the exported screenshot or None to use app title.
             wait_for_animation: Whether to wait for animations to complete before returning.
@@ -181,6 +203,7 @@ async def compare_snapshots_fixture(request: FixtureRequest) -> Callable:
                     request,
                     pilot,
                     compare_to=compare_to,
+                    test_suffix=test_suffix,
                     press=press,
                     snap_title=snap_title,
                     wait_for_animation=wait_for_animation,
@@ -189,12 +212,21 @@ async def compare_snapshots_fixture(request: FixtureRequest) -> Callable:
             request,
             app_or_pilot_or_module,
             compare_to=compare_to,
+            test_suffix=test_suffix,
             press=press,
             snap_title=snap_title,
             wait_for_animation=wait_for_animation,
         )
 
     yield _compare_snapshots
+
+
+def _snapshot_failure_factory(cur: sqlite3.Cursor, row: tuple) -> dict:
+    """Factory to convert DB rows into dicts, and rehydrate special types."""
+    fields = [column[0] for column in cur.description]
+    result = dict(zip(fields, row))
+    result["app"] = json.loads(result["app"])
+    return result
 
 
 def _get_session_root(session: pytest.Session) -> Path:
@@ -278,11 +310,10 @@ def pytest_sessionfinish(
         with sqlite3.connect(session_root / "items.db") as con:
             cursor = con.cursor()
             for item in session.items:
-                if not item.stash.get(TXTOLOGY_SNAPSHOT_TEST, False):
-                    continue
-                if item.stash.get(TXTOLOGY_SNAPSHOT_TEST_PASS, False):
-                    continue
-                _write_snapshot_item(item, cursor)
+                for snapshot in item.stash.get(TXTOLOGY_SNAPSHOTS, []):
+                    if snapshot.result:
+                        continue
+                    _write_snapshot_failure(item, snapshot, cursor)
             con.commit()
 
     if getattr(session.config, "workerinput", None) is not None:
@@ -290,15 +321,7 @@ def pytest_sessionfinish(
         return
 
     with sqlite3.connect(session_root / "items.db") as con:
-
-        def dict_factory(cur: sqlite3.Cursor, row: tuple) -> dict:
-            """Factory to convert DB rows into dicts, and rehydrate special types."""
-            fields = [column[0] for column in cur.description]
-            result = dict(zip(fields, row))
-            result["app"] = json.loads(result["app"])
-            return result
-
-        con.row_factory = dict_factory
+        con.row_factory = _snapshot_failure_factory
         cursor = con.cursor()
         failures = cursor.execute("SELECT * FROM snapshot_failures").fetchall()
 
@@ -370,10 +393,10 @@ def pytest_terminal_summary(
         )
 
 
-def _write_snapshot_item(item: pytest.Item, cursor: sqlite3.Cursor) -> None:
+def _write_snapshot_failure(item: pytest.Item, snapshot: SnapshotFailure, cursor: sqlite3.Cursor) -> None:
     """Save a snapshot test result from a worker process to a shared database table."""
     path, line_index, name = item.reportinfo()
-    app = item.stash.get(TXTOLOGY_APP_KEY, None)
+    app = snapshot.pilot.app
     cursor.execute(
         "INSERT INTO snapshot_failures VALUES ("
         ":path,"
@@ -387,9 +410,9 @@ def _write_snapshot_item(item: pytest.Item, cursor: sqlite3.Cursor) -> None:
             "path": str(path),
             "name": name,
             "line": line_index + 1,
-            "result": item.stash.get(TXTOLOGY_RESULT_SVG_KEY, None),
-            "expected": item.stash.get(TXTOLOGY_EXPECTED_SVG_KEY, None),
-            "expectedPath": item.stash.get(TXTOLOGY_EXPECTED_PATH_KEY, None),
+            "result": snapshot.result_svg,
+            "expected": snapshot.expected_svg,
+            "expectedPath": snapshot.expected_path,
             "app": json.dumps(
                 {
                     "title": app.title,
