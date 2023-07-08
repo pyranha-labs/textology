@@ -20,7 +20,51 @@ from .observers import ObserverManager
 from .widgets import Location
 
 
-class BrowserApp(App):
+class WidgetApp(App):
+    """Application with a single widget for the root layout."""
+
+    def __init__(
+        self,
+        layout: Callable | Widget | None = None,
+        driver_class: type[Driver] | None = None,
+        css_path: CSSPathType | None = None,
+        watch_css: bool = False,
+    ) -> None:
+        """Initialize an application with a layout.
+
+        Args:
+            layout: Primary content widget, or function to create primary content widget.
+            driver_class: Driver class or `None` to auto-detect.
+                This will be used by some Textual tools.
+            css_path: Path to CSS or `None` to use the `CSS_PATH` class variable.
+                To load multiple CSS files, pass a list of strings or paths which will be loaded in order.
+            watch_css: Reload CSS if the files changed.
+                This is set automatically if you are using `textual run` with the `dev` switch.
+
+        Raises:
+            CssPathError: When the supplied CSS path(s) are an unexpected type.
+        """
+        super().__init__(
+            driver_class=driver_class,
+            css_path=css_path,
+            watch_css=watch_css,
+        )
+        self.layout = layout or self.default_layout
+
+    def compose(self) -> ComposeResult:
+        """Default compose with provided layout.
+
+        Yields:
+            Layout widget set on instantiation.
+        """
+        yield self.layout if not isinstance(self.layout, Callable) else self.layout()
+
+    def default_layout(self) -> Widget:
+        """Default layout generator if a layout was not provided during initialization."""
+        return Container(id="content-window")
+
+
+class BrowserApp(WidgetApp):
     """Application capable of routing user requests, and tracking browsing history."""
 
     def __init__(
@@ -33,7 +77,7 @@ class BrowserApp(App):
         """Initialize an application with a browser history and router.
 
         Args:
-            layout: Primary content window.
+            layout: Primary content widget, or function to create primary content widget.
                 Must contain Location widget.
             driver_class: Driver class or `None` to auto-detect.
                 This will be used by some Textual tools.
@@ -50,6 +94,9 @@ class BrowserApp(App):
                 Location(),
                 Container(id="content-window"),
             )
+        elif isinstance(layout, Callable):
+            layout = layout()
+
         if isinstance(layout, Location):
             location = layout
         else:
@@ -61,20 +108,12 @@ class BrowserApp(App):
         if not location:
             raise ValueError("Layout must contain a Location object for routing requests")
         super().__init__(
+            layout=layout,
             driver_class=driver_class,
             css_path=css_path,
             watch_css=watch_css,
         )
-        self.layout = layout
         self.location = location
-
-    def compose(self) -> ComposeResult:
-        """Default compose with provided layout.
-
-        Yields:
-            Layout widget set on instantiation.
-        """
-        yield self.layout
 
     def back(self) -> int:
         """Go back one URL in the browser history.
@@ -122,11 +161,12 @@ class BrowserApp(App):
         return self.location.route(path, methods=methods)
 
 
-class ObservedApp(App, ObserverManager):
+class ObservedApp(WidgetApp, ObserverManager):
     """Application capable of performing automatic input/output callbacks on reactive widget property updates."""
 
     def __init__(
         self,
+        layout: Widget | None = None,
         driver_class: type[Driver] | None = None,
         css_path: CSSPathType | None = None,
         watch_css: bool = False,
@@ -135,6 +175,7 @@ class ObservedApp(App, ObserverManager):
         """Initialize an application with tracking for input/output callbacks.
 
         Args:
+            layout: Primary content widget, or function to create primary content widget.
             driver_class: Driver class or `None` to auto-detect.
                 This will be used by some Textual tools.
             css_path: Path to CSS or `None` to use the `CSS_PATH` class variable.
@@ -147,6 +188,7 @@ class ObservedApp(App, ObserverManager):
             CssPathError: When the supplied CSS path(s) are an unexpected type.
         """
         super().__init__(
+            layout=layout,
             driver_class=driver_class,
             css_path=css_path,
             watch_css=watch_css,
