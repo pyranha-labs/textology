@@ -149,6 +149,17 @@ def song(song_clicks, ping_clicks, pong_clicks):
 app.run()
 ```
 
+- Observation callbacks can also be async:
+```python
+@app.when(
+    Modified("pong-btn", "n_clicks"),
+    Update("content", "children"),
+)
+async def delayed_pong(clicks):
+    await asyncio.sleep(3)
+    return Label(f"Pong pressed {clicks} and updated 3 seconds later")
+```
+
 - <details>
   <summary>Observer/callback application (Same as above, but with Dash compatibility object and calls)</summary>
 
