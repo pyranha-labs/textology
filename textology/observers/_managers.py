@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import abc
+import asyncio
 import functools
 import logging
 from collections import defaultdict
+from inspect import isawaitable
 from typing import Any
 from typing import Callable
+from typing import Coroutine
 
 from textology.logging import NullLogger
 
@@ -21,7 +24,7 @@ from ._exceptions import PreventUpdate
 from ._exceptions import UnknownObserver
 
 # Type alias to represent function receiving 2 arguments (old value and new value) and returning nothing.
-ValueUpdateHandler = Callable[[Any, Any], None]
+ValueUpdateHandler = Callable[[Any, Any], Coroutine]
 
 
 class Observer:
@@ -124,14 +127,14 @@ class ObserverManager:
     def _generate_callback(self, modified_id: str, modified_property: str, observer: Observer) -> ValueUpdateHandler:
         """Create a callback wrapper that will call the original function with input/output management applied."""
 
-        def _on_update(old_value: Any, new_value: Any) -> None:
+        async def _on_update(old_value: Any, new_value: Any) -> None:
             """Process value changes for a component property and apply the requested update operations."""
             update_components = self._get_update_components(observer)
             if not update_components:
                 # One or more components missing, do not trigger callback.
                 return
+            observer_id = observer.observer_id
             args = []
-            args_setup_error = None
             for dep in observer.modifications + observer.selections:
                 if dep.component_id == modified_id and dep.component_property == modified_property:
                     args.append(old_value if isinstance(dep, Select) else new_value)
@@ -141,20 +144,19 @@ class ObserverManager:
                             self.get_callback_arg(observer.observer_id, dep.component_id, dep.component_property)
                         )
                     except Exception as error:  # pylint: disable=broad-exception-caught
-                        args_setup_error = error
-                        break
+                        self.on_callback_error(observer_id, error)
+                        return
 
-            observer_id = observer.observer_id
-            updates = None
             try:
-                if args_setup_error:
-                    raise args_setup_error
                 updates = observer.callback(*args) if not observer.external else self.send_callback(observer_id, *args)
+                if isawaitable(updates):
+                    updates = await updates
             except PreventUpdate:
-                pass
+                updates = None
             except BaseException as error:  # pylint: disable=broad-exception-caught
                 # Catch all errors to prevent fatal crashes in application callback loops.
                 self.on_callback_error(observer_id, error)
+                updates = None
 
             if updates:
                 try:
@@ -321,7 +323,10 @@ class ObservedObject:
             old_value = observer.value
             observer.value = value
             if old_value != value and observer.callback:
-                observer.callback(old_value, value)
+                result = observer.callback(old_value, value)
+                if isawaitable(result):
+                    loop = asyncio.get_event_loop()
+                    loop.create_task(result)
         else:
             super().__setattr__(name, value)
 
@@ -364,9 +369,11 @@ def _create_callback(func: Callable, updates: list[Update]) -> Callable:
     """Wrap a function with additional callback management, such as error handling and result standardization."""
 
     @functools.wraps(func)
-    def _callback(*args: Any, **kwargs: Any) -> dict[str, dict[str, Any]]:
+    async def _callback(*args: Any, **kwargs: Any) -> dict[str, dict[str, Any]]:
         """Wrap original function with additional callback management such as conversion to standardized result map."""
         results = func(*args, **kwargs)  # Invoke original callback.
+        if isawaitable(results):
+            results = await results
         if not isinstance(results, (list, tuple)):
             results = [results]
 

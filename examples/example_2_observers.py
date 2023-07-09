@@ -2,6 +2,8 @@
 
 """Basic example of set up and loop for an input/output application."""
 
+import asyncio
+
 from textology.observers import Modified
 from textology.observers import ObservedObject
 from textology.observers import ObservedValue
@@ -77,11 +79,17 @@ def pong_other(pong: str) -> str:
     return f"old value: {pong}"
 
 
-# Register components as capable of responding to callbacks.
-app.register_components()
+async def main() -> None:
+    """Run user prompts in async loop to allow attribute updates to trigger."""
+    # Register components as capable of responding to callbacks.
+    app.register_components()
 
-if __name__ == "__main__":
     app.get_component("other").value = "foo"
     while (value := input('Enter new ping value, or "quit" to exit: ')) != "quit":
         app.get_component("ping").value = value
+        await asyncio.sleep(0)
         print(app.get_component("pong").value)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

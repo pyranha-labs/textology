@@ -1,5 +1,9 @@
 """Unit tests for callbacks module."""
 
+import asyncio
+
+import pytest
+
 from textology.observers import Modified
 from textology.observers import ObservedObject
 from textology.observers import ObservedValue
@@ -46,7 +50,8 @@ class App(ObserverManager):
                     component.observe(property_name, callback)
 
 
-def test_callback_chain() -> None:
+@pytest.mark.asyncio
+async def test_callback_chain() -> None:
     """Basic unit test to validate manual and automatic trigger on components."""
     app = App(
         [
@@ -61,7 +66,7 @@ def test_callback_chain() -> None:
         Select("other", "value"),
         Update("pong", "value"),
     )
-    def ping_pong(ping: str, other: str) -> str:
+    async def ping_pong(ping: str, other: str) -> str:
         """Basic callback that is triggered by a modified value, also accepts a basic value, and provides one update."""
         return f"ping {ping} with {other}"
 
@@ -69,7 +74,7 @@ def test_callback_chain() -> None:
         Modified("pong", "value"),
         Update("other", "value"),
     )
-    def pong_other(pong: str) -> str:
+    async def pong_other(pong: str) -> str:
         """Callback that is triggered by an update from another callback, and updates a component without triggering."""
         return f"other value: {pong}"
 
@@ -84,11 +89,13 @@ def test_callback_chain() -> None:
     assert other_comp.value is None
 
     ping_comp.value = "test1"
+    await asyncio.sleep(0.1)
     assert ping_comp.value == "test1"
     assert pong_comp.value == "ping test1 with None"
     assert other_comp.value == "other value: ping test1 with None"
 
     ping_comp.value = "test2"
+    await asyncio.sleep(0.1)
     assert ping_comp.value == "test2"
     assert pong_comp.value == "ping test2 with other value: ping test1 with None"
     assert other_comp.value == "other value: ping test2 with other value: ping test1 with None"
