@@ -11,7 +11,6 @@ from textual.message import Message
 from textual.reactive import reactive
 
 from textology.history import History
-from textology.logging import NullLogger
 from textology.router import Endpoint
 from textology.router import Request
 from textology.router import Router
@@ -102,7 +101,7 @@ class Location(ExtendedWidget, Router):
         super().__init__(id=id, **extension_configs)
         self._initial_path = path
         # Manually set up router mixin since Widget inheritance does not automatically trigger.
-        Router.__init__(self, logger=logger)
+        Router.__init__(self, logger=logger or logging.root)
         self._history = History()
         self.url_events_enabled = enable_url_events
         self.history_events_enabled = enable_history_events
@@ -194,7 +193,7 @@ class Location(ExtendedWidget, Router):
 
     def _on_mount(self, _: events.Mount) -> None:
         """Ensure the logger and initial path are fully loaded after mounting."""
-        if isinstance(self.logger, NullLogger):
+        if self.logger == logging.root:
             self.logger = self.log
         self.url = self._initial_path
 

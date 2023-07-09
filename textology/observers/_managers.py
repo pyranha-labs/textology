@@ -157,9 +157,15 @@ class ObserverManager:
                 self.on_callback_error(observer_id, error)
 
             if updates:
-                for update_id, properties in updates.items():
-                    for update_property, value in properties.items():
-                        self.apply_update(observer_id, update_components[update_id], update_id, update_property, value)
+                try:
+                    for update_id, properties in updates.items():
+                        for update_property, value in properties.items():
+                            self.apply_update(
+                                observer_id, update_components[update_id], update_id, update_property, value
+                            )
+                except BaseException as error:  # pylint: disable=broad-exception-caught
+                    # Catch all errors to prevent fatal crashes in application callback loops.
+                    self.on_callback_error(observer_id, error)
 
         return _on_update
 
