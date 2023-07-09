@@ -54,6 +54,6 @@ async def test_horizontal_menu(compare_snapshots: Callable) -> None:
             [
                 await compare_snapshots(pilot, test_suffix="page1"),
                 await compare_snapshots(pilot, press=["down"], test_suffix="page2"),
-                await compare_snapshots(pilot, press=["down", "tab", "down"], test_suffix="page3"),
+                await compare_snapshots(pilot, press=["down", "right", "down"], test_suffix="page3"),
             ]
         )

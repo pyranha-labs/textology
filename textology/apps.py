@@ -15,7 +15,6 @@ from textual.css.query import NoMatches
 from textual.driver import Driver
 from textual.widget import Widget
 
-from .logging import NullLogger
 from .observers import ObserverManager
 from .widgets import Location
 
@@ -69,7 +68,7 @@ class BrowserApp(WidgetApp):
 
     def __init__(
         self,
-        layout: Widget | None = None,
+        layout: Callable | Widget | None = None,
         driver_class: type[Driver] | None = None,
         css_path: CSSPathType | None = None,
         watch_css: bool = False,
@@ -166,7 +165,7 @@ class ObservedApp(WidgetApp, ObserverManager):
 
     def __init__(
         self,
-        layout: Widget | None = None,
+        layout: Callable | Widget | None = None,
         driver_class: type[Driver] | None = None,
         css_path: CSSPathType | None = None,
         watch_css: bool = False,
@@ -194,7 +193,7 @@ class ObservedApp(WidgetApp, ObserverManager):
             watch_css=watch_css,
         )
         # Manually set up observer manager mixin since App inheritance does not automatically trigger.
-        ObserverManager.__init__(self, logger=logger)
+        ObserverManager.__init__(self, logger=logger or logging.root)
 
     def apply_update(
         self,
@@ -226,7 +225,7 @@ class ObservedApp(WidgetApp, ObserverManager):
 
     def on_mount(self, _: events.Mount) -> None:
         """Ensure the logger is fully loaded after mounting."""
-        if isinstance(self.logger, NullLogger):
+        if self.logger == logging.root:
             self.logger = self.log
 
     def _register_widget_observers(self, widget: Widget) -> None:
