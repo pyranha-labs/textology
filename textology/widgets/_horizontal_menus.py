@@ -2,9 +2,12 @@
 
 from typing import Any
 from typing import Callable
+from typing import ClassVar
 
 from textual import containers
 from textual import events
+from textual.binding import Binding
+from textual.binding import BindingType
 from textual.reactive import reactive
 from textual.widget import Widget
 
@@ -22,6 +25,11 @@ class HorizontalMenus(WidgetExtension, containers.HorizontalScroll):
     The menus can be quickly focused, selected, etc., with less vertical traversal in large objects.
     "Previewing" the next menu in a set of menus is also allowed.
     """
+
+    BINDINGS: ClassVar[list[BindingType]] = [
+        Binding("left", "focus_previous", show=False),
+        Binding("right", "focus_next", show=False),
+    ]
 
     # Currently focused item across sub-menus.
     focused: ListItem | None = reactive(None, repaint=False, init=False)
