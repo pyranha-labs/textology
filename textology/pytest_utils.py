@@ -364,8 +364,8 @@ def pytest_sessionfinish(
 
         report_path_opt = session.config.getoption(OPT_SNAP_REPORT)
         report_path = Path(report_path_opt) if report_path_opt else Path(session_root / "snapshot_test_report.html")
-        with open(report_path, "w+", encoding="utf-8") as snapshot_file:
-            snapshot_file.write(report)
+        report_path.write_text(report, encoding="utf-8")
+
         session.config.txtology_report_path = report_path
         session.config.txtology_report_count = len(failures)
 
