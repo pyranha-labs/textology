@@ -52,4 +52,4 @@ class ListItem(WidgetExtension, widgets.ListItem):
             extension_configs["disable_messages"] = LIST_ITEM_EVENT_IGNORES
         self.__extend_widget__(**extension_configs)
         self.data = data
-        self.menu_index = None
+        self.menu_index: int | None = None

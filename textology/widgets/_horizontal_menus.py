@@ -3,6 +3,7 @@
 from typing import Any
 from typing import Callable
 from typing import ClassVar
+from typing import Iterable
 
 from textual import containers
 from textual import events
@@ -68,8 +69,7 @@ class HorizontalMenus(WidgetExtension, containers.HorizontalScroll):
         if any(isinstance(child, (ListItem, ListItemMeta)) for child in children):
             if not all(isinstance(child, (ListItem, ListItemMeta)) for child in children):
                 raise ValueError("All initial children must be of same type: ListItem, ListItemMeta, or ListView")
-            for child in children:
-                child.menu_index = 0
+            self._update_menu_index(children, 0)
             children = [
                 self.menu_creator(
                     0,
@@ -194,6 +194,7 @@ class HorizontalMenus(WidgetExtension, containers.HorizontalScroll):
         """
         for item in items:
             item.menu_index = index
+        self._update_menu_index(items, index)
         if index >= len(self.menus):
             self._add_menu(items)
         else:
@@ -207,6 +208,12 @@ class HorizontalMenus(WidgetExtension, containers.HorizontalScroll):
         if index < len(self.menus):
             self.menus[index].replace(new_items)
 
+    @staticmethod
+    def _update_menu_index(items: Iterable[ListItem | ListItemMeta], index: int) -> None:
+        """Update the menu index value on all items in a list."""
+        for item in items:
+            item.menu_index = index
+
     def watch_highlighted(self, old_value: ListItem | None, new_value: ListItem | None) -> None:
         """Monitor the highlighted item to update the submenus.
 
@@ -217,8 +224,9 @@ class HorizontalMenus(WidgetExtension, containers.HorizontalScroll):
         if new_value == old_value or not new_value:
             return
         menu_items = new_value.data.get("menu_items")
+        menu_index = new_value.menu_index or 0
         if menu_items:
             list_items = [item.to_item() for item in menu_items]
-            self.show_menu(new_value.menu_index + 1, list_items)
+            self.show_menu(menu_index + 1, list_items)
         else:
-            self.remove_menus(new_value.menu_index)
+            self.remove_menus(menu_index)
