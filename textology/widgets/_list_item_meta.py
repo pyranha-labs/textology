@@ -37,7 +37,7 @@ class ListItemMeta:
         self.classes = classes
         self.data = data
         self.extension_configs = extension_configs
-        self.menu_index = None
+        self.menu_index: int | None = None
 
     def to_item(self) -> ListItem:
         """Create the underlying list item widget.
