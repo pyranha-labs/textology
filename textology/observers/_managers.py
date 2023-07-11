@@ -6,6 +6,7 @@ import abc
 import asyncio
 import functools
 import logging
+import traceback
 from collections import defaultdict
 from inspect import isawaitable
 from typing import Any
@@ -243,8 +244,10 @@ class ObserverManager:
         if not isinstance(error, Exception):
             # Unhandled fatal error; reraise.
             raise error
+        # Not all third party loggers have ".exception()" to print stacktraces, collect manually and use error.
+        full_trace = traceback.format_exc()
         # Standard error, log and continue.
-        self.logger.error(f"Failed callback for {observer_id}: {type(error).__name__} {error}")
+        self.logger.error(f"Failed callback for {observer_id}: {type(error).__name__} {error}\n{full_trace}")
 
     def send_callback(self, observer_id: str, *callback_args: Any) -> dict[str, dict[str, Any]]:
         """Forward a callback request to be handled externally.
