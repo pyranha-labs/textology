@@ -244,7 +244,7 @@ class Router:
             logger: Custom logger to send messages to.
         """
         super().__init__()
-        self.logger = logger or NullLogger(__name__)
+        self.logger: logging.Logger | None = logger or NullLogger(__name__)
         self.weighted_endpoints: list[Endpoint] = []
         self.dynamic_endpoints: dict[str, dict[str, Endpoint]] = {}  # dynamic_endpoints[path][method]
         self.static_endpoints: dict[str, dict[str, Endpoint]] = {}  # static_endpoints[path][method]

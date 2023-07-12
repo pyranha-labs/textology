@@ -102,7 +102,7 @@ class ObserverManager:
         # Structured as: _observer_map[component_id][component_property] = Observer
         self._observer_map = defaultdict(lambda: defaultdict(list))
         self._observer_id_map = {}
-        self.logger = logger or NullLogger(__name__)
+        self.logger: logging.Logger | None = logger or NullLogger(__name__)
 
     def apply_update(  # Pass all component arguments to allow subclasses to use. pylint: disable=unused-argument
         self,
