@@ -89,3 +89,25 @@ async def test_horizontal_menu_with_listview(compare_snapshots: Callable) -> Non
                 await compare_snapshots(pilot, press=["right", "down"]),
             ]
         )
+
+
+@pytest.mark.asyncio
+async def test_list_items(compare_snapshots: Callable) -> None:
+    """Validate all ListItem types and combinations render correctly."""
+    app = apps.WidgetApp(
+        layout=widgets.ListView(
+            widgets.ListItemHeader(widgets.Label("Header From Widget")),
+            widgets.ListItemHeader(data={"label": "Header From Label"}),
+            widgets.ListItemHeader(name="Header from Name"),
+            widgets.ListItem(widgets.Label("Item From Widget")),
+            widgets.ListItem(data={"label": "Item from Label"}),
+            widgets.ListItem(name="Item from Name"),
+        )
+    )
+
+    async with app.run_test() as pilot:
+        assert all(
+            [
+                await compare_snapshots(pilot),
+            ]
+        )
