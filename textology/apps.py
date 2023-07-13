@@ -207,9 +207,10 @@ class ObservedApp(WidgetApp, ObserverManager):
         if component_property == "children":
             # Children is a special property on widgets, it cannot be directly applied. Manually swap children.
             component.remove_children()
-            if not isinstance(value, list):
-                value = [value]
-            component.mount_all(value)
+            if value:
+                if not isinstance(value, list):
+                    value = [value]
+                component.mount_all(value)
         elif component_property == "screen":
             # Screen is a special property on applications, it cannot be directly applied. Manually add to stack.
             component.app.push_screen(value)
