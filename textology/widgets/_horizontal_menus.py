@@ -1,5 +1,7 @@
 """Progressive horizontal set of ListViews with tracking for active item and peeking at next menu."""
 
+from __future__ import annotations
+
 from typing import Any
 from typing import Callable
 from typing import ClassVar
@@ -38,6 +40,44 @@ class HorizontalMenus(WidgetExtension, containers.HorizontalScroll):
     highlighted: ListItem | None = reactive(None, repaint=False, init=False)
     # All highlighted items across sub-menus.
     highlights: list[ListItem] = reactive([], repaint=False, init=False)
+
+    class Focused(events.Message, bubble=True):
+        """Posted when the focused item changes."""
+
+        def __init__(self, horizontal_menu: HorizontalMenus, item: ListItem | None) -> None:
+            """Initialize focused event.
+
+            Args:
+                horizontal_menu: Parent menu containing the item.
+                item: New item that was focused.
+            """
+            super().__init__()
+            self.horizontal_menu: HorizontalMenus = horizontal_menu
+            self.item: ListItem | None = item
+
+        @property
+        def control(self) -> HorizontalMenus:
+            """The primary controlling widget that contains the focused item, used by "on()" decorator."""
+            return self.horizontal_menu
+
+    class Highlighted(events.Message, bubble=True):
+        """Posted when the highlighted item changes."""
+
+        def __init__(self, horizontal_menu: HorizontalMenus, item: ListItem | None) -> None:
+            """Initialize highlight event.
+
+            Args:
+                horizontal_menu: Parent menu containing the item.
+                item: New item that was highlighted.
+            """
+            super().__init__()
+            self.horizontal_menu: HorizontalMenus = horizontal_menu
+            self.item: ListItem | None = item
+
+        @property
+        def control(self) -> HorizontalMenus:
+            """The primary controlling widget that contains the highlighted item, used by "on()" decorator."""
+            return self.horizontal_menu
 
     def __init__(
         self,
@@ -214,8 +254,19 @@ class HorizontalMenus(WidgetExtension, containers.HorizontalScroll):
         for item in items:
             item.menu_index = index
 
+    def watch_focused(self, old_value: ListItem | None, new_value: ListItem | None) -> None:
+        """Monitor the focused item to update listeners.
+
+        Args:
+            old_value: Previously focused list item.
+            new_value: Newly focused list item.
+        """
+        if new_value == old_value or not new_value:
+            return
+        self.post_message(self.Focused(self, new_value))
+
     def watch_highlighted(self, old_value: ListItem | None, new_value: ListItem | None) -> None:
-        """Monitor the highlighted item to update the submenus.
+        """Monitor the highlighted item to update the submenus and listeners.
 
         Args:
             old_value: Previously highlighted list item.
@@ -230,3 +281,4 @@ class HorizontalMenus(WidgetExtension, containers.HorizontalScroll):
             self.show_menu(menu_index + 1, list_items)
         else:
             self.remove_menus(menu_index)
+        self.post_message(self.Highlighted(self, new_value))
