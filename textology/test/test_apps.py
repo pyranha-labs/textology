@@ -4,7 +4,9 @@ from pathlib import Path
 from typing import Callable
 
 import pytest
+from textual.app import ComposeResult
 
+from textology import apps
 from textology import observers
 from textology import widgets
 from textology.test import basic_app
@@ -21,9 +23,8 @@ async def test_button_n_clicks() -> None:
         observers.Modified("btn", "n_clicks"),
         observers.Update("store", "data"),
     )
-    def btn_click(n_clicks: int) -> str:
-        """Basic callback on button press/click."""
-        return f"Button clicked {n_clicks} times"
+    def btn_click(clicks: int) -> str:
+        return f"Button clicked {clicks} times"
 
     async with app.run_test() as pilot:
         button = app.query_one(widgets.Button)
@@ -55,3 +56,74 @@ async def test_snapshot_with_pilot(compare_snapshots: Callable) -> None:
     """Validate that snapshot fixture/test works with instantiated pilot."""
     async with basic_app.BasicApp().run_test() as pilot:
         assert await compare_snapshots(pilot, Path(SNAPSHOT_DIR, "test_basic_app.svg"))
+
+
+@pytest.mark.asyncio
+async def test_callback_registration_per_scope(compare_snapshots: Callable) -> None:
+    """Validate that observer/callback registration works at all scopes."""
+
+    class DisplayWidget(widgets.ExtendedWidget):
+        """Widget used to test callbacks attached at a widget level."""
+
+        def compose(self) -> ComposeResult:
+            yield widgets.Store([], id="results")
+            yield widgets.Label("No Data", id="display")
+
+        @observers.when(
+            observers.Modified("results", "data"),
+        )
+        def update_label(self, results: list) -> None:
+            self.app.query_one("#display").update("\n".join(results))
+
+    class App(apps.ObservedApp):
+        """Application used to test callbacks attached at an application level."""
+
+        def compose(self) -> ComposeResult:
+            yield widgets.Button("Button 1", id="btn1")
+            yield widgets.Button("Button 2", id="btn2")
+            yield widgets.Button("Button 3", id="btn3")
+            yield widgets.Button("Button 4", id="btn4")
+            yield DisplayWidget(styles={"height": "auto"})
+
+        @observers.when(
+            observers.Modified("btn1", "n_clicks"),
+            observers.Select("results", "data"),
+            observers.Update("results", "data"),
+        )
+        def method_reactive(self, clicks: int, results: list) -> list:
+            results = [*results, "Button 1 pressed"]
+            return results
+
+        @observers.when(
+            observers.Published("btn3", widgets.Button.Pressed),
+            observers.Select("results", "data"),
+            observers.Update("results", "data"),
+        )
+        def method_event(self, event: widgets.Button.Pressed, results: list) -> list:
+            results = [*results, "Button 3 pressed"]
+            return results
+
+    @observers.when(
+        observers.Modified("btn2", "n_clicks"),
+        observers.Select("results", "data"),
+        observers.Update("results", "data"),
+    )
+    def function_reactive(clicks: int, results: list) -> list:
+        results = [*results, "Button 2 pressed"]
+        return results
+
+    @observers.when(
+        observers.Published("btn4", widgets.Button.Pressed),
+        observers.Select("results", "data"),
+        observers.Update("results", "data"),
+    )
+    def function_event(event: widgets.Button.Pressed, results: list) -> list:
+        results = [*results, "Button 4 pressed"]
+        return results
+
+    async with App().run_test() as pilot:
+        await pilot.click("#btn1")
+        await pilot.click("#btn2")
+        await pilot.click("#btn3")
+        await pilot.click("#btn4")
+        assert await compare_snapshots(pilot)

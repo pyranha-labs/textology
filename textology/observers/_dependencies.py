@@ -44,10 +44,34 @@ class Dependency:
         return f"{self.__class__.__name__}('{self.component_id}', '{self.component_property}')"
 
 
-class Modified(Dependency):
-    """Triggering input of an observation callback.
+class Published(Dependency):
+    """Triggering input of an observation callback based on a stateless event, rather than a stateful property.
 
-    Property to monitor for modifications and trigger observation callbacks.
+    Event type to monitor for announcements and trigger observation callbacks.
+    """
+
+    def __init__(
+        self,
+        component_id: str | SupportsID,
+        component_event: type,
+    ) -> None:
+        """Initialize published event dependency.
+
+        Args:
+            component_id: ID, or object with ID property, that a component uses to send updates.
+            component_event: Event type that is sent from the component to trigger updates.
+        """
+        super().__init__(
+            component_id if isinstance(component_id, str) else component_id.id,
+            f"{component_event.__module__}.{component_event.__name__}",
+        )
+        self.component_event = component_event
+
+
+class Modified(Dependency):
+    """Triggering input of an observation callback based on a stateful attribute update.
+
+    Property/attribute to monitor for modifications and trigger observation callbacks.
     """
 
 
@@ -71,23 +95,26 @@ class Update(Dependency):
 
 def flatten_dependencies(
     args: tuple,
-) -> tuple[list[Modified], list[Select], list[Update]]:
+) -> tuple[list[Published], list[Modified], list[Select], list[Update]]:
     """Split arguments into modifications (triggering inputs), selections (non-triggering inputs), and updates.
 
     Args:
         args: Positional arguments containing one or more Dependencies.
 
     Returns:
-        Flat lists of combined modification(s), select(s), and update(s), pulled from arguments regardless of order.
+        Flat lists of combined dependencies, pulled from arguments regardless of order.
     """
+    publications = []
     updates = []
     modifications = []
     selections = []
     for arg in args:
-        if isinstance(arg, Update):
-            updates.append(arg)
+        if isinstance(arg, Published):
+            publications.append(arg)
         elif isinstance(arg, Modified):
             modifications.append(arg)
         elif isinstance(arg, Select):
             selections.append(arg)
-    return modifications, selections, updates
+        elif isinstance(arg, Update):
+            updates.append(arg)
+    return publications, modifications, selections, updates

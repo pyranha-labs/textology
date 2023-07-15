@@ -2,7 +2,6 @@
 
 """More advanced example of set up and loop for observer application, based on a textual application."""
 
-from textual.app import ComposeResult
 from textual.containers import Horizontal
 from textual.containers import Vertical
 from textual.widget import Widget
@@ -15,37 +14,30 @@ from textology.widgets import Label
 from textology.widgets import ListItem
 from textology.widgets import ListView
 
-
-class SimpleApp(ObservedApp):
-    """Application with a listener for list view changes that will update content window using routes."""
-
-    def compose(self) -> ComposeResult:
-        """Primary content window."""
-        menu_item_styles = {"height": 3, "padding": 1}
-        yield Horizontal(
-            ListView(
-                ListItem(
-                    Label("Page 1", styles={**menu_item_styles, "color": "lightgreen"}),
-                    data=1,
-                ),
-                ListItem(
-                    Label("Page 2", styles={**menu_item_styles, "color": "yellow"}),
-                    data=2,
-                ),
-                ListItem(
-                    Label("Page 3", styles={**menu_item_styles, "color": "orange"}),
-                    data=3,
-                ),
-                id="main-menu",
-                styles={"width": 24},
+menu_item_styles = {"height": 3, "padding": 1}
+app = ObservedApp(
+    layout=Horizontal(
+        ListView(
+            ListItem(
+                Label("Page 1", styles={**menu_item_styles, "color": "lightgreen"}),
+                data=1,
             ),
-            Container(
-                id="content",
+            ListItem(
+                Label("Page 2", styles={**menu_item_styles, "color": "yellow"}),
+                data=2,
             ),
-        )
-
-
-app = SimpleApp()
+            ListItem(
+                Label("Page 3", styles={**menu_item_styles, "color": "orange"}),
+                data=3,
+            ),
+            id="main-menu",
+            styles={"width": 24},
+        ),
+        Container(
+            id="content",
+        ),
+    )
+)
 
 
 @app.when(

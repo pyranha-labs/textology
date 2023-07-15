@@ -68,7 +68,9 @@ exception: Python3.10 minimum requirement.
 - New widgets, such as:
   - ListItemHeaders (non-interactive ListItems)
   - HorizontalMenus (walkable list of ListViews with peeking at following lists)
-- "Observer" apps, with "event driven architecture" to detect changes and automatically update UI elements.
+- "Observer" apps, with "event driven architecture" to detect changes, and automatically update UI elements.
+  - Listen to reactive attribute changes.
+  - Listen to posted events/messages.
 - Enhanced testing support
   - Parallel tests via python-xdist
   - Custom testing arguments, such as updating snapshots on failures
@@ -112,9 +114,9 @@ from textology.widgets import Button, Container, Label
 
 app = ObservedApp(
     layout=Container(
-        Button('Ping', id='ping-btn'),
-        Button('Pong', id='pong-btn'),
-        Button('Sing-a-long', id='sing-btn'),
+        Button("Ping", id="ping-btn"),
+        Button("Pong", id="pong-btn"),
+        Button("Sing-a-long", id="sing-btn"),
         Container(
             id="content",
         ),
@@ -149,7 +151,7 @@ def song(song_clicks, ping_clicks, pong_clicks):
 app.run()
 ```
 
-- Observation callbacks can also be async:
+- Callbacks can also be async:
 ```python
 @app.when(
     Modified("pong-btn", "n_clicks"),
@@ -160,8 +162,109 @@ async def delayed_pong(clicks):
     return Label(f"Pong pressed {clicks} and updated 3 seconds later")
 ```
 
+
 - <details>
-  <summary>Observer/callback application (Same as above, but with Dash compatibility object and calls)</summary>
+  <summary>Callbacks can also listen for stateless events, not just stateful attribute updates</summary>
+
+    ```python
+    from textology.apps import ObservedApp
+    from textology.observers import Published, Select, Update
+    from textology.widgets import Button, Container, Label
+    
+    app = ObservedApp(
+        layout=Container(
+            Button("Ping", id="ping-btn"),
+            Button("Pong", id="pong-btn"),
+            Button("Sing-a-long", id="sing-btn"),
+            Container(
+                id="content",
+            ),
+        )
+    )
+    
+    @app.when(
+        Published("ping-btn", Button.Pressed),
+        Update("content", "children"),
+    )
+    def ping(event):
+        return Label(f"Ping pressed {event.button.n_clicks}")
+    
+    @app.when(
+        Published("pong-btn", Button.Pressed),
+        Update("content", "children"),
+    )
+    def pong(event):
+        return Label(f"Pong pressed {event.button.n_clicks}")
+    
+    @app.when(
+        Published("sing-btn", Button.Pressed),
+        Select("ping-btn", "n_clicks"),
+        Select("pong-btn", "n_clicks"),
+        Update("content", "children"),
+    )
+    def song(event, ping_clicks, pong_clicks):
+        if not ping_clicks or not pong_clicks:
+            return Label(f"Press Ping and Pong first to complete the song!")
+        return Label(f"Ping, pong, sing-a-long song pressed {event.button.n_clicks}")
+    
+    app.run()
+    ```
+
+
+- <details>
+  <summary>Callbacks can also be registered on methods, to share across all application instances</summary>
+
+    ```python
+    from textology.apps import ObservedApp
+    from textology.observers import Published, Select, Update, when
+    from textology.widgets import Button, Container, Label
+    
+    
+    class Page(Container):
+        def compose(self):
+            yield Button("Ping", id="ping-btn")
+            yield Button("Pong", id="pong-btn")
+            yield Button("Sing-a-long", id="sing-btn")
+            yield Container(
+                id="content",
+            )
+    
+        @when(
+            Published("ping-btn", Button.Pressed),
+            Update("content", "children"),
+        )
+        def ping(self, event):
+            return Label(f"Ping pressed {event.button.n_clicks}")
+    
+        @when(
+            Published("pong-btn", Button.Pressed),
+            Update("content", "children"),
+        )
+        def pong(self, event):
+            return Label(f"Pong pressed {event.button.n_clicks}")
+    
+        @when(
+            Published("sing-btn", Button.Pressed),
+            Select("ping-btn", "n_clicks"),
+            Select("pong-btn", "n_clicks"),
+            Update("content", "children"),
+        )
+        def song(self, event, ping_clicks, pong_clicks):
+            if not ping_clicks or not pong_clicks:
+                return Label(f"Press Ping and Pong first to complete the song!")
+            return Label(f"Ping, pong, sing-a-long song pressed {event.button.n_clicks}")
+    
+    
+    app = ObservedApp(
+        layout=Page()
+    )
+    
+    app.run()
+    ```
+
+
+- <details>
+  <summary>Callbacks can also use Dash code style (Same as others, but with Dash compatibility object and calls)</summary>
 
     ```python
     from textology.dash_compat import DashCompatApp, Input, Output, State
@@ -169,9 +272,9 @@ async def delayed_pong(clicks):
 
     app = DashCompatApp(
         layout=Container(
-            Button('Ping', id='ping-btn'),
-            Button('Pong', id='pong-btn'),
-            Button('Sing-a-long', id='sing-btn'),
+            Button("Ping", id="ping-btn"),
+            Button("Pong", id="pong-btn"),
+            Button("Sing-a-long", id="sing-btn"),
             Container(
                 id="content",
             ),
@@ -206,7 +309,6 @@ async def delayed_pong(clicks):
     app.run()
     ```
 
- </details>
 
 ### Extended Widgets
 
