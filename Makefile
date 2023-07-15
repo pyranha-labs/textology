@@ -33,12 +33,12 @@ format:
 # Check for common lint/complexity issues.
 .PHONY: lint
 lint:
-	pylint --rcfile setup.cfg $(NAME) examples setup.py
+	pylint --rcfile setup.cfg $(NAME) examples utils setup.py
 
 # Check documentation and code style to ensure they match expected formats.
 .PHONY: style
 style:
-	pydocstyle --config $(SETUP_CFG) --count $(GIT_DIR) && echo Doc style good to go!
+	$(GIT_DIR)/utils/pydocstyle_patched.py --config $(SETUP_CFG) --count $(GIT_DIR) && echo Doc style good to go!
 	pycodestyle --config $(SETUP_CFG) --count $(GIT_DIR) && echo Code style good to go!
 
 # Check typehints for static typing best practices.
