@@ -9,9 +9,18 @@ Planned features and functionality. Not an all-inclusive list.
 Core features and functionality.
 
 - [x] Observers
-    * [x] General manager for registering input/output callbacks based on observing values
-    * [x] ObserverApp utilizing observer manager for automating reactive attribute events
+    * [x] General manager for registering input/output callbacks based on observing value changes
+      * [x] Register input/output callbacks based on observing stateful attributes
+      * [x] Register input/output callbacks based on observing stateless events
+    * [x] ObserverApp utilizing observer manager for automating reactions to application changes
+      * [x] Support for input/output callbacks based on reactive attribute updates
+      * [x] Support for input/output callbacks based on monitoring stateless message events
     * [x] ObserverApp compatibility layer with Dash syntax (allow Dash style callback declarations)
+    * [x] Register global input/output callbacks used across all observer managed applications
+      * [x] Register callbacks against module level functions
+      * [x] Register callbacks against instance methods
+      * [ ] Register callbacks against class methods
+      * [ ] Register callbacks against static methods
     * [ ] Observer dependency filters (greater than, less than, equals, where, etc.)
     * [ ] Wildcard/variable observers similar to routes (all, match)
     * [ ] Background callbacks

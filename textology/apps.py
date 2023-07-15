@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import logging
+from collections import defaultdict
+from inspect import isawaitable
 from typing import Any
 from typing import Callable
 
@@ -194,6 +196,7 @@ class ObservedApp(WidgetApp, ObserverManager):
         )
         # Manually set up observer manager mixin since App inheritance does not automatically trigger.
         ObserverManager.__init__(self, logger=logger or logging.root)
+        self._observer_message_handler_map = {}
 
     def apply_update(
         self,
@@ -224,20 +227,60 @@ class ObservedApp(WidgetApp, ObserverManager):
         except NoMatches:
             return None
 
+    async def _on_message(self, message: events.Message) -> None:
+        """Process messages after sending to registered observers first."""
+        control = message.control
+        if control:
+            controller_id = control.id
+            if controller_id:
+                cls = message.__class__
+                callbacks = self._observer_message_handler_map.get(f"{controller_id}@{cls.__module__}.{cls.__name__}")
+                if callbacks:
+                    for callback in callbacks:
+                        result = callback(None, message)
+                        if isawaitable(result):
+                            await result
+        await super()._on_message(message)
+
     def on_mount(self, _: events.Mount) -> None:
-        """Ensure the logger is fully loaded after mounting."""
+        """Ensure the widget and observers are fully loaded after mounting."""
         if self.logger == logging.root:
             self.logger = self.log
 
-    def _register_widget_observers(self, widget: Widget) -> None:
+        # Combine global observers with local observers outside init, so that apps can be declared anywhere in modules.
+        combined_observer_map = defaultdict(lambda: defaultdict(list))
+        for observer_map in (self._observer_map, self._observer_map_global):
+            for widget_id, property_map in observer_map.items():
+                for property_id, observers in property_map.items():
+                    combined_observer_map[widget_id][property_id].extend(observers)
+
+        # Register event watchers.
+        for widget_id, property_map in combined_observer_map.items():
+            for property_id, observers in property_map.items():
+                for observer in observers:
+                    if observer.publications:
+                        self._observer_message_handler_map.setdefault(f"{widget_id}@{property_id}", []).append(
+                            self._generate_callback(
+                                widget_id,
+                                property_id,
+                                observer,
+                            )
+                        )
+        self.attach_to_observers(self)
+
+    def _register_reactive_observers(self, widget: Widget) -> None:
         """Enable observers for a newly added widget and its reactive attributes if it has an ID."""
         # Do not watch any widgets or properties for changes that have not had an observer set up.
-        if widget.id not in self._observer_map:
+        widget_id = widget.id
+        if not widget_id or (widget_id not in self._observer_map and widget_id not in self._observer_map_global):
             return
         for property_name in widget._reactives.keys():  # pylint: disable=protected-access
-            if property_name not in self._observer_map[widget.id]:
+            if (
+                property_name not in self._observer_map[widget_id]
+                and property_name not in self._observer_map_global[widget_id]
+            ):
                 continue
-            for callback in self.generate_callbacks(widget.id, property_name):
+            for callback in self.generate_callbacks(widget_id, property_name):
                 self.watch(widget, property_name, callback, init=False)
 
 
@@ -245,8 +288,13 @@ def _post_mount_patch(self: Widget) -> None:
     """Called after the object has been mounted, regardless of mount event, to register observer support."""
     # Call the original function being patched to ensure the widget is fully set up before registering.
     _widget_post_mount(self)
-    if self.id and hasattr(self.app, "_register_widget_observers"):
-        self.app._register_widget_observers(self)  # pylint: disable=protected-access
+    attach_to_observers = getattr(self.app, "attach_to_observers", None)
+    if attach_to_observers:
+        attach_to_observers(self)
+    if self.id:
+        _register_reactive_observers = getattr(self.app, "_register_reactive_observers", None)
+        if _register_reactive_observers:
+            _register_reactive_observers(self)
 
 
 # Patch the base Widget class to allow all reactive attributes to register to observer applications.

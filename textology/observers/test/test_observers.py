@@ -99,3 +99,34 @@ async def test_callback_chain() -> None:
     assert ping_comp.value == "test2"
     assert pong_comp.value == "ping test2 with other value: ping test1 with None"
     assert other_comp.value == "other value: ping test2 with other value: ping test1 with None"
+
+
+@pytest.mark.asyncio
+async def test_callback_without_output() -> None:
+    """Validate that a callback was triggered, even if no output."""
+    app = App(
+        [
+            Component(id="ping"),
+        ]
+    )
+
+    called = False
+
+    @app.when(
+        Modified("ping", "value"),
+    )
+    async def ping_pong(ping: str) -> None:
+        """Basic callback that is triggered by a modified value, but has no output."""
+        nonlocal called
+        called = True
+
+    app.register_components()
+
+    ping_comp = app.get_component("ping")
+    assert ping_comp.value is None
+    assert not called
+
+    ping_comp.value = "test1"
+    await asyncio.sleep(0.1)
+    assert ping_comp.value == "test1"
+    assert called
