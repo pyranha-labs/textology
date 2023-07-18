@@ -12,26 +12,39 @@ async def test_button_n_clicks() -> None:
     app = dash_compat.DashCompatApp(
         layout=widgets.Container(
             widgets.Button("Click me!", id="btn"),
-            widgets.Store("Update me!", id="store"),
+            widgets.Store("Update me!", id="store1"),
+            widgets.Store("Update me!", id="store2"),
         )
     )
 
     @app.callback(
         dash_compat.Input("btn", "n_clicks"),
-        dash_compat.Output("store", "data"),
+        dash_compat.Output("store1", "data"),
     )
     def btn_click(n_clicks: int) -> str:
         """Basic callback on button press/click."""
-        return f"Button clicked {n_clicks} times"
+        return f"Attribute callback triggered {n_clicks} times"
+
+    @app.callback(
+        dash_compat.Input("btn", widgets.Button.Pressed),
+        dash_compat.Output("store2", "data"),
+    )
+    def btn_click_event(pressed: widgets.Button.Pressed) -> str:
+        """Basic callback on button press/click."""
+        return f"Event callback triggered {pressed.button.n_clicks} times"
 
     async with app.run_test() as pilot:
         button = app.query_one(widgets.Button)
-        store = app.query_one(widgets.Store)
+        store1 = app.query_one("#store1")
+        store2 = app.query_one("#store2")
+
         assert button.n_clicks == 0
-        assert store.data == "Update me!"
+        assert store1.data == "Update me!"
+        assert store2.data == "Update me!"
 
         await pilot.click(widgets.Button)
         await pilot.click(widgets.Button)
         await pilot.click(widgets.Button)
         assert button.n_clicks == 3
-        assert store.data == "Button clicked 3 times"
+        assert store1.data == "Attribute callback triggered 3 times"
+        assert store2.data == "Event callback triggered 3 times"
