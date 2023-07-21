@@ -141,7 +141,7 @@ class ObserverManager:
 
     Can be used directly as a nested object within an application, or as a "mixin" for an application class. Example:
         manager = ObserverManager() # Or:
-        class ObservedApp(ObserverManager):
+        class ObservedApp(BaseAppClass, ObserverManager):
             ...
         app = ObservedApp()
     """

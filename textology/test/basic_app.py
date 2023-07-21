@@ -6,7 +6,7 @@ from textology import apps
 from textology import widgets
 
 
-class BasicApp(apps.ObservedApp):
+class BasicApp(apps.ExtendedApp):
     """Simple application with basic elements for testing interactions and snapshots."""
 
     def compose(self) -> ComposeResult:
