@@ -101,18 +101,19 @@ pip install textology[full-dev]
 
 ### Extended Applications
 
-Some Textology app classes, such as `ObservedApp`, can replace any regular Textual App, and be used as is without any
-extensions turned on. Here is an example of the most commonly used extended application, `ObservedApp`, and its
+Textology app classes, such as `ExtendedApp`, can replace any regular Textual App, and be used as is without any
+extensions turned on. Here is an example of the most commonly used application subclass, `ExtendedApp`, and its
 primary extended functionality being used. More detailed examples of applications based around routes, callbacks,
 and standard Textual applications can be found in [Examples](https://github.com/dfrtz/textology/examples).
 
 - Observer/callback application (automatic attribute monitoring and updates by element IDs without manual queries):
+
 ```python
-from textology.apps import ObservedApp
+from textology.apps import ExtendedApp
 from textology.observers import Modified, Select, Update
 from textology.widgets import Button, Container, Label
 
-app = ObservedApp(
+app = ExtendedApp(
     layout=Container(
         Button("Ping", id="ping-btn"),
         Button("Pong", id="pong-btn"),
@@ -123,6 +124,7 @@ app = ObservedApp(
     )
 )
 
+
 @app.when(
     Modified("ping-btn", "n_clicks"),
     Update("content", "children"),
@@ -130,12 +132,14 @@ app = ObservedApp(
 def ping(clicks):
     return Label(f"Ping pressed {clicks}")
 
+
 @app.when(
     Modified("pong-btn", "n_clicks"),
     Update("content", "children"),
 )
 def pong(clicks):
     return Label(f"Pong pressed {clicks}")
+
 
 @app.when(
     Modified("sing-btn", "n_clicks"),
@@ -147,6 +151,7 @@ def song(song_clicks, ping_clicks, pong_clicks):
     if not ping_clicks or not pong_clicks:
         return Label(f"Press Ping and Pong first to complete the song!")
     return Label(f"Ping, pong, sing-a-long song pressed {song_clicks}")
+
 
 app.run()
 ```
@@ -167,11 +172,11 @@ async def delayed_pong(clicks):
   <summary>Callbacks can also listen for stateless events, not just stateful attribute updates</summary>
 
     ```python
-    from textology.apps import ObservedApp
+    from textology.apps import ExtendedApp
     from textology.observers import Published, Select, Update
     from textology.widgets import Button, Container, Label
     
-    app = ObservedApp(
+    app = ExtendedApp(
         layout=Container(
             Button("Ping", id="ping-btn"),
             Button("Pong", id="pong-btn"),
@@ -215,7 +220,7 @@ async def delayed_pong(clicks):
   <summary>Callbacks can also be registered on methods, to share across all application instances</summary>
 
     ```python
-    from textology.apps import ObservedApp
+    from textology.apps import ExtendedApp
     from textology.observers import Published, Select, Update, when
     from textology.widgets import Button, Container, Label
     
@@ -255,7 +260,7 @@ async def delayed_pong(clicks):
             return Label(f"Ping, pong, sing-a-long song pressed {event.button.n_clicks}")
     
     
-    app = ObservedApp(
+    app = ExtendedApp(
         layout=Page()
     )
     

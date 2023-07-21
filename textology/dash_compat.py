@@ -12,7 +12,7 @@ developers may need to leverage the native classes and designs from the base lib
 
 from typing import Callable
 
-from textology.apps import ObservedApp
+from textology.apps import ExtendedApp
 
 # Compatibility aliases for Dash.
 from textology.observers import Dependency
@@ -27,10 +27,10 @@ from textology.observers import when as callback  # pylint: disable=unused-impor
 InputType = Modified | Published
 
 
-class DashCompatApp(ObservedApp):
+class DashCompatApp(ExtendedApp):
     """Application capable of performing automatic input/output callbacks on reactive widget property updates.
 
-    Compatibility alias for ObservedApp class.
+    Compatibility alias for ExtendedApp class.
     """
 
     def callback(
@@ -39,7 +39,7 @@ class DashCompatApp(ObservedApp):
     ) -> Callable:
         """Register a callback that triggers when observed values change.
 
-        Compatibility alias for ObservedApp.when() calls.
+        Compatibility alias for ExtendedApp.when() calls.
 
         Example:
             @app.callback(

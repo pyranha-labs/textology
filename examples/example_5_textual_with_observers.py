@@ -6,7 +6,7 @@ from textual.containers import Horizontal
 from textual.containers import Vertical
 from textual.widget import Widget
 
-from textology.apps import ObservedApp
+from textology.apps import ExtendedApp
 from textology.observers import Modified
 from textology.observers import Update
 from textology.widgets import Container
@@ -15,7 +15,7 @@ from textology.widgets import ListItem
 from textology.widgets import ListView
 
 menu_item_styles = {"height": 3, "padding": 1}
-app = ObservedApp(
+app = ExtendedApp(
     layout=Horizontal(
         ListView(
             ListItem(

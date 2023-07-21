@@ -75,7 +75,7 @@ async def test_callback_registration_per_scope(compare_snapshots: Callable) -> N
         def update_label(self, results: list) -> None:
             self.app.query_one("#display").update("\n".join(results))
 
-    class App(apps.ObservedApp):
+    class App(apps.ExtendedApp):
         """Application used to test callbacks attached at an application level."""
 
         def compose(self) -> ComposeResult:
