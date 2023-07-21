@@ -23,6 +23,7 @@ from ._dependencies import Published
 from ._dependencies import Select
 from ._dependencies import Update
 from ._dependencies import flatten_dependencies
+from ._dependencies import validate_dependencies
 from ._exceptions import PreventUpdate
 from ._exceptions import UnknownObserver
 
@@ -465,7 +466,7 @@ class ObservedValue:
 def create_observer_register(
     observer_map: dict[str, dict[str, list[Observer]]],
     observer_id_map: dict[str, Observer],
-    *observer_args: Dependency,
+    *dependencies: Dependency,
     split_publications: bool = False,
     split_modifications: bool = False,
     external: bool = False,
@@ -477,7 +478,7 @@ def create_observer_register(
             Modified in place when new observer is registered.
         observer_id_map: All currently registered observers by full observer ID.
             Modified in place when new observer is registered.
-        observer_args: Positional arguments containing one or more Dependencies.
+        dependencies: Positional arguments containing one or more Dependencies.
         split_publications: Register the observer once per publication, instead of once per all publications.
         split_modifications: Register the observer once per modification, instead of once per all modifications.
         external: Whether the callback is handled by an external endpoint, or locally.
@@ -487,10 +488,11 @@ def create_observer_register(
     Returns:
         Decorator to register a function as an input/output reaction to one or more property changes.
     """
+    validate_dependencies(*dependencies)
 
     def _decorator(func: Callable) -> Callable:
         """Wrap the original function with additional callback management, and register the final observer."""
-        publications, modifications, selections, updates = flatten_dependencies(observer_args)
+        publications, modifications, selections, updates = flatten_dependencies(dependencies)
 
         # Triggers can be 1 input/argument per callback, or all per callback.
         if publications:

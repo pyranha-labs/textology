@@ -35,7 +35,7 @@ class DashCompatApp(ExtendedApp):
 
     def callback(
         self,
-        *args: Dependency,
+        *dependencies: Dependency,
     ) -> Callable:
         """Register a callback that triggers when observed values change.
 
@@ -50,16 +50,14 @@ class DashCompatApp(ExtendedApp):
                 ...
 
         Args:
-            args: Positional arguments containing one or more observation Dependencies.
+            dependencies: Positional arguments containing one or more observation Dependencies.
                 May be original observation types (Modified/Select/Update) or aliased types (Input/State/Output).
 
         Returns:
             Decorator to register a function as an input/output reaction to one or more property changes.
         """
         return super().when(
-            self._observer_map,
-            self._observer_id_map,
-            *args,
+            *dependencies,
         )
 
 
