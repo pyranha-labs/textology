@@ -118,3 +118,27 @@ def flatten_dependencies(
         elif isinstance(arg, Update):
             updates.append(arg)
     return publications, modifications, selections, updates
+
+
+def validate_dependencies(*dependencies: Dependency) -> None:
+    """Check all the dependencies to ensure they create a valid callback.
+
+    Args:
+        dependencies: All dependencies used by an observer/callback.
+
+    Raises:
+        ValueError if missing any requirements or any combination is invalid, such as duplicates.
+    """
+    triggers = []
+    trigger_props = {}
+    for dependency in dependencies:
+        component_id = dependency.component_id
+        component_property = dependency.component_property
+        if isinstance(dependency, (Modified, Published)):
+            trigger_props.setdefault(component_id, set())
+            if component_property in trigger_props[component_id]:
+                raise ValueError(f"Duplicate trigger dependency found for {component_id}:{component_property}")
+            triggers.append(dependency)
+            trigger_props[component_id].add(component_property)
+    if not triggers:
+        raise ValueError("No trigger dependency found")

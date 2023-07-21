@@ -1,4 +1,4 @@
-"""Unit tests for callbacks module."""
+"""Unit tests for observers module general functionality."""
 
 import asyncio
 
