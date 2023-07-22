@@ -13,23 +13,30 @@ from inspect import isawaitable
 from typing import Any
 from typing import Callable
 from typing import Coroutine
+from typing import Generator
 
 from textology.logging import NullLogger
 
 from ._dependencies import Dependency
+from ._dependencies import DependencyType
 from ._dependencies import Modified
 from ._dependencies import NoUpdate
 from ._dependencies import Published
+from ._dependencies import Raised
 from ._dependencies import Select
 from ._dependencies import Update
 from ._dependencies import flatten_dependencies
+from ._dependencies import no_update
 from ._dependencies import validate_dependencies
 from ._exceptions import PreventUpdate
 from ._exceptions import UnknownObserver
 
+UpdateResultType = dict[str, dict[str, Any]]
+
 # Type alias to represent function receiving 2 arguments (old value and new value) and returning nothing.
 ValueUpdateHandler = Callable[[Any, Any], Coroutine]
 
+_GLOBAL_OBSERVER_EXC_MAP: dict[type[Exception], list[Observer]] = defaultdict(list)
 _GLOBAL_OBSERVER_ID_MAP: dict[str, Observer] = {}
 _GLOBAL_OBSERVER_MAP: dict[str, dict[str, list[Observer]]] = defaultdict(lambda: defaultdict(list))
 
@@ -46,35 +53,39 @@ class Observer:
 
     def __init__(
         self,
-        publications: list[Published],
-        modifications: list[Modified],
-        selections: list[Select],
-        updates: list[Update],
+        dependencies: dict[type[Dependency], list[Dependency]],
         func: Callable = False,
+        external: bool = False,
     ) -> None:
         """Initialize specifications for observing values.
 
         Args:
-            publications: Component IDs and published event types that provide arguments and trigger the callback.
-            modifications: Component IDs and properties that provide arguments and trigger the callback.
-            selections: Component IDs and properties that provide additional arguments without triggering the callback.
-            updates: Component IDs and properties to update based on the results of the callback.
+            dependencies: Dependencies used to monitor for triggers and results of the callback.
             func: The function to call with input values when triggered.
                 Indirectly called via "callback()" when triggered.
+            external: Whether the callback is handled locally, or sent to an external handler.
         """
-        observer_id = (
-            "..".join(f"{dep.component_id}@{dep.component_property}" for dep in publications + modifications)
-            + "..."
-            + "..".join(f"{dep.component_id}@{dep.component_property}" for dep in updates)
-        )
+        self._dependencies: dict[type[Dependency], list[DependencyType]] = dependencies or {}
+        for dependency_type in (Modified, Published, Raised, Select, Update):
+            self._dependencies.setdefault(dependency_type, [])
         self._method_ref: weakref.ReferenceType | None = None
-        self.observer_id = observer_id
-        self.publications = publications
-        self.modifications = modifications
-        self.selections = selections
-        self.updates = updates
-        self.external = False
+        self.external = external
         self.func = func
+        self._callback_arguments = self.publications + self.modifications + self.selections
+        inputs = self.publications + self.modifications + self.raises + self.selections
+        outputs = self.updates
+        self.id = (
+            "+".join(f"{dep.component_id}@{dep.component_property}" for dep in inputs)
+            + "->"
+            + "+".join(f"{dep.component_id}@{dep.component_property}" for dep in outputs)
+        )
+
+        # If the function is not a method (object pre-attached), then tag it in case an object needs to be added.
+        # Tagged functions can be searched later, such as during object init, to convert the callback into a method.
+        if type(func).__name__ != "method":
+            if not hasattr(func, WHEN_DECORATOR):
+                setattr(func, WHEN_DECORATOR, [])
+            getattr(func, WHEN_DECORATOR).append(self)
 
     def __hash__(self) -> int:
         """Convert object into hash usable in maps."""
@@ -82,16 +93,9 @@ class Observer:
 
     def __repr__(self) -> str:
         """Convert object into human-readable, machine loadable, text."""
-        return (
-            f"{self.__class__.__name__}("
-            f"'{self.publications}',"
-            f" {self.modifications},"
-            f" {self.selections},"
-            f" {self.updates},"
-            f"external={self.external})"
-        )
+        return f"{self.__class__.__name__}({self._dependencies})"
 
-    async def callback(self, *args: Any, **kwargs: Any) -> dict[str, dict[str, Any]] | None:
+    async def callback(self, *args: Any, **kwargs: Any) -> UpdateResultType | None:
         """Call the original function with additional callback management, such as conversion to standardized results.
 
         Args:
@@ -109,7 +113,7 @@ class Observer:
         results = func(*args, **kwargs)  # Invoke original callback.
         results = await results if isawaitable(results) else results
 
-        if results is NoUpdate or isinstance(results, NoUpdate) or not self.updates:
+        if isinstance(results, NoUpdate) or not self.updates:
             return None
 
         if len(self.updates) == 1:
@@ -118,7 +122,7 @@ class Observer:
         component_updates = defaultdict(dict)
         has_update = False
         for update_val, update in zip(results, self.updates):
-            if update_val is NoUpdate or isinstance(update_val, NoUpdate):
+            if isinstance(update_val, NoUpdate):
                 continue
             has_update = True
             component_updates[update.component_id][update.component_property] = update_val
@@ -135,6 +139,36 @@ class Observer:
             obj: Object to store a new weak reference for, and use during callbacks.
         """
         self._method_ref = weakref.ref(obj)
+
+    @property
+    def callback_arguments(self) -> list[Published | Modified | Select]:
+        """Component IDs and properties, or types, that provide arguments to the callback."""
+        return self._callback_arguments
+
+    @property
+    def modifications(self) -> list[Modified]:
+        """Component IDs and properties that provide arguments and trigger the callback."""
+        return self._dependencies[Modified]
+
+    @property
+    def publications(self) -> list[Published]:
+        """Component IDs and published event types that provide arguments and trigger the callback."""
+        return self._dependencies[Published]
+
+    @property
+    def raises(self) -> list[Raised]:
+        """Exception types that provide arguments and trigger the callback when an exception is raised."""
+        return self._dependencies[Raised]
+
+    @property
+    def selections(self) -> list[Select]:
+        """Component IDs and properties that provide additional arguments without triggering the callback."""
+        return self._dependencies[Select]
+
+    @property
+    def updates(self) -> list[Update]:
+        """Component IDs and properties for output of a callback that will be updated after triggering."""
+        return self._dependencies[Update]
 
 
 class ObserverManager:
@@ -157,9 +191,10 @@ class ObserverManager:
             logger: Custom logger to send messages to.
         """
         super().__init__()
-        self._observer_id_map = {}
-        # Structured as: _observer_map[component_id][component_property] = Observer
-        self._observer_map = defaultdict(lambda: defaultdict(list))
+        self._observer_exc_map: dict[type[Exception], list[Observer]] = defaultdict(list)
+        self._observer_id_map: dict[str, Observer] = {}
+        # Structured as: _observer_map[component_id][component_property] = Observers
+        self._observer_map: dict[str, dict[str, list[Observer]]] = defaultdict(lambda: defaultdict(list))
         self.logger: logging.Logger | None = logger or NullLogger(__name__)
 
     def apply_update(  # Pass all component arguments to allow subclasses to use. pylint: disable=unused-argument
@@ -197,55 +232,54 @@ class ObserverManager:
                     for observer in observers:
                         observer.update_method_ref(obj)
 
-    def _generate_callback(self, trigger_id: str, modified_property: str, observer: Observer) -> ValueUpdateHandler:
+    def _generate_callback(self, trigger_id: str, trigger_property: str, observer: Observer) -> ValueUpdateHandler:
         """Create a callback wrapper that will call the original function with input/output management applied."""
 
         async def _on_update(old_value: Any, new_value: Any) -> None:
             """Process value changes for a component property and apply the requested update operations."""
             update_components = self._get_update_components(observer)
             if observer.updates and not update_components:
-                # One or more components missing, do not trigger callback.
+                # One or more components are not in the current component tree, do not trigger callback.
                 return
-            observer_id = observer.observer_id
-            args = []
-            for dep in observer.publications + observer.modifications + observer.selections:
-                if isinstance(dep, Published):
-                    # Published events are stateless; they are not available if they are not the trigger.
-                    # Fill events, other than the triggering event, with empty values.
-                    args.append(new_value if dep.component_id == trigger_id else None)
-                elif dep.component_id == trigger_id and dep.component_property == modified_property:
-                    # Properties are stateful; they are available at all times.
-                    # Use new value if this was the trigger, otherwise use historical value to represent "current" state.
-                    args.append(old_value if isinstance(dep, Select) else new_value)
-                else:
-                    try:
-                        args.append(
-                            self.get_callback_arg(observer.observer_id, dep.component_id, dep.component_property)
-                        )
-                    except Exception as error:  # pylint: disable=broad-exception-caught
-                        self.on_callback_error(observer_id, error)
-                        return
+            callback_components = self._get_callback_components(observer)
+            if not callback_components:
+                # One or more components are not in the current component tree, do not trigger callback.
+                return
+            args = self._get_callback_args(
+                observer,
+                callback_components,
+                trigger_id,
+                trigger_property,
+                old_value,
+                new_value,
+            )
+            if isinstance(args, NoUpdate):
+                # Failed to request one or more component properties, do not continue.
+                return
 
             try:
-                updates = observer.callback(*args) if not observer.external else self.send_callback(observer_id, *args)
+                updates = observer.callback(*args) if not observer.external else self.send_callback(observer.id, *args)
                 updates = await updates if isawaitable(updates) else updates
             except PreventUpdate:
                 updates = None
             except BaseException as error:  # pylint: disable=broad-exception-caught
                 # Catch all errors to prevent fatal crashes in application callback loops.
-                self.on_callback_error(observer_id, error)
+                # All error updates will be handled separately, as the components will not be the same.
                 updates = None
+                if not await self._on_update_error(error):
+                    # Send error to the default handler, nothing else was set up to capture.
+                    self.on_callback_error(observer.id, error)
 
-            if updates:
-                try:
-                    for update_id, properties in updates.items():
-                        for update_property, value in properties.items():
-                            self.apply_update(
-                                observer_id, update_components[update_id], update_id, update_property, value
-                            )
-                except BaseException as error:  # pylint: disable=broad-exception-caught
-                    # Catch all errors to prevent fatal crashes in application callback loops.
-                    self.on_callback_error(observer_id, error)
+            if not updates:
+                # There are no update types, updates were requested to be skipped, or generating updates failed.
+                return
+
+            try:
+                for comp_id, comp_property, value in _iter_updates(updates):
+                    self.apply_update(observer.id, update_components[comp_id], comp_id, comp_property, value)
+            except BaseException as error:  # pylint: disable=broad-exception-caught
+                # Catch all errors to prevent fatal crashes in application callback loops.
+                self.on_callback_error(observer.id, error)
 
         return _on_update
 
@@ -268,26 +302,59 @@ class ObserverManager:
 
     def get_callback_arg(
         self,
-        observer_id: str,
-        component_id: str,
-        component_property: str,
+        component: Any,
+        property_name: str,
     ) -> Any:
         """Find a value from a component to be passed to a callback.
 
         Default behavior is a standard attribute request. Override to provide more complex request to properties.
 
         Args:
-            observer_id: ID of the observer that triggered.
-            component_id: ID of the component that contains the requested property.
-            component_property: Property name on the component that is being requested.
+            component: Component with properties usable in a callback.
+            property_name: Name of the property on the component that is being requested.
 
         Returns:
             The property value from the requested component.
         """
-        component = self.get_component(component_id)
-        if not component:
-            raise PreventUpdate(f"Skipping callback for {observer_id}: Component {component_id} not available")
-        return getattr(component, component_property)
+        return getattr(component, property_name)
+
+    def _get_callback_args(  # pylint: disable=too-many-arguments
+        self,
+        observer: Observer,
+        components: dict,
+        trigger_id: str | None,
+        trigger_property: str | None,
+        old_value: Any,
+        new_value: Any,
+    ) -> list | NoUpdate:
+        """Find all arguments from components that will be used by a callback."""
+        args = []
+        for dep in observer.callback_arguments:
+            if isinstance(dep, Published):
+                # Published events are stateless; they are not available if they are not the trigger.
+                # Fill events, other than the triggering event, with empty values.
+                args.append(new_value if dep.component_id == trigger_id else None)
+            elif dep.component_id == trigger_id and dep.component_property == trigger_property:
+                # Properties are stateful; they are available at all times.
+                # Use new value if this was the trigger, otherwise use historical value to represent "current" state.
+                args.append(old_value if isinstance(dep, Select) else new_value)
+            else:
+                try:
+                    args.append(self.get_callback_arg(components[dep.component_id], dep.component_property))
+                except Exception as error:  # pylint: disable=broad-exception-caught
+                    self.on_callback_error(observer.id, error)
+                    return no_update
+        return args
+
+    def _get_callback_components(self, observer: Observer) -> dict[str, Any] | None:
+        """Find all components that will be used as arguments by a callback."""
+        output_components = {}
+        for dep in observer.callback_arguments:
+            component = self.get_component(dep.component_id)
+            if not component:
+                return None
+            output_components[dep.component_id] = component
+        return output_components
 
     @abc.abstractmethod
     def get_component(self, component_id: str) -> Any:
@@ -302,13 +369,13 @@ class ObserverManager:
 
     def _get_update_components(self, observer: Observer) -> dict[str, Any] | None:
         """Find all components that will be updated by a callback."""
-        output_components = {}
+        components = {}
         for dep in observer.updates:
             component = self.get_component(dep.component_id)
             if not component:
                 return None
-            output_components[dep.component_id] = component
-        return output_components
+            components[dep.component_id] = component
+        return components
 
     @property
     def _observer_id_map_global(self) -> dict[str, Observer]:
@@ -344,7 +411,68 @@ class ObserverManager:
         # Standard error, log and continue.
         self.logger.error(f"Failed callback for {observer_id}: {type(error).__name__} {error}\n{full_trace}")
 
-    def send_callback(self, observer_id: str, *callback_args: Any) -> dict[str, dict[str, Any]]:
+    async def _on_update_error(self, error: BaseException) -> bool:
+        """Handle callback exception raises and apply the requested update operations."""
+        handlers = None
+        handled = False
+        for exc_type in error.__class__.__mro__[:-1]:
+            # Stop on the first match for the class, this will be the best match (most specific) for the type.
+            if handlers := self._observer_exc_map.get(exc_type):
+                break
+
+        if not handlers:
+            return handled
+
+        for observer in handlers:
+            update_components = self._get_update_components(observer)
+            if observer.updates and not update_components:
+                # One or more components are not in the current component tree, do not trigger callback.
+                continue
+            callback_components = self._get_callback_components(observer)
+            if observer.callback_arguments and not callback_components:
+                # One or more components are not in the current component tree, do not trigger callback.
+                continue
+            args = self._get_callback_args(
+                observer,
+                callback_components,
+                None,
+                None,
+                None,
+                None,
+            )
+            if isinstance(args, NoUpdate):
+                # Failed to request one or more component properties, do not continue.
+                continue
+
+            try:
+                updates = (
+                    observer.callback(error, *args)
+                    if not observer.external
+                    else self.send_callback(
+                        observer.id,
+                        error,
+                        *args,
+                    )
+                )
+                updates = await updates if isawaitable(updates) else updates
+
+                if not updates:
+                    if not update_components:
+                        # No updates were expected, consider the exception handled by the callback.
+                        handled = True
+                    continue
+
+                for comp_id, comp_property, value in _iter_updates(updates):
+                    self.apply_update(observer.id, update_components[comp_id], comp_id, comp_property, value)
+                    handled = True
+            except PreventUpdate:
+                pass
+            except BaseException as new_error:  # pylint: disable=broad-exception-caught
+                # Catch all errors to prevent fatal crashes in application callback loops.
+                self.on_callback_error(observer.id, new_error)
+        return handled
+
+    async def send_callback(self, observer_id: str, *callback_args: Any) -> dict[str, dict[str, Any]]:
         """Forward a callback request to be handled externally.
 
         Override to send the request to an external endpoint, and wait for the response.
@@ -365,7 +493,7 @@ class ObserverManager:
         self.logger.warning(
             f'External callback {observer_id} is forwarding to local callback: override "send_callback" in {type(self)} or remove "external" from callback'
         )
-        return observer.callback(*callback_args)
+        return await observer.callback(*callback_args)
 
     def when(
         self,
@@ -389,8 +517,9 @@ class ObserverManager:
         """
         return create_observer_register(
             *dependencies,
-            observer_map=self._observer_map,
+            observer_exc_map=self._observer_exc_map,
             observer_id_map=self._observer_id_map,
+            observer_map=self._observer_map,
         )
 
 
@@ -465,22 +594,27 @@ class ObservedValue:
 
 def create_observer_register(
     *dependencies: Dependency,
-    observer_map: dict[str, dict[str, list[Observer]]] | None = None,
+    observer_exc_map: dict[type[Exception], list[Observer]] | None = None,
     observer_id_map: dict[str, Observer] | None = None,
-    split_publications: bool = False,
+    observer_map: dict[str, dict[str, list[Observer]]] | None = None,
+    split_publications: bool = True,
     split_modifications: bool = False,
+    split_raises: bool = True,
     external: bool = False,
 ) -> Callable:
     """Create a decorator that will wrap a function with additional callback management, and register the observer.
 
     Args:
         dependencies: Positional arguments containing one or more Dependencies.
-        observer_map: All currently registered observers by component ID and component property.
-            Modified in place when new observer is registered. Defaults to global observers shared across apps.
+        observer_exc_map: All currently registered observers for Exception types.
+            Modified in place when observer is registered. Defaults to global exception observers shared across apps.
         observer_id_map: All currently registered observers by full observer ID.
-            Modified in place when new observer is registered. Defaults to global observers shared across apps.
+            Modified in place when observer is registered. Defaults to global observers shared across apps.
+        observer_map: All currently registered observers by component ID and component property.
+            Modified in place when observer is registered. Defaults to global observers shared across apps.
         split_publications: Register the observer once per publication, instead of once per all publications.
         split_modifications: Register the observer once per modification, instead of once per all modifications.
+        split_raises: Register the observer once per exception raise type, instead of once per all raise types.
         external: Whether the callback is handled by an external endpoint, or locally.
             Any callbacks handled externally should be considered stateless: they should not store or request any
             variables created during a previous callback, and should only rely on the callback arguments they provide.
@@ -490,46 +624,74 @@ def create_observer_register(
     """
     validate_dependencies(*dependencies)
 
-    observer_map = observer_map if observer_map is not None else _GLOBAL_OBSERVER_MAP
+    observer_exc_map = observer_exc_map if observer_exc_map is not None else _GLOBAL_OBSERVER_EXC_MAP
     observer_id_map = observer_id_map if observer_id_map is not None else _GLOBAL_OBSERVER_ID_MAP
+    observer_map = observer_map if observer_map is not None else _GLOBAL_OBSERVER_MAP
 
     def _decorator(func: Callable) -> Callable:
         """Wrap the original function with additional callback management, and register the final observer."""
-        publications, modifications, selections, updates = flatten_dependencies(dependencies)
+        observers = []
+        flattened = flatten_dependencies(dependencies)
+        publications = flattened.get(Published, [])
+        modifications = flattened.get(Modified, [])
+        raises = flattened.get(Raised, [])
+        selections = flattened.get(Select, [])
+        updates = flattened.get(Update, [])
 
+        # Create all standard observers, those that are not based on exceptions will all combinations.
         # Triggers can be 1 input/argument per callback, or all per callback.
         if publications:
             publications = [[dep] for dep in publications] if split_publications else [publications]
         if modifications:
             modifications = [[dep] for dep in modifications] if split_modifications else [modifications]
-
-        observers = []
         for publication_group, modification_group in itertools.product(publications or [[]], modifications or [[]]):
             observers.append(
                 Observer(
-                    publication_group,
-                    modification_group,
-                    selections,
-                    updates,
+                    {
+                        Published: publication_group,
+                        Modified: modification_group,
+                        Select: selections,
+                        Update: updates,
+                    },
                     func=func,
+                    external=external,
                 )
             )
+
+        # Create all special exception observers with only raise types, selections, and updates.
+        if raises:
+            raises = [[dep] for dep in raises] if split_raises else [raises]
+        for raise_group in raises:
+            observers.append(
+                Observer(
+                    {
+                        Raised: raise_group,
+                        Select: selections,
+                        Update: updates,
+                    },
+                    func=func,
+                    external=external,
+                )
+            )
+
         for observer in observers:
-            observer.external = external
-            # If the function is not a method (object pre-attached), then tag it in case an object needs to be added.
-            # Tagged functions can be searched later, such as during object init, to convert the callback into a method.
-            if type(func).__name__ != "method":
-                if not hasattr(func, WHEN_DECORATOR):
-                    setattr(func, WHEN_DECORATOR, [])
-                getattr(func, WHEN_DECORATOR).append(observer)
-            observer_id_map[observer.observer_id] = observer
+            observer_id_map[observer.id] = observer
             for dep in observer.publications + observer.modifications:
                 observer_map.setdefault(dep.component_id, {}).setdefault(dep.component_property, []).append(observer)
+            for dep in observer.raises:
+                observer_exc_map.setdefault(dep.exception_type, []).append(observer)
 
         # Return the original, unmodified, function; the decorator only tags and/or maps for later usage.
         return func
 
     return _decorator
+
+
+def _iter_updates(updates: UpdateResultType) -> Generator[tuple[str, str, Any], None, None]:
+    """Iterate over the standard update multi-level format."""
+    for update_id, properties in updates.items():
+        for update_property, value in properties.items():
+            yield update_id, update_property, value
 
 
 def when(

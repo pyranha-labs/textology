@@ -168,6 +168,15 @@ async def delayed_pong(clicks):
 ```
 
 
+- Callbacks can also catch Exceptions from other callbacks:
+```python
+@app.when(
+    Raised(Exception),
+)
+def error_notification(error):
+    app.notify(f"An unknown error occurred: {error}", title="Error")
+```
+
 - <details>
   <summary>Callbacks can also listen for stateless events, not just stateful attribute updates</summary>
 

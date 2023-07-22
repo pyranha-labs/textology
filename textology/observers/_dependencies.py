@@ -1,7 +1,10 @@
 """Dependencies for input/output requests via observation callbacks."""
 
 from typing import Any
+from typing import Iterable
 from typing import Protocol
+
+CALLBACK_EXCEPTION_ID = "_callback_exception_id"
 
 
 class SupportsID(Protocol):
@@ -44,6 +47,20 @@ class Dependency:
         return f"{self.__class__.__name__}('{self.component_id}', '{self.component_property}')"
 
 
+class Modified(Dependency):
+    """Triggering input of an observation callback based on a stateful attribute update.
+
+    Property/attribute to monitor for modifications and trigger observation callbacks.
+    """
+
+
+class NoUpdate:
+    """Empty type that indicates that a specific update should be ignored in an observation callback."""
+
+
+no_update = NoUpdate()
+
+
 class Published(Dependency):
     """Triggering input of an observation callback based on a stateless event, rather than a stateful property.
 
@@ -68,15 +85,29 @@ class Published(Dependency):
         self.component_event = component_event
 
 
-class Modified(Dependency):
-    """Triggering input of an observation callback based on a stateful attribute update.
+class Raised(Dependency):
+    """Triggering input of an observation callback based on an exception being raised during another callback.
 
-    Property/attribute to monitor for modifications and trigger observation callbacks.
+    Special dependency type that is called when exceptions are raised during invocation of other callbacks.
+    Exception handler callbacks are only invoked if an exception occurs during another callback,
+    not if an exception happens during collection or application of the callback. Observation managers/applications
+    are responsible for handling exceptions during collection/application phases before/after the callback.
     """
 
+    def __init__(
+        self,
+        exception_type: type[BaseException],
+    ) -> None:
+        """Initialize raised exception dependency.
 
-class NoUpdate:
-    """Empty type that indicates that a specific update should be ignored in an observation callback."""
+        Args:
+            exception_type: Exception type that is caught from callbacks.
+        """
+        super().__init__(
+            CALLBACK_EXCEPTION_ID,
+            f"{exception_type.__module__}.{exception_type.__name__}",
+        )
+        self.exception_type = exception_type
 
 
 class Select(Dependency):
@@ -89,14 +120,17 @@ class Select(Dependency):
 class Update(Dependency):
     """Output of an observation callback that will update another component.
 
-    Property to apply after a modification triggers an observation callback.
+    Property to apply after an input triggers an observation callback.
     """
 
 
+DependencyType = Modified | Published | Raised | Select | Update
+
+
 def flatten_dependencies(
-    args: tuple,
-) -> tuple[list[Published], list[Modified], list[Select], list[Update]]:
-    """Split arguments into modifications (triggering inputs), selections (non-triggering inputs), and updates.
+    args: Iterable,
+) -> dict[type[Dependency], list[Dependency]]:
+    """Split arguments into organized dependency groups based on their types.
 
     Args:
         args: Positional arguments containing one or more Dependencies.
@@ -104,20 +138,18 @@ def flatten_dependencies(
     Returns:
         Flat lists of combined dependencies, pulled from arguments regardless of order.
     """
-    publications = []
-    updates = []
-    modifications = []
-    selections = []
+    types: dict[type[Dependency], list] = {
+        Published: [],
+        Modified: [],
+        Raised: [],
+        Select: [],
+        Update: [],
+    }
     for arg in args:
-        if isinstance(arg, Published):
-            publications.append(arg)
-        elif isinstance(arg, Modified):
-            modifications.append(arg)
-        elif isinstance(arg, Select):
-            selections.append(arg)
-        elif isinstance(arg, Update):
-            updates.append(arg)
-    return publications, modifications, selections, updates
+        if not isinstance(arg, Dependency):
+            continue
+        types[arg.__class__].append(arg)
+    return types
 
 
 def validate_dependencies(*dependencies: Dependency) -> None:
@@ -131,12 +163,17 @@ def validate_dependencies(*dependencies: Dependency) -> None:
     """
     triggers = []
     trigger_props = {}
+    raises = []
     for dependency in dependencies:
         component_id = dependency.component_id
         component_property = dependency.component_property
-        if isinstance(dependency, (Modified, Published)):
+        if isinstance(dependency, Raised):
+            raises.append(dependency)
+        if raises and isinstance(dependency, (Modified, Published)):
+            raise ValueError("No other triggering input dependencies are allowed with exception handlers, only Selects")
+        if isinstance(dependency, (Modified, Published, Raised)):
             trigger_props.setdefault(component_id, set())
-            if component_property in trigger_props[component_id]:
+            if component_id != CALLBACK_EXCEPTION_ID and component_property in trigger_props[component_id]:
                 raise ValueError(f"Duplicate trigger dependency found for {component_id}:{component_property}")
             triggers.append(dependency)
             trigger_props[component_id].add(component_property)
