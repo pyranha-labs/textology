@@ -369,7 +369,7 @@ class ObserverManager:
 
     def when(
         self,
-        *args: Dependency,
+        *dependencies: Dependency,
     ) -> Callable:
         """Register a callback that triggers when observed values change while this instance is active.
 
@@ -382,15 +382,15 @@ class ObserverManager:
                 ...
 
         Args:
-            args: Positional arguments containing one or more observation Dependencies.
+            dependencies: Positional arguments containing one or more observation Dependencies.
 
         Returns:
             Decorator to register a function as an input/output reaction to one or more property changes.
         """
         return create_observer_register(
-            self._observer_map,
-            self._observer_id_map,
-            *args,
+            *dependencies,
+            observer_map=self._observer_map,
+            observer_id_map=self._observer_id_map,
         )
 
 
@@ -464,9 +464,9 @@ class ObservedValue:
 
 
 def create_observer_register(
-    observer_map: dict[str, dict[str, list[Observer]]],
-    observer_id_map: dict[str, Observer],
     *dependencies: Dependency,
+    observer_map: dict[str, dict[str, list[Observer]]] | None = None,
+    observer_id_map: dict[str, Observer] | None = None,
     split_publications: bool = False,
     split_modifications: bool = False,
     external: bool = False,
@@ -474,11 +474,11 @@ def create_observer_register(
     """Create a decorator that will wrap a function with additional callback management, and register the observer.
 
     Args:
-        observer_map: All currently registered observers by component ID and component property.
-            Modified in place when new observer is registered.
-        observer_id_map: All currently registered observers by full observer ID.
-            Modified in place when new observer is registered.
         dependencies: Positional arguments containing one or more Dependencies.
+        observer_map: All currently registered observers by component ID and component property.
+            Modified in place when new observer is registered. Defaults to global observers shared across apps.
+        observer_id_map: All currently registered observers by full observer ID.
+            Modified in place when new observer is registered. Defaults to global observers shared across apps.
         split_publications: Register the observer once per publication, instead of once per all publications.
         split_modifications: Register the observer once per modification, instead of once per all modifications.
         external: Whether the callback is handled by an external endpoint, or locally.
@@ -489,6 +489,9 @@ def create_observer_register(
         Decorator to register a function as an input/output reaction to one or more property changes.
     """
     validate_dependencies(*dependencies)
+
+    observer_map = observer_map if observer_map is not None else _GLOBAL_OBSERVER_MAP
+    observer_id_map = observer_id_map if observer_id_map is not None else _GLOBAL_OBSERVER_ID_MAP
 
     def _decorator(func: Callable) -> Callable:
         """Wrap the original function with additional callback management, and register the final observer."""
@@ -530,7 +533,7 @@ def create_observer_register(
 
 
 def when(
-    *args: Dependency,
+    *dependencies: Dependency,
 ) -> Callable:
     """Register a callback that triggers when observed values change globally.
 
@@ -543,13 +546,11 @@ def when(
             ...
 
     Args:
-        args: Positional arguments containing one or more observation Dependencies.
+        dependencies: Positional arguments containing one or more observation Dependencies.
 
     Returns:
         Decorator to register a function as an input/output reaction to one or more property changes.
     """
     return create_observer_register(
-        _GLOBAL_OBSERVER_MAP,
-        _GLOBAL_OBSERVER_ID_MAP,
-        *args,
+        *dependencies,
     )
