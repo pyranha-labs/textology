@@ -35,7 +35,7 @@ Core features and functionality.
     * [x] Parallel processing support (python-xdist)
     * [x] Async support (python-asyncio)
     * [x] MDL HTML report for failed snapshot tests
-    * [ ] Update MDL to MDC for HTML report
+    * [x] Update MDL to MDC for HTML report
 
 
 ## Widgets
