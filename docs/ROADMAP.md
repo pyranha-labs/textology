@@ -12,9 +12,11 @@ Core features and functionality.
     * [x] General manager for registering input/output callbacks based on observing value changes
       * [x] Register input/output callbacks based on observing stateful attributes
       * [x] Register input/output callbacks based on observing stateless events
+      * [x] Register input/output callbacks based on observing exceptions
     * [x] ObserverApp utilizing observer manager for automating reactions to application changes
       * [x] Support for input/output callbacks based on reactive attribute updates
       * [x] Support for input/output callbacks based on monitoring stateless message events
+      * [x] Support for input/output callbacks based on monitoring exceptions
     * [x] ObserverApp compatibility layer with Dash syntax (allow Dash style callback declarations)
     * [x] Register global input/output callbacks used across all observer managed applications
       * [x] Register callbacks against module level functions

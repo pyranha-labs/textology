@@ -7,6 +7,7 @@ import pytest
 from textology.observers import Dependency
 from textology.observers import Modified
 from textology.observers import Published
+from textology.observers import Raised
 from textology.observers import Select
 from textology.observers import Update
 from textology.observers._dependencies import validate_dependencies
@@ -83,6 +84,13 @@ TEST_CASES = {
             ],
             "returns": None,
         },
+        "valid input output exception combo": {
+            "args": [
+                Raised(ValueError),
+                Update("id", "property"),
+            ],
+            "returns": None,
+        },
         "valid property input only": {
             "args": [
                 Modified("id", "property"),
@@ -95,6 +103,20 @@ TEST_CASES = {
             ],
             "returns": None,
         },
+        "valid exception input only": {
+            "args": [
+                Raised(ValueError),
+            ],
+            "returns": None,
+        },
+        "valid exception and other non-triggering input": {
+            "args": [
+                Raised(ValueError),
+                Select("id", "property"),
+                Update("id", "property"),
+            ],
+            "raises": None,
+        },
         "duplicate inputs": {
             "args": [
                 Modified("id", "property"),
@@ -106,6 +128,14 @@ TEST_CASES = {
         "no inputs": {
             "args": [
                 Select("id", "property"),
+                Update("id", "property"),
+            ],
+            "raises": ValueError,
+        },
+        "invalid exception and other triggering input": {
+            "args": [
+                Raised(ValueError),
+                Modified("id", "property"),
                 Update("id", "property"),
             ],
             "raises": ValueError,

@@ -15,14 +15,16 @@ from typing import Callable
 from textology.apps import ExtendedApp
 
 # Compatibility aliases for Dash.
+# Allow importing other modules for direct access through this module for simplicity. pylint: disable=unused-import
 from textology.observers import Dependency
 from textology.observers import Modified
-from textology.observers import NoUpdate  # pylint: disable=unused-import
+from textology.observers import NoUpdate
 from textology.observers import Published
-from textology.observers import Select as State  # pylint: disable=unused-import
+from textology.observers import Raised as State
+from textology.observers import Select as State
 from textology.observers import SupportsID
-from textology.observers import Update as Output  # pylint: disable=unused-import
-from textology.observers import when as callback  # pylint: disable=unused-import
+from textology.observers import Update as Output
+from textology.observers import when as callback
 
 InputType = Modified | Published
 

@@ -8,6 +8,7 @@ from textology.observers import Modified
 from textology.observers import ObservedObject
 from textology.observers import ObservedValue
 from textology.observers import ObserverManager
+from textology.observers import Raised
 from textology.observers import Select
 from textology.observers import Update
 
@@ -130,3 +131,73 @@ async def test_callback_without_output() -> None:
     await asyncio.sleep(0.1)
     assert ping_comp.value == "test1"
     assert called
+
+
+@pytest.mark.asyncio
+async def test_callback_failure() -> None:
+    """Validate that a callback was triggered, fails, and exception callback is triggered."""
+    app = App(
+        [
+            Component(id="ping1"),
+            Component(id="ping2"),
+            Component(id="ping3"),
+            Component(id="pong"),
+            Component(id="error"),
+        ]
+    )
+
+    @app.when(
+        Modified("ping1", "value"),
+        Update("pong", "value"),
+    )
+    async def ping_pong1(ping: str) -> None:
+        """Basic callback that is triggered by a modified value, and raises an exception that is caught."""
+        raise ValueError("I got caught red handed")
+
+    @app.when(
+        Modified("ping2", "value"),
+        Update("pong", "value"),
+    )
+    async def ping_pong2(ping: str) -> None:
+        """Basic callback that is triggered by a modified value, and raises an exception that is not caught."""
+        raise Exception("I am sneaky")
+
+    @app.when(
+        Modified("ping3", "value"),
+        Update("pong", "value"),
+    )
+    async def ping_pong3(ping: str) -> str:
+        """Basic callback that is triggered by a modified value, and succeeds."""
+        return "Third time is the charm!"
+
+    @app.when(
+        Raised(ValueError),
+        Update("error", "value"),
+    )
+    async def catch_error(error: ValueError) -> str:
+        """Basic callback that is triggered on a failure, and creates a parallel update."""
+        return f"Culprit: {error}"
+
+    app.register_components()
+
+    ping1_comp = app.get_component("ping1")
+    ping2_comp = app.get_component("ping2")
+    ping3_comp = app.get_component("ping3")
+    pong_comp = app.get_component("pong")
+    error_comp = app.get_component("error")
+
+    assert ping1_comp.value is None
+    assert ping2_comp.value is None
+    assert ping3_comp.value is None
+    assert pong_comp.value is None
+    assert error_comp.value is None
+
+    ping1_comp.value = "test1"
+    ping2_comp.value = "test2"
+    ping3_comp.value = "test3"
+    await asyncio.sleep(0.1)
+    assert ping1_comp.value is "test1"
+    assert ping2_comp.value is "test2"
+    assert ping3_comp.value is "test3"
+    assert pong_comp.value is "Third time is the charm!"
+    assert error_comp.value == "Culprit: I got caught red handed"
