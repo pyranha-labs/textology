@@ -91,7 +91,7 @@ async def test_callback_registration_per_scope(compare_snapshots: Callable) -> N
             observers.Update("results", "data"),
         )
         def method_reactive(self, clicks: int, results: list) -> list:
-            results = [*results, "Button 1 pressed"]
+            results = [*results, f"Button 1 pressed {clicks} times"]
             return results
 
         @observers.when(
@@ -100,7 +100,7 @@ async def test_callback_registration_per_scope(compare_snapshots: Callable) -> N
             observers.Update("results", "data"),
         )
         def method_event(self, event: widgets.Button.Pressed, results: list) -> list:
-            results = [*results, "Button 3 pressed"]
+            results = [*results, f"Button 3 pressed {event.button.n_clicks} times"]
             return results
 
     @observers.when(
@@ -109,7 +109,7 @@ async def test_callback_registration_per_scope(compare_snapshots: Callable) -> N
         observers.Update("results", "data"),
     )
     def function_reactive(clicks: int, results: list) -> list:
-        results = [*results, "Button 2 pressed"]
+        results = [*results, f"Button 2 pressed {clicks} times"]
         return results
 
     @observers.when(
@@ -118,7 +118,7 @@ async def test_callback_registration_per_scope(compare_snapshots: Callable) -> N
         observers.Update("results", "data"),
     )
     def function_event(event: widgets.Button.Pressed, results: list) -> list:
-        results = [*results, "Button 4 pressed"]
+        results = [*results, f"Button 4 pressed {event.button.n_clicks} times"]
         return results
 
     async with App().run_test() as pilot:

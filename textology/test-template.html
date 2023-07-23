@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="fill-height ">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,8 +19,8 @@
         }
 
         .content {
-            margin: 0;
             padding: 12px 12px 0;
+            margin: 64px 0 0;
         }
 
         .mdc-drawer-app-content {
@@ -193,6 +193,14 @@
             padding: 0;
         }
 
+        .fill-height {
+            height: 100%;
+        }
+
+        .mdc-drawer-app-content {
+            padding-top: 0;
+        }
+
         .missing-img-text {
             width: calc(100% - 32px);
             padding: 12px
@@ -220,11 +228,11 @@
     </style>
 </head>
 
-<body class="mdc-typography">
+<body class="mdc-typography fill-height">
 
 <noscript>You need to enable JavaScript to run this app.</noscript>
 
-<div id="root">
+<div id="root" class="fill-height">
     <aside class="mdc-drawer mdc-drawer--modal">
         <div class="mdc-drawer__header">
             <h3 class="mdc-drawer__title">Snapshot Tests</h3>
@@ -241,7 +249,7 @@
 
     <div class="mdc-drawer-scrim"></div>
 
-    <div class="drawer-frame-app-content">
+    <div class="drawer-frame-app-content fill-height">
         <header id="app-bar" class="mdc-top-app-bar drawer-top-app-bar mdc-elevation--z2">
             <div class="mdc-top-app-bar__row">
                 <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
@@ -258,7 +266,7 @@
             </div>
         </header>
 
-        <div class="mdc-drawer-app-content mdc-top-app-bar--fixed-adjust">
+        <div class="mdc-drawer-app-content mdc-top-app-bar--fixed-adjust fill-height">
             <main class="main-content flex-column" id="main-content">
                 <div id="results" class="content">
                     <div id="result-template" class="mdc-card mdc-elevation--z2 result-card">
