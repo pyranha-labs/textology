@@ -1,9 +1,42 @@
 """Unit tests for dash_compat module."""
 
+from typing import Callable
+
 import pytest
+from textual.events import Mount
 
 from textology import dash_compat
+from textology import observers
 from textology import widgets
+
+TEST_CASES = {
+    "Input": {
+        "Modified": {
+            "args": ["id", "prop"],
+            "returns": observers.Modified("id", "prop"),
+        },
+        "Published": {
+            "args": ["id", Mount],
+            "returns": observers.Published("id", Mount),
+        },
+        "Raised": {
+            "args": [ValueError],
+            "returns": observers.Raised(ValueError),
+        },
+        "Invalid object first": {
+            "args": [123],
+            "raises": ValueError,
+        },
+        "Invalid class first": {
+            "args": [Mount],
+            "raises": ValueError,
+        },
+        "Invalid object second": {
+            "args": ["id", 123],
+            "raises": ValueError,
+        },
+    },
+}
 
 
 @pytest.mark.asyncio
@@ -48,3 +81,13 @@ async def test_button_n_clicks() -> None:
         assert button.n_clicks == 3
         assert store1.data == "Attribute callback triggered 3 times"
         assert store2.data == "Event callback triggered 3 times"
+
+
+@pytest.mark.parametrize(
+    "test_case",
+    list(TEST_CASES["Input"].values()),
+    ids=list(TEST_CASES["Input"].keys()),
+)
+def test_input_wrapper(test_case: dict, function_tester: Callable) -> None:
+    """Test that a generic input type combo can be converted into underlying dependency type."""
+    function_tester(test_case, dash_compat.Input)

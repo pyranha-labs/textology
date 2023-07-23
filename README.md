@@ -401,7 +401,7 @@ async def test_snapshot_with_app(compare_snapshots):
 ```
 
 Other advanced testing features include:
-- Ability to pass and App, App Pilot, or a module containing an instantiated App or Pilot, to fixtures
+- Ability to pass an App, App Pilot, or a module containing an instantiated App or Pilot, to fixtures
 - Custom snapshot paths, including reusing the same snapshot across multiple tests
 - Automatic SVG updates with `pytest --txtology-snap-update`
 
