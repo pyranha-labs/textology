@@ -132,14 +132,6 @@ class Observer:
 
         return component_updates
 
-    def update_method_ref(self, obj: Any) -> None:
-        """Update the weak reference used when the callback is a method.
-
-        Args:
-            obj: Object to store a new weak reference for, and use during callbacks.
-        """
-        self._method_ref = weakref.ref(obj)
-
     @property
     def callback_arguments(self) -> list[Published | Modified | Select]:
         """Component IDs and properties, or types, that provide arguments to the callback."""
@@ -164,6 +156,14 @@ class Observer:
     def selections(self) -> list[Select]:
         """Component IDs and properties that provide additional arguments without triggering the callback."""
         return self._dependencies[Select]
+
+    def update_method_ref(self, obj: Any) -> None:
+        """Update the weak reference used when the callback is a method.
+
+        Args:
+            obj: Object to store a new weak reference for, and use during callbacks.
+        """
+        self._method_ref = weakref.ref(obj)
 
     @property
     def updates(self) -> list[Update]:

@@ -9,6 +9,7 @@ functionality is being used.
 
 from ._button import Button
 from ._containers import Container
+from ._containers import PageContainer
 from ._extensions import Clickable
 from ._extensions import ExtendedWidget
 from ._extensions import WidgetExtension

@@ -13,11 +13,11 @@ Core features and functionality.
       * [x] Register input/output callbacks based on observing stateful attributes
       * [x] Register input/output callbacks based on observing stateless events
       * [x] Register input/output callbacks based on observing exceptions
-    * [x] ObserverApp utilizing observer manager for automating reactions to application changes
+    * [x] ExtendedApp utilizing observer manager for automating reactions to application changes
       * [x] Support for input/output callbacks based on reactive attribute updates
       * [x] Support for input/output callbacks based on monitoring stateless message events
       * [x] Support for input/output callbacks based on monitoring exceptions
-    * [x] ObserverApp compatibility layer with Dash syntax (allow Dash style callback declarations)
+    * [x] ExtendedApp compatibility layer with Dash syntax (allow Dash style callback declarations)
     * [x] Register global input/output callbacks used across all observer managed applications
       * [x] Register callbacks against module level functions
       * [x] Register callbacks against instance methods
@@ -29,15 +29,25 @@ Core features and functionality.
       * [ ] "running" callbacks to show immediate change before completion
       * [ ] "progress" callbacks to update the status of "running" callbacks
       * [ ] "cancel" callbacks to stop "running" callbacks
+    * [ ] Allowing controlling whether callbacks are triggered on first load with "prevent_initial_call"
 - [x] Routers
     * [x] Basic URL router with variables in paths
     * [x] Endpoint methods for leverage same routes with different operations
+    * [x] ExtendedApp with multi-page widget routing via URLs
+      * [x] Register pages via direct layout function
+      * [x] Register pages via modules with layout functions
+      * [ ] Register pages via class tree to allow flexible module layout
+      * [ ] Allow registering all modules in a folder
+      * [ ] Allow full folder path to page path. e.g. "docs/doc1" to "/docs/doc1"
+      * [ ] Allow full module name to page path. e.g. "docs.doc1" to "/docs/doc1"
+    * [ ] Async router serve loop
 - [ ] HTML templates for layouts
 - [x] Testing
     * [x] Parallel processing support (python-xdist)
     * [x] Async support (python-asyncio)
     * [x] MDL HTML report for failed snapshot tests
     * [x] Update MDL to MDC for HTML report
+    * [ ] Add JSON view of widget tree to test failure output
 
 
 ## Widgets
