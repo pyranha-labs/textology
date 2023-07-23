@@ -12,21 +12,21 @@ developers may need to leverage the native classes and designs from the base lib
 
 from typing import Callable
 
-from textology.apps import ExtendedApp
+from .apps import ExtendedApp
 
 # Compatibility aliases for Dash.
 # Allow importing other modules for direct access through this module for simplicity. pylint: disable=unused-import
-from textology.observers import Dependency
-from textology.observers import Modified
-from textology.observers import NoUpdate
-from textology.observers import Published
-from textology.observers import Raised as State
-from textology.observers import Select as State
-from textology.observers import SupportsID
-from textology.observers import Update as Output
-from textology.observers import when as callback
+from .observers import Dependency
+from .observers import Modified
+from .observers import NoUpdate
+from .observers import Published
+from .observers import Raised
+from .observers import Select as State
+from .observers import SupportsID
+from .observers import Update as Output
+from .observers import when as callback
 
-InputType = Modified | Published
+InputType = Modified | Published | Raised
 
 
 class DashCompatApp(ExtendedApp):
@@ -64,20 +64,27 @@ class DashCompatApp(ExtendedApp):
 
 
 def Input(  # Treat this function as a class factory. pylint: disable=invalid-name
-    component_id: str | SupportsID,
-    property_or_event: str | type,
+    id_or_exception: str | SupportsID | type[BaseException],
+    property_or_event: str | type | None = None,
 ) -> InputType:
     """Initialize base dependency identification.
 
     Args:
-        component_id: ID, or object with ID property, that a component uses to send and receive updates.
+        id_or_exception: ID, object with ID, or exception type, that a component uses to trigger callbacks.
         property_or_event: Property name, or event class type, on the component that triggers callbacks.
 
-    Return:
-        Reactive attribute dependency (Modified) if a string, message dependency (Published) otherwise.
+    Returns:
+        Attribute watcher if provided strings, message watcher if string & class, or exception watcher if error type.
+
+    Raises:
+        ValueError if any combination of value is incorrect for conversion into an input type dependency
     """
-    if not isinstance(str, type):
-        raise ValueError("Input dependencies can only be strings, or classes")
-    if isinstance(property_or_event, str):
-        return Modified(component_id, property_or_event)
-    return Published(component_id, property_or_event)
+    if isinstance(id_or_exception, str):
+        if isinstance(property_or_event, str):
+            return Modified(id_or_exception, property_or_event)
+        if isinstance(property_or_event, type):
+            return Published(id_or_exception, property_or_event)
+        raise ValueError("Input dependency second argument can only be an attribute or class")
+    if isinstance(id_or_exception, type) and issubclass(id_or_exception, BaseException):
+        return Raised(id_or_exception)
+    raise ValueError("Input dependency first argument can only be an id to watch or exception to catch")
