@@ -40,3 +40,10 @@ class Container(WidgetExtension, containers.Container):
             disabled=disabled,
         )
         self.__extend_widget__(**extension_configs)
+
+
+class PageContainer(Container):
+    """Container used to display page contents, and signal to multi-page applications which ID to use in callbacks.
+
+    If not used in a multi-page app, it is functionally the same as a Container.
+    """

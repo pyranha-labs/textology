@@ -56,6 +56,7 @@
             flex: 1;
             margin-left: 8px;
             margin-right: 8px;
+            word-break: break-word;
         }
 
         .test-img-diff {
@@ -421,7 +422,7 @@
                                         <div class="overlay-container">
                                             <div id="test-details-diff-expected-image"
                                                  class="test-img-diff">
-                                                {{ expected }}
+                                                {{ expected_diff }}
                                             </div>
                                         </div>
                                         <div id="test-details-diff-result-image">
@@ -937,7 +938,7 @@
         }
 
         document.getElementById("test-details-diff-result-image").innerHTML = test.result;
-        if (test.expected) {
+        if (test.expected_diff) {
             document.getElementById("test-details-diff-expected-image").innerHTML = test.expected;
         }
 
@@ -991,7 +992,9 @@
         for (const [index, test] of Object.entries(testResult.items)) {
             test.index = parseInt(index);
             test.elementIndex = test.index  + 1;
-            if (!test.expected) {
+            if (test.expected) {
+                test.expected_diff = test.expected;
+            } else {
                 test.expected = format(`
                     <div class="missing-img-placeholder flex-column">
                         <div class="mdc-typography--body2 missing-img-text">

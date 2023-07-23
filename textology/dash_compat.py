@@ -10,6 +10,7 @@ it will be included here, but this is not Dash. In order to access the full rang
 developers may need to leverage the native classes and designs from the base libraries.
 """
 
+from types import ModuleType
 from typing import Callable
 
 from .apps import ExtendedApp
@@ -25,6 +26,8 @@ from .observers import Select as State
 from .observers import SupportsID
 from .observers import Update as Output
 from .observers import when as callback
+from .pages import _GLOBAL_PAGE_MAP as page_registry
+from .pages import Page
 
 InputType = Modified | Published | Raised
 
@@ -33,6 +36,12 @@ class DashCompatApp(ExtendedApp):
     """Application capable of performing automatic input/output callbacks on reactive widget property updates.
 
     Compatibility alias for ExtendedApp class.
+
+    Additional functionality (provided by ExtendedApp and wrapped with Dash compat):
+        - Automatic input/output callbacks for managing application state via ".callback()" registration.
+        - URL based multi-page content via ".register_page()".
+        - URL routing for resource requests within the application via ".location.get()".
+        - URL history for navigating via ".back()", ".forward()", etc.
     """
 
     def callback(
@@ -60,6 +69,41 @@ class DashCompatApp(ExtendedApp):
         """
         return super().when(
             *dependencies,
+        )
+
+    def register_page(  # Intentional renames for Dash compatibility. pylint: disable=arguments-renamed
+        self,
+        module: Page | ModuleType | str | Callable | None = None,
+        path: str | None = None,
+        path_template: str | None = None,
+        redirect_from: str | list[str] | None = None,
+        layout: Callable | None = None,
+    ) -> None:
+        """Set up a URL path to provide a layout in a multi-page application.
+
+        The "page_registry" global or app attribute can also be used to create page navigation links
+        by application template/layout authors.
+
+        Compatibility alias for ExtendedApp.register_page() calls.
+
+        Args:
+            module: A module, or module path, where the remaining page's variables are defined.
+                e.g. If calling from within the module itself: "__name__"
+                e.g. If calling from another module: "mylib.home"
+            path: URL Path, with or without variables. e.g. "/", "/home", "/documents/{document_name}"
+                Inferred from the "module" or "layout" if not provided.
+                    e.g. "mylib.home" -> "/home"
+                    e.g. "home_page" -> "/home_page"
+                Variables marked as {variable_name} in paths will be passed to "layout" as keyword arguments.
+            path_template: Compatibility alias for "path", no functional difference.
+            redirect_from: Paths that should redirect to this page's path. e.g. "/v1/home"
+            layout: Function to call to generate the widget(s) used in the page's layout.
+        """
+        super().register_page(
+            page=module,
+            path=path_template or path,
+            redirect_from=redirect_from,
+            layout=layout,
         )
 
 

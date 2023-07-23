@@ -127,3 +127,51 @@ async def test_callback_registration_per_scope(compare_snapshots: Callable) -> N
         await pilot.click("#btn3")
         await pilot.click("#btn4")
         assert await compare_snapshots(pilot)
+
+
+@pytest.mark.asyncio
+async def test_multi_page_app(compare_snapshots: Callable) -> None:
+    """Validate that multi-page application routes successfully between pages on URL changes."""
+
+    def layout_page1(clicks: int | None = None) -> widgets.Label:
+        return widgets.Label(f"Page 1 clicks {clicks}")
+
+    def layout_page2(clicks: int | None = None) -> widgets.Label:
+        return widgets.Label(f"Page 2 clicks {clicks}")
+
+    app = apps.ExtendedApp(
+        layout=widgets.Container(
+            widgets.Button("Button 1", id="btn1"),
+            widgets.Button("Button 2", id="btn2"),
+            widgets.Location(id="url"),
+            widgets.PageContainer(id="content"),
+        ),
+        pages=[
+            # Test page on initialization with no path variables.
+            layout_page1
+        ],
+    )
+
+    # Test page after initialization with path variables.
+    app.register_page(path="/page2/{clicks}", layout=layout_page2)
+
+    @app.when(
+        observers.Modified("btn1", "n_clicks"),
+        observers.Update("url", "href"),
+    )
+    def btn1_click(clicks: int) -> str:
+        return f"/page1?clicks={clicks}"
+
+    @app.when(
+        observers.Modified("btn2", "n_clicks"),
+        observers.Update("url", "href"),
+    )
+    def btn1_click(clicks: int) -> str:
+        return f"/page2/{clicks}"
+
+    async with app.run_test() as pilot:
+        await pilot.click("#btn1")
+        result1 = await compare_snapshots(pilot, test_suffix="page1")
+        await pilot.click("#btn2")
+        result2 = await compare_snapshots(pilot, test_suffix="page2")
+        assert all([result1, result2])
