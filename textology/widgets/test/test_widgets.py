@@ -11,7 +11,7 @@ from textology import widgets
 @pytest.mark.asyncio
 async def test_horizontal_menu(compare_snapshots: Callable) -> None:
     """Validate basic HorizontalMenus functionality to show/hide dynamic menus."""
-    app = apps.WidgetApp(
+    app = apps.LayoutApp(
         layout=widgets.HorizontalMenus(
             widgets.ListItemHeader(widgets.Label("Pages")),
             widgets.ListItemMeta(data={"label": "Page 1"}),
@@ -60,7 +60,7 @@ async def test_horizontal_menu(compare_snapshots: Callable) -> None:
 @pytest.mark.asyncio
 async def test_horizontal_menu_with_listview(compare_snapshots: Callable) -> None:
     """Validate basic HorizontalMenus functionality when a pre-populated Listview is provided, instead of ListItems."""
-    app = apps.WidgetApp(
+    app = apps.LayoutApp(
         layout=widgets.HorizontalMenus(
             widgets.ListView(
                 widgets.ListItemHeader(widgets.Label("Pages")),
@@ -94,7 +94,7 @@ async def test_horizontal_menu_with_listview(compare_snapshots: Callable) -> Non
 @pytest.mark.asyncio
 async def test_list_items(compare_snapshots: Callable) -> None:
     """Validate all ListItem types and combinations render correctly."""
-    app = apps.WidgetApp(
+    app = apps.LayoutApp(
         layout=widgets.ListView(
             widgets.ListItemHeader(widgets.Label("Header From Widget")),
             widgets.ListItemHeader(data={"label": "Header From Label"}),

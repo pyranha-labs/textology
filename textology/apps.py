@@ -35,7 +35,7 @@ _DEFAULT_CONTENT_ID = "content"
 _DEFAULT_URL_ID = "url"
 
 
-class WidgetApp(App):
+class LayoutApp(App):
     """Application with a single widget for the root layout."""
 
     def __init__(
@@ -79,7 +79,7 @@ class WidgetApp(App):
         yield self.layout
 
 
-class ExtendedApp(WidgetApp, ObserverManager):
+class ExtendedApp(LayoutApp, ObserverManager):
     """Textual application with multiple Textology extensions for automating UI updates.
 
     Additional functionality:
