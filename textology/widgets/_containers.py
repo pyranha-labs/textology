@@ -2,44 +2,33 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from textual import containers
-from textual.widget import Widget
 
-from ._extensions import WidgetExtension
+from ._extensions import WidgetInitExtension
 
 
-class Container(WidgetExtension, containers.Container):
-    """An extended, simple, container widget, with vertical layout."""
+class Center(WidgetInitExtension, containers.Center):
+    """An extended container which aligns children on the X axis."""
 
-    def __init__(
-        self,
-        *children: Widget,
-        name: str | None = None,
-        id: str | None = None,
-        classes: str | None = None,
-        disabled: bool = False,
-        **extension_configs: Any,
-    ) -> None:
-        """Initialize a Container widget with extension arguments.
 
-        Args:
-            *children: Child widgets.
-            name: The name of the widget.
-            id: The ID of the widget in the DOM.
-            classes: The CSS classes for the widget.
-            disabled: Whether the widget is disabled or not.
-            extension_configs: Widget extension configurations, such as dynamically provided local callbacks by name.
-        """
-        super().__init__(
-            *children,
-            name=name,
-            id=id,
-            classes=classes,
-            disabled=disabled,
-        )
-        self.__extend_widget__(**extension_configs)
+class Container(WidgetInitExtension, containers.Container):
+    """An extended, simple container widget, with vertical layout."""
+
+
+class Grid(WidgetInitExtension, containers.Grid):
+    """An extended container with grid layout."""
+
+
+class Horizontal(WidgetInitExtension, containers.Horizontal):
+    """An extended container with horizontal layout and no scrollbars."""
+
+
+class HorizontalScroll(WidgetInitExtension, containers.HorizontalScroll):
+    """An extended container with horizontal layout and an automatic scrollbar on the Y axis."""
+
+
+class Middle(WidgetInitExtension, containers.Middle):
+    """An extended container which aligns children on the Y axis."""
 
 
 class PageContainer(Container):
@@ -47,3 +36,15 @@ class PageContainer(Container):
 
     If not used in a multi-page app, it is functionally the same as a Container.
     """
+
+
+class ScrollableContainer(containers.ScrollableContainer):
+    """An extended scrollable container with vertical layout, and auto scrollbars on both axis."""
+
+
+class Vertical(WidgetInitExtension, containers.Vertical):
+    """An extended container with vertical layout and no scrollbars."""
+
+
+class VerticalScroll(WidgetInitExtension, containers.VerticalScroll):
+    """An extended container with vertical layout and an automatic scrollbar on the Y axis."""

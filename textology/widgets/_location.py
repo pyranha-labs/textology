@@ -9,16 +9,17 @@ from urllib.parse import urlparse
 from textual import events
 from textual.message import Message
 from textual.reactive import reactive
+from textual.widget import Widget
 
 from textology.history import History
 from textology.router import Endpoint
 from textology.router import Request
 from textology.router import Router
 
-from ._extensions import ExtendedWidget
+from ._extensions import WidgetInitExtension
 
 
-class Location(ExtendedWidget, Router):
+class Location(WidgetInitExtension, Widget, Router):
     """Hidden widget containing representation of the current location of loaded resources.
 
     Intended to only be used for callbacks/routing/tracking requests.

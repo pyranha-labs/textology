@@ -55,9 +55,10 @@ class WidgetExtension:
     returns True (for continue), the message will be sent to the original widget message handler, and propagate
     throughout the app as normal.
 
-    If creating a new basic widget, use ExtendedWidget instead. If subclassing an existing basic textual widget,
-    the extension class must be placed before base class to ensure custom behaviors take priority. Example:
-        class MyContainer(MessagingExtension, Container):
+    If creating a new basic widget, use WidgetInitExtension + Widget instead. If subclassing an existing,
+    basic, textual widget,  the extension class must be placed before base class to ensure custom behaviors
+    take priority. Example:
+        class MyContainer(WidgetExtension, Container):
             ...
     """
 
@@ -190,11 +191,15 @@ class WidgetExtension:
         return None
 
 
-class ExtendedWidget(WidgetExtension, Widget):
-    """A Widget is the base class for Textual widgets with built-in extension support.
+class WidgetInitExtension(WidgetExtension):
+    """Extension for textual widgets that inherit from base Widget class.
 
-    Use to create new basic widgets with extensions built int. If extending an existing basic textual widget,
-    use WidgetExtension as a mixin instead.
+    Includes all extensions provided by WidgetExtension, and automatically calls the extension set up.
+    See WidgetExtension for full details on all extended features.
+
+    Example:
+        class Container(WidgetInitExtension, containers.Container):
+            ...
     """
 
     def __init__(
