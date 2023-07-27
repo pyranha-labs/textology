@@ -8,11 +8,19 @@ functionality is being used.
 """
 
 from ._button import Button
+from ._containers import Center
 from ._containers import Container
+from ._containers import Grid
+from ._containers import Horizontal
+from ._containers import HorizontalScroll
+from ._containers import Middle
 from ._containers import PageContainer
+from ._containers import ScrollableContainer
+from ._containers import Vertical
+from ._containers import VerticalScroll
 from ._extensions import Clickable
-from ._extensions import ExtendedWidget
 from ._extensions import WidgetExtension
+from ._extensions import WidgetInitExtension
 from ._horizontal_menus import HorizontalMenus
 from ._label import Label
 from ._list_item import LIST_ITEM_EVENT_IGNORES

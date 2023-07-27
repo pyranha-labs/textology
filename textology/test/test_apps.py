@@ -5,6 +5,7 @@ from typing import Callable
 
 import pytest
 from textual.app import ComposeResult
+from textual.widget import Widget
 
 from textology import apps
 from textology import observers
@@ -62,7 +63,7 @@ async def test_snapshot_with_pilot(compare_snapshots: Callable) -> None:
 async def test_callback_registration_per_scope(compare_snapshots: Callable) -> None:
     """Validate that observer/callback registration works at all scopes."""
 
-    class DisplayWidget(widgets.ExtendedWidget):
+    class DisplayWidget(widgets.WidgetInitExtension, Widget):
         """Widget used to test callbacks attached at a widget level."""
 
         def compose(self) -> ComposeResult:
