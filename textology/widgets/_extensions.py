@@ -1,13 +1,13 @@
 """Custom textual Widgets extensions."""
 
-from __future__ import annotations
-
 import time
 from inspect import isawaitable
 from typing import Any
 from typing import Awaitable
 from typing import Callable
 
+from rich.console import RenderableType
+from rich.text import TextType
 from textual import events
 from textual.message import Message
 from textual.reactive import reactive
@@ -189,6 +189,103 @@ class WidgetExtension:
         else:
             await super()._on_message(message)
         return None
+
+
+class StaticInitExtension(WidgetExtension):
+    """Extension for textual widgets that inherit from Static class.
+
+    Includes all extensions provided by WidgetExtension, and automatically calls the extension set up.
+    See WidgetExtension for full details on all extended features.
+
+    Example:
+        class Label(StaticInitExtension, widgets.Label):
+            ...
+    """
+
+    def __init__(
+        self,
+        renderable: RenderableType = "",
+        *,
+        expand: bool = False,
+        shrink: bool = False,
+        markup: bool = True,
+        name: str | None = None,
+        id: str | None = None,
+        classes: str | None = None,
+        disabled: bool = False,
+        **extension_configs: Any,
+    ) -> None:
+        """Initialize a Static widget with extension arguments.
+
+        Args:
+            renderable: A Rich renderable, or string containing console markup.
+            expand: Expand content if required to fill container.
+            shrink: Shrink content if required to fill container.
+            markup: True if markup should be parsed and rendered.
+            name: Name of widget.
+            id: ID of Widget.
+            classes: Space separated list of class names.
+            disabled: Whether the static is disabled or not.
+            extension_configs: Widget extension configurations, such as dynamically provided local callbacks by name.
+        """
+        super().__init__(
+            renderable,
+            expand=expand,
+            shrink=shrink,
+            markup=markup,
+            name=name,
+            id=id,
+            classes=classes,
+            disabled=disabled,
+        )
+        self.__extend_widget__(**extension_configs)
+
+
+class ToggleButtonInitExtension(WidgetExtension):
+    """Extension for textual widgets that inherit from ToggleButton class.
+
+    Includes all extensions provided by WidgetExtension, and automatically calls the extension set up.
+    See WidgetExtension for full details on all extended features.
+
+    Example:
+        class Checkbox(ToggleButtonInitExtension, containers.Checkbox):
+            ...
+    """
+
+    def __init__(
+        self,
+        label: TextType = "",
+        value: bool = False,
+        button_first: bool = True,
+        *,
+        name: str | None = None,
+        id: str | None = None,
+        classes: str | None = None,
+        disabled: bool = False,
+        **extension_configs: Any,
+    ) -> None:
+        """Initialize the toggle.
+
+        Args:
+            label: The label for the toggle.
+            value: The initial value of the toggle.
+            button_first: Should the button come before the label, or after?
+            name: The name of the toggle.
+            id: The ID of the toggle in the DOM.
+            classes: The CSS classes of the toggle.
+            disabled: Whether the button is disabled or not.
+            extension_configs: Widget extension configurations, such as dynamically provided local callbacks by name.
+        """
+        super().__init__(
+            label=label,
+            value=value,
+            button_first=button_first,
+            name=name,
+            id=id,
+            classes=classes,
+            disabled=disabled,
+        )
+        self.__extend_widget__(**extension_configs)
 
 
 class WidgetInitExtension(WidgetExtension):

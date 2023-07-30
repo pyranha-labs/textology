@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from textual import containers
 
-from ._extensions import WidgetInitExtension
+from .._extensions import WidgetInitExtension
 
 
 class Center(WidgetInitExtension, containers.Center):
