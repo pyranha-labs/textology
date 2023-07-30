@@ -7,7 +7,7 @@ from textual import widgets
 from textual.widget import Widget
 
 from ._extensions import WidgetExtension
-from ._label import Label
+from ._textual._label import Label
 
 # Recommended events to ignore when widgets are used in ListViews to prevent large unneeded event batches.
 LIST_ITEM_EVENT_IGNORES = (

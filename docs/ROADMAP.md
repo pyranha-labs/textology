@@ -74,4 +74,4 @@ Functionality to expand the use cases of existing widgets.
     * [x] ListItemHeader (ListItem subclass) for non-interactive section breaks in ListViews
     * [x] ListView with reactive "highlighted" attributes, and support for ListItemHeaders
     * [x] Extend Remainder of "containers" module
-    * [ ] Extend Remainder of "widgets" module
+    * [x] Extend Remainder of "widgets" module
