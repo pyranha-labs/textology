@@ -274,9 +274,10 @@ class ExtendedApp(LayoutApp, ObserverManager):
         self.logger.warning(f"Page not found {request.url.path}")
         return Label("Page not found")
 
-    def page_registry(self) -> dict:
+    @property
+    def page_registry(self) -> dict[str, Page]:
         """Provide the combined page registry in use by this multi-page application."""
-        return self._page_registry
+        return self._page_registry.copy()
 
     def _page_router(self, pathname: str, search: str) -> list[Widget]:
         """Load the appropriate page based on the URL path and search options."""
@@ -322,6 +323,7 @@ class ExtendedApp(LayoutApp, ObserverManager):
         self,
         page: Page | ModuleType | str | Callable | None = None,
         path: str | None = None,
+        name: str | None = None,
         redirect_from: str | list[str] | None = None,
         layout: Callable | None = None,
     ) -> None:
@@ -336,6 +338,9 @@ class ExtendedApp(LayoutApp, ObserverManager):
                     e.g. "mylib.home" -> "/home"
                     e.g. "layout_home_page" -> "/home_page"
                 Variables marked as {variable_name} in paths will be passed to "layout" as keyword arguments.
+            name: The name of the page link, such as what might be shown in navigation menus.
+                Inferred from the "path" if not provided.
+                    e.g. "home_page" -> "Home Page"
             redirect_from: Paths that should redirect to this page's path. e.g. "/v1/home"
             layout: Function to call to generate the widget(s) used in the page's layout.
         """
@@ -344,6 +349,7 @@ class ExtendedApp(LayoutApp, ObserverManager):
         page = register_page(
             page=page,
             path=path,
+            name=name,
             redirect_from=redirect_from,
             layout=layout,
             page_map=self._page_registry,
