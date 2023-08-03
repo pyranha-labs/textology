@@ -16,6 +16,7 @@ class Page:
         self,
         layout: Callable,
         path: str | None = None,
+        name: str | None = None,
         redirect_from: str | list[str] | None = None,
     ) -> None:
         """Initialize the page configuration.
@@ -26,12 +27,16 @@ class Page:
                 Inferred from the "layout" if not provided.
                     e.g. "home_page" -> "/home_page"
                 Variables marked as {variable_name} in paths will be passed to "layout" as keyword arguments.
+            name: The name of the page link, such as what might be shown in navigation menus.
+                Inferred from the "path" if not provided.
+                    e.g. "home_page" -> "Home Page"
             redirect_from: Paths that should redirect to this page's path. e.g. "/v1/home"
         """
         if not path:
             path = layout.__name__.removeprefix("layout_")
         self.layout = layout
         self.path = path if path.startswith("/") else f"/{path}"
+        self.name = name or self.path.strip("/").replace("_", " ").title()
         self.redirect_from = [redirect_from] if isinstance(redirect_from, str) else redirect_from
 
     @staticmethod
@@ -45,7 +50,7 @@ class Page:
             Newly created page with attributes, such as path, populated by the module's attributes and variables.
         """
         kwargs = {}
-        vars_to_save = ("layout", "path", "redirect_from")
+        vars_to_save = ("layout", "path", "name", "redirect_from")
         if isinstance(module, str):
             module = importlib.import_module(module)
         for var_name in dir(module):
@@ -82,6 +87,7 @@ class Page:
 def register_page(
     page: Page | ModuleType | str | Callable | None = None,
     path: str | None = None,
+    name: str | None = None,
     redirect_from: str | list[str] | None = None,
     layout: Callable | None = None,
     page_map: dict[str, Page] | None = None,
@@ -97,6 +103,9 @@ def register_page(
                 e.g. "mylib.home" -> "/home"
                 e.g. "layout_home_page" -> "/home_page"
             Variables marked as {variable_name} in paths will be passed to "layout" as keyword arguments.
+        name: The name of the page link, such as what might be shown in navigation menus.
+            Inferred from the "path" if not provided.
+                e.g. "home_page" -> "Home Page"
         redirect_from: Paths that should redirect to this page's path. e.g. "/v1/home"
         layout: Function to call to generate the widget(s) used in the page's layout.
         page_map: All currently registered pages for a multi-page app.
@@ -117,10 +126,13 @@ def register_page(
             page.redirect_from = redirect_from
         if layout:
             page.layout = layout
+        if name:
+            page.name = name
     else:
         page = Page(
             layout=layout,
             path=path,
+            name=name,
             redirect_from=redirect_from,
         )
     paths = [page.path]

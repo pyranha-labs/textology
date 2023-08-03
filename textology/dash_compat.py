@@ -71,11 +71,12 @@ class DashCompatApp(ExtendedApp):
             *dependencies,
         )
 
-    def register_page(  # Intentional renames for Dash compatibility. pylint: disable=arguments-renamed
+    def register_page(  # Intentional renames for Dash compatibility. pylint: disable=arguments-renamed, too-many-arguments
         self,
         module: Page | ModuleType | str | Callable | None = None,
         path: str | None = None,
         path_template: str | None = None,
+        name: str | None = None,
         redirect_from: str | list[str] | None = None,
         layout: Callable | None = None,
     ) -> None:
@@ -96,6 +97,9 @@ class DashCompatApp(ExtendedApp):
                     e.g. "home_page" -> "/home_page"
                 Variables marked as {variable_name} in paths will be passed to "layout" as keyword arguments.
             path_template: Compatibility alias for "path", no functional difference.
+            name: The name of the page link, such as what might be shown in navigation menus.
+                Inferred from the "path" if not provided.
+                    e.g. "home_page" -> "Home Page"
             redirect_from: Paths that should redirect to this page's path. e.g. "/v1/home"
             layout: Function to call to generate the widget(s) used in the page's layout.
         """
