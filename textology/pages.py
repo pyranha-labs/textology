@@ -17,6 +17,7 @@ class Page:
         layout: Callable,
         path: str | None = None,
         name: str | None = None,
+        order: int = 0,
         redirect_from: str | list[str] | None = None,
     ) -> None:
         """Initialize the page configuration.
@@ -30,6 +31,7 @@ class Page:
             name: The name of the page link, such as what might be shown in navigation menus.
                 Inferred from the "path" if not provided.
                     e.g. "home_page" -> "Home Page"
+            order: The relative order to sort pages in the "page_registry", such as ordering in navigation menus.
             redirect_from: Paths that should redirect to this page's path. e.g. "/v1/home"
         """
         if not path:
@@ -37,6 +39,7 @@ class Page:
         self.layout = layout
         self.path = path if path.startswith("/") else f"/{path}"
         self.name = name or self.path.strip("/").replace("_", " ").title()
+        self.order = order
         self.redirect_from = [redirect_from] if isinstance(redirect_from, str) else redirect_from
 
     @staticmethod
@@ -50,7 +53,7 @@ class Page:
             Newly created page with attributes, such as path, populated by the module's attributes and variables.
         """
         kwargs = {}
-        vars_to_save = ("layout", "path", "name", "redirect_from")
+        vars_to_save = ("layout", "path", "name", "order", "redirect_from")
         if isinstance(module, str):
             module = importlib.import_module(module)
         for var_name in dir(module):
@@ -84,10 +87,11 @@ class Page:
         return page
 
 
-def register_page(
+def register_page(  # pylint: disable=too-many-arguments
     page: Page | ModuleType | str | Callable | None = None,
     path: str | None = None,
     name: str | None = None,
+    order: int = 0,
     redirect_from: str | list[str] | None = None,
     layout: Callable | None = None,
     page_map: dict[str, Page] | None = None,
@@ -106,6 +110,7 @@ def register_page(
         name: The name of the page link, such as what might be shown in navigation menus.
             Inferred from the "path" if not provided.
                 e.g. "home_page" -> "Home Page"
+        order: The relative order to sort pages in the "page_registry", such as ordering in navigation menus.
         redirect_from: Paths that should redirect to this page's path. e.g. "/v1/home"
         layout: Function to call to generate the widget(s) used in the page's layout.
         page_map: All currently registered pages for a multi-page app.
@@ -128,11 +133,14 @@ def register_page(
             page.layout = layout
         if name:
             page.name = name
+        if order:
+            page.order = order
     else:
         page = Page(
             layout=layout,
             path=path,
             name=name,
+            order=order,
             redirect_from=redirect_from,
         )
     paths = [page.path]

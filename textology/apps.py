@@ -319,11 +319,12 @@ class ExtendedApp(LayoutApp, ObserverManager):
             for callback in self.generate_callbacks(widget_id, property_name):
                 self.watch(widget, property_name, callback, init=False)
 
-    def register_page(
+    def register_page(  # pylint: disable=too-many-arguments
         self,
         page: Page | ModuleType | str | Callable | None = None,
         path: str | None = None,
         name: str | None = None,
+        order: int = 0,
         redirect_from: str | list[str] | None = None,
         layout: Callable | None = None,
     ) -> None:
@@ -341,6 +342,7 @@ class ExtendedApp(LayoutApp, ObserverManager):
             name: The name of the page link, such as what might be shown in navigation menus.
                 Inferred from the "path" if not provided.
                     e.g. "home_page" -> "Home Page"
+            order: The relative order to sort pages in the "page_registry", such as ordering in navigation menus.
             redirect_from: Paths that should redirect to this page's path. e.g. "/v1/home"
             layout: Function to call to generate the widget(s) used in the page's layout.
         """
@@ -350,6 +352,7 @@ class ExtendedApp(LayoutApp, ObserverManager):
             page=page,
             path=path,
             name=name,
+            order=order,
             redirect_from=redirect_from,
             layout=layout,
             page_map=self._page_registry,
