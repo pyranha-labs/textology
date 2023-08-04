@@ -77,6 +77,7 @@ class DashCompatApp(ExtendedApp):
         path: str | None = None,
         path_template: str | None = None,
         name: str | None = None,
+        order: int = 0,
         redirect_from: str | list[str] | None = None,
         layout: Callable | None = None,
     ) -> None:
@@ -100,12 +101,15 @@ class DashCompatApp(ExtendedApp):
             name: The name of the page link, such as what might be shown in navigation menus.
                 Inferred from the "path" if not provided.
                     e.g. "home_page" -> "Home Page"
+            order: The relative order to sort pages in the "page_registry", such as ordering in navigation menus.
             redirect_from: Paths that should redirect to this page's path. e.g. "/v1/home"
             layout: Function to call to generate the widget(s) used in the page's layout.
         """
         super().register_page(
             page=module,
             path=path_template or path,
+            name=name,
+            order=order,
             redirect_from=redirect_from,
             layout=layout,
         )
