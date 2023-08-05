@@ -12,7 +12,6 @@ from ._extensions import Clickable
 from ._extensions import WidgetExtension
 from ._extensions import WidgetInitExtension
 from ._horizontal_menus import HorizontalMenus
-from ._list_item import LIST_ITEM_EVENT_IGNORES
 from ._list_item import ListItem
 from ._list_item_header import ListItemHeader
 from ._list_item_meta import ListItemMeta

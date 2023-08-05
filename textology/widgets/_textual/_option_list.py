@@ -1,7 +1,9 @@
 """Extended Textual OptionList widget."""
 
 from typing import Any
+from typing import Callable
 
+from textual import events
 from textual import widgets
 from textual.widgets._option_list import NewOptionListContent
 
@@ -18,7 +20,9 @@ class OptionList(WidgetExtension, widgets.OptionList):
         id: str | None = None,
         classes: str | None = None,
         disabled: bool = False,
-        **extension_configs: Any,
+        styles: dict[str, Any] | None = None,
+        disabled_messages: list[type[events.Message]] | None = None,
+        callbacks: dict[str, Callable] | None = None,
     ) -> None:
         """Initialize the option list.
 
@@ -28,7 +32,9 @@ class OptionList(WidgetExtension, widgets.OptionList):
             id: The ID of the option list in the DOM.
             classes: The CSS classes of the option list.
             disabled: Whether the option list is disabled or not.
-            extension_configs: Widget extension configurations, such as dynamically provided local callbacks by name.
+            styles: Local inline styles to apply on top of the class' styles for only this instance.
+            disabled_messages: List of messages to disable on this widget instance only.
+            callbacks: Mapping of callbacks to send messages to instead of sending to default handler.
         """
         super().__init__(
             *content,
@@ -37,4 +43,8 @@ class OptionList(WidgetExtension, widgets.OptionList):
             classes=classes,
             disabled=disabled,
         )
-        self.__extend_widget__(**extension_configs)
+        self.__extend_widget__(
+            styles=styles,
+            disabled_messages=disabled_messages,
+            callbacks=callbacks,
+        )

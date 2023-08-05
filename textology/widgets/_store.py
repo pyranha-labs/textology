@@ -2,8 +2,10 @@
 
 import time
 from typing import Any
+from typing import Callable
 from typing import TypeVar
 
+from textual import events
 from textual.reactive import reactive
 from textual.widget import Widget
 
@@ -37,16 +39,18 @@ class Store(WidgetInitExtension, Widget):
         self,
         data: Any,
         id: str | None = None,
-        **extension_configs: Any,
+        disabled_messages: list[events.Message] | None = None,
+        callbacks: dict[str, Callable] | None = None,
     ) -> None:
         """Initialize the data store.
 
         Args:
             data: Initial data to store.
             id: The ID of the widget in the DOM.
-            extension_configs: Widget extension configurations, such as dynamically provided local callbacks by name.
+            disabled_messages: List of messages to disable on this widget instance only.
+            callbacks: Mapping of callbacks to send messages to instead of sending to default handler.
         """
-        super().__init__(id=id, **extension_configs)
+        super().__init__(id=id, disabled_messages=disabled_messages, callbacks=callbacks)
         self.data = data
 
     def watch_clear_data(self, new_value: bool) -> None:

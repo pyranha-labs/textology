@@ -5,6 +5,7 @@ from inspect import isawaitable
 from typing import Any
 from typing import Awaitable
 from typing import Callable
+from typing import Iterable
 
 from rich.console import RenderableType
 from rich.text import TextType
@@ -62,47 +63,38 @@ class WidgetExtension:
             ...
     """
 
-    default_disabled_messages = []
+    default_disabled_messages = ()
 
     def __extend_widget__(
         self,
-        disable_messages: list[events.Message] | None = None,
-        local_callbacks: dict[str, Callable] | None = None,
         styles: dict[str, Any] | None = None,
-        **additional_configs: Any,
+        disabled_messages: Iterable[type[events.Message]] | None = None,
+        callbacks: dict[str, Callable] | None = None,
     ) -> None:
         """Set up the widget's extensions.
 
         Args:
-            disable_messages: List of messages to disable on this widget instance only.
+            styles: Local inline styles to apply on top of the class' styles for only this instance.
+            disabled_messages: List of messages to disable on this widget instance only.
                 Defaults to class default_disabled_messages attribute if None.
-            local_callbacks: Mapping of callbacks to send messages to instead of sending to default handler.
+            callbacks: Mapping of callbacks to send messages to instead of sending to default handler.
                 Callbacks behave the same as "on_*" functions declared at class level.
                 Return "True" in callbacks to send the messages to the default widget handler.
                 May be provided as direct arguments to "additional_configs". e.g. "on_button_pressed=on_press"
-            additional_configs: Additional configurations, such as dynamically provided local callbacks by name.
-            styles: Local inline styles to apply on top of the classes styles for only this instance.
         """
         self._local_callback_map = {}
 
         if styles:
             self.__extend_widget_styles__(styles)
 
-        # Allow callback to be provided as an explicit dictionary, or as dynamic kwargs.
-        if not local_callbacks:
-            found_callbacks = {}
-            for key, value in additional_configs.items():
-                if key.startswith("on_") and callable(value):
-                    found_callbacks[key] = value
-            local_callbacks = found_callbacks
-        if local_callbacks:
-            self.__extend_widget_messaging_callbacks__(local_callbacks)
+        if callbacks:
+            self.__extend_widget_messaging_callbacks__(callbacks)
 
         # Allow messages to be disabled for this instance of the widget only, or use subclass defaults.
-        if disable_messages is None:
-            disable_messages = self.default_disabled_messages
-        if disable_messages:
-            self.disable_messages(*disable_messages)
+        if disabled_messages is None:
+            disabled_messages = self.default_disabled_messages
+        if disabled_messages:
+            self.disable_messages(*disabled_messages)
 
     def __extend_widget_messaging_callbacks__(
         self,
@@ -111,7 +103,9 @@ class WidgetExtension:
         """Validate and set up message callbacks."""
         for key, value in local_callbacks.items():
             if not key.startswith("on_"):
-                continue
+                raise ValueError(
+                    'Callbacks must start with "on_" and end with the name of the event type in camel_case'
+                )
             self._local_callback_map[key] = value
 
     def __extend_widget_styles__(self, styles: dict) -> None:
@@ -213,7 +207,9 @@ class StaticInitExtension(WidgetExtension):
         id: str | None = None,
         classes: str | None = None,
         disabled: bool = False,
-        **extension_configs: Any,
+        styles: dict[str, Any] | None = None,
+        disabled_messages: Iterable[type[events.Message]] | None = None,
+        callbacks: dict[str, Callable] | None = None,
     ) -> None:
         """Initialize a Static widget with extension arguments.
 
@@ -226,7 +222,9 @@ class StaticInitExtension(WidgetExtension):
             id: ID of Widget.
             classes: Space separated list of class names.
             disabled: Whether the static is disabled or not.
-            extension_configs: Widget extension configurations, such as dynamically provided local callbacks by name.
+            styles: Local inline styles to apply on top of the class' styles for only this instance.
+            disabled_messages: List of messages to disable on this widget instance only.
+            callbacks: Mapping of callbacks to send messages to instead of sending to default handler.
         """
         super().__init__(
             renderable,
@@ -238,7 +236,11 @@ class StaticInitExtension(WidgetExtension):
             classes=classes,
             disabled=disabled,
         )
-        self.__extend_widget__(**extension_configs)
+        self.__extend_widget__(
+            styles=styles,
+            disabled_messages=disabled_messages,
+            callbacks=callbacks,
+        )
 
 
 class ToggleButtonInitExtension(WidgetExtension):
@@ -262,7 +264,9 @@ class ToggleButtonInitExtension(WidgetExtension):
         id: str | None = None,
         classes: str | None = None,
         disabled: bool = False,
-        **extension_configs: Any,
+        styles: dict[str, Any] | None = None,
+        disabled_messages: Iterable[type[events.Message]] | None = None,
+        callbacks: dict[str, Callable] | None = None,
     ) -> None:
         """Initialize the toggle.
 
@@ -274,7 +278,9 @@ class ToggleButtonInitExtension(WidgetExtension):
             id: The ID of the toggle in the DOM.
             classes: The CSS classes of the toggle.
             disabled: Whether the button is disabled or not.
-            extension_configs: Widget extension configurations, such as dynamically provided local callbacks by name.
+            styles: Local inline styles to apply on top of the class' styles for only this instance.
+            disabled_messages: List of messages to disable on this widget instance only.
+            callbacks: Mapping of callbacks to send messages to instead of sending to default handler.
         """
         super().__init__(
             label=label,
@@ -285,7 +291,11 @@ class ToggleButtonInitExtension(WidgetExtension):
             classes=classes,
             disabled=disabled,
         )
-        self.__extend_widget__(**extension_configs)
+        self.__extend_widget__(
+            styles=styles,
+            disabled_messages=disabled_messages,
+            callbacks=callbacks,
+        )
 
 
 class WidgetInitExtension(WidgetExtension):
@@ -306,7 +316,9 @@ class WidgetInitExtension(WidgetExtension):
         id: str | None = None,
         classes: str | None = None,
         disabled: bool = False,
-        **extension_configs: Any,
+        styles: dict[str, Any] | None = None,
+        disabled_messages: Iterable[events.Message] | None = None,
+        callbacks: dict[str, Callable] | None = None,
     ) -> None:
         """Initialize a Widget with support for extension arguments.
 
@@ -316,7 +328,9 @@ class WidgetInitExtension(WidgetExtension):
             id: The ID of the widget in the DOM.
             classes: The CSS classes for the widget.
             disabled: Whether the widget is disabled or not.
-            extension_configs: Widget extension configurations, such as dynamically provided local callbacks by name.
+            styles: Local inline styles to apply on top of the class' styles for only this instance.
+            disabled_messages: List of messages to disable on this widget instance only.
+            callbacks: Mapping of callbacks to send messages to instead of sending to default handler.
         """
         super().__init__(
             *children,
@@ -325,4 +339,8 @@ class WidgetInitExtension(WidgetExtension):
             classes=classes,
             disabled=disabled,
         )
-        self.__extend_widget__(**extension_configs)
+        self.__extend_widget__(
+            styles=styles,
+            disabled_messages=disabled_messages,
+            callbacks=callbacks,
+        )
