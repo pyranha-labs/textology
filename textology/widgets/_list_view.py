@@ -1,6 +1,7 @@
 """Extended Textual vertical list view widget."""
 
 from typing import Any
+from typing import Callable
 
 from textual import events
 from textual import widgets
@@ -33,7 +34,9 @@ class ListView(WidgetExtension, widgets.ListView):
         classes: str | None = None,
         disabled: bool = False,
         auto_highlight: bool = True,
-        **extension_configs: Any,
+        styles: dict[str, Any] | None = None,
+        disabled_messages: list[events.Message] | None = None,
+        callbacks: dict[str, Callable] | None = None,
     ) -> None:
         """Initialize a ListView with extension arguments.
 
@@ -45,7 +48,9 @@ class ListView(WidgetExtension, widgets.ListView):
             classes: The CSS classes of the widget.
             disabled: Whether the ListView is disabled or not.
             auto_highlight: Whether the ListView automatically highlights the first item on focus.
-            extension_configs: Widget extension configurations, such as dynamically provided local callbacks by name.
+            styles: Local inline styles to apply on top of the class' styles for only this instance.
+            disabled_messages: List of messages to disable on this widget instance only.
+            callbacks: Mapping of callbacks to send messages to instead of sending to default handler.
         """
         super().__init__(
             *children,
@@ -55,7 +60,11 @@ class ListView(WidgetExtension, widgets.ListView):
             classes=classes,
             disabled=disabled,
         )
-        self.__extend_widget__(**extension_configs)
+        self.__extend_widget__(
+            styles=styles,
+            disabled_messages=disabled_messages,
+            callbacks=callbacks,
+        )
         self.auto_highlight = auto_highlight
 
     def on_focus(self, event: events.Focus) -> None:

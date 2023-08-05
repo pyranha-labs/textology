@@ -1,8 +1,9 @@
 """List item that acts as an unselectable header between groups."""
 
 from typing import Any
+from typing import Callable
 
-from textual.events import Click
+from textual import events
 from textual.widget import Widget
 
 from ._list_item import ListItem
@@ -31,7 +32,9 @@ class ListItemHeader(ListItem):
         disabled: bool = False,
         disable_click: bool = True,
         data: Any = None,
-        **extension_configs: Any,
+        styles: dict[str, Any] | None = None,
+        disabled_messages: list[type[events.Message]] | None = None,
+        callbacks: dict[str, Callable] | None = None,
     ) -> None:
         """Initialize a ListItemHeader with extension arguments.
 
@@ -44,7 +47,9 @@ class ListItemHeader(ListItem):
             disable_click: Whether clicking the widget it disabled.
             data: Optional data associated with the list item.
                 If no child is provided for display, the data will be searched for a "label" key to use in a Label.
-            extension_configs: Widget extension configurations, such as dynamically provided local callbacks by name.
+            styles: Local inline styles to apply on top of the class' styles for only this instance.
+            disabled_messages: List of messages to disable on this widget instance only.
+            callbacks: Mapping of callbacks to send messages to instead of sending to default handler.
         """
         super().__init__(
             *children,
@@ -53,11 +58,13 @@ class ListItemHeader(ListItem):
             classes=classes,
             disabled=disabled,
             data=data,
-            **extension_configs,
+            styles=styles,
+            disabled_messages=disabled_messages,
+            callbacks=callbacks,
         )
         self.disable_click = disable_click
 
-    async def _on_click(self, event: Click) -> None:
+    async def _on_click(self, event: events.Click) -> None:
         """Disable clicking header items."""
         if self.disable_click:
             event.stop()

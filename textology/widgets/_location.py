@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from typing import Any
+from typing import Callable
 from urllib.parse import urlparse
 
 from textual import events
@@ -80,14 +81,15 @@ class Location(WidgetInitExtension, Widget, Router):
     # Sentinel value used to trigger reloads from callbacks. Set to True to manually trigger a reload.
     refresh_url: bool = reactive(False, repaint=False, init=False, always_update=True)
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         path: str | None = "/",
         id: str | None = None,
         logger: logging.Logger | None = None,
         enable_url_events: bool = False,
         enable_history_events: bool = False,
-        **extension_configs: Any,
+        disabled_messages: list[events.Message] | None = None,
+        callbacks: dict[str, Callable] | None = None,
     ) -> None:
         """Initialize the location, routing, and history.
 
@@ -97,9 +99,10 @@ class Location(WidgetInitExtension, Widget, Router):
             logger: Custom logger to send routing messages to.
             enable_url_events: Whether URL update events should be sent.
             enable_history_events: Whether history update events should be sent.
-            extension_configs: Widget extension configurations, such as dynamically provided local callbacks by name.
+            disabled_messages: List of messages to disable on this widget instance only.
+            callbacks: Mapping of callbacks to send messages to instead of sending to default handler.
         """
-        super().__init__(id=id, **extension_configs)
+        super().__init__(id=id, disabled_messages=disabled_messages, callbacks=callbacks)
         self._initial_path = path
         # Manually set up router mixin since Widget inheritance does not automatically trigger.
         Router.__init__(self, logger=logger or logging.root)

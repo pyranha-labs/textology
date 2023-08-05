@@ -1,8 +1,10 @@
 """Extended Textual Tab Content widgets."""
 
 from typing import Any
+from typing import Callable
 
 from rich.text import TextType
+from textual import events
 from textual import widgets
 from textual.widget import Widget
 
@@ -20,7 +22,9 @@ class TabbedContent(WidgetExtension, widgets.TabbedContent):
         id: str | None = None,
         classes: str | None = None,
         disabled: bool = False,
-        **extension_configs: Any,
+        styles: dict[str, Any] | None = None,
+        disabled_messages: list[type[events.Message]] | None = None,
+        callbacks: dict[str, Callable] | None = None,
     ) -> None:
         """Initialize a TabbedContent widgets.
 
@@ -31,7 +35,9 @@ class TabbedContent(WidgetExtension, widgets.TabbedContent):
             id: The ID of the button in the DOM.
             classes: The CSS classes of the button.
             disabled: Whether the button is disabled or not.
-            extension_configs: Widget extension configurations, such as dynamically provided local callbacks by name.
+            styles: Local inline styles to apply on top of the class' styles for only this instance.
+            disabled_messages: List of messages to disable on this widget instance only.
+            callbacks: Mapping of callbacks to send messages to instead of sending to default handler.
         """
         super().__init__(
             *titles,
@@ -41,7 +47,11 @@ class TabbedContent(WidgetExtension, widgets.TabbedContent):
             classes=classes,
             disabled=disabled,
         )
-        self.__extend_widget__(**extension_configs)
+        self.__extend_widget__(
+            styles=styles,
+            disabled_messages=disabled_messages,
+            callbacks=callbacks,
+        )
 
 
 class TabPane(WidgetExtension, widgets.TabPane):
@@ -55,7 +65,9 @@ class TabPane(WidgetExtension, widgets.TabPane):
         id: str | None = None,
         classes: str | None = None,
         disabled: bool = False,
-        **extension_configs: Any,
+        styles: dict[str, Any] | None = None,
+        disabled_messages: list[type[events.Message]] | None = None,
+        callbacks: dict[str, Callable] | None = None,
     ) -> None:
         """Initialize a TabPane.
 
@@ -66,7 +78,9 @@ class TabPane(WidgetExtension, widgets.TabPane):
             id: Optional ID for the TabPane.
             classes: Optional initial classes for the widget.
             disabled: Whether the TabPane is disabled or not.
-            extension_configs: Widget extension configurations, such as dynamically provided local callbacks by name.
+            styles: Local inline styles to apply on top of the class' styles for only this instance.
+            disabled_messages: List of messages to disable on this widget instance only.
+            callbacks: Mapping of callbacks to send messages to instead of sending to default handler.
         """
         super().__init__(
             title,
@@ -76,4 +90,8 @@ class TabPane(WidgetExtension, widgets.TabPane):
             classes=classes,
             disabled=disabled,
         )
-        self.__extend_widget__(**extension_configs)
+        self.__extend_widget__(
+            styles=styles,
+            disabled_messages=disabled_messages,
+            callbacks=callbacks,
+        )

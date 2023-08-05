@@ -1,7 +1,9 @@
 """Extended Textual DataTable widget."""
 
 from typing import Any
+from typing import Callable
 
+from textual import events
 from textual import widgets
 from typing_extensions import Literal
 
@@ -11,7 +13,7 @@ from .._extensions import WidgetExtension
 class DataTable(WidgetExtension, widgets.DataTable):  # pylint: disable=too-many-ancestors
     """An extended tabular widget that contains data."""
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-locals
         self,
         *,
         show_header: bool = True,
@@ -27,7 +29,9 @@ class DataTable(WidgetExtension, widgets.DataTable):  # pylint: disable=too-many
         id: str | None = None,
         classes: str | None = None,
         disabled: bool = False,
-        **extension_configs: Any,
+        styles: dict[str, Any] | None = None,
+        disabled_messages: list[type[events.Message]] | None = None,
+        callbacks: dict[str, Callable] | None = None,
     ) -> None:
         """Initialize the data table widget.
 
@@ -45,7 +49,9 @@ class DataTable(WidgetExtension, widgets.DataTable):  # pylint: disable=too-many
             id: The ID of the content switcher in the DOM.
             classes: The CSS classes of the content switcher.
             disabled: Whether the content switcher is disabled or not.
-            extension_configs: Widget extension configurations, such as dynamically provided local callbacks by name.
+            styles: Local inline styles to apply on top of the class' styles for only this instance.
+            disabled_messages: List of messages to disable on this widget instance only.
+            callbacks: Mapping of callbacks to send messages to instead of sending to default handler.
         """
         super().__init__(
             show_header=show_header,
@@ -62,4 +68,8 @@ class DataTable(WidgetExtension, widgets.DataTable):  # pylint: disable=too-many
             classes=classes,
             disabled=disabled,
         )
-        self.__extend_widget__(**extension_configs)
+        self.__extend_widget__(
+            styles=styles,
+            disabled_messages=disabled_messages,
+            callbacks=callbacks,
+        )

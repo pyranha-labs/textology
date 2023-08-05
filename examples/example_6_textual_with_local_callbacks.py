@@ -26,7 +26,9 @@ class SimpleApp(App):
                 ListItem(Label("Page 3", styles={**menu_item_styles, "color": "orange"}), data=3),
                 id="main-menu",
                 styles={"width": 24},
-                on_list_view_highlighted=self.on_main_menu_highlighted,
+                callbacks={
+                    "on_list_view_highlighted": self.on_main_menu_highlighted,
+                },
             ),
             Container(
                 id="content",

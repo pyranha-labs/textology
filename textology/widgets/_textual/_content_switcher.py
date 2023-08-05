@@ -1,7 +1,9 @@
 """Extended Textual ContentSwitcher widget."""
 
 from typing import Any
+from typing import Callable
 
+from textual import events
 from textual import widgets
 from textual.widget import Widget
 
@@ -24,7 +26,9 @@ class ContentSwitcher(WidgetExtension, widgets.ContentSwitcher):
         classes: str | None = None,
         disabled: bool = False,
         initial: str | None = None,
-        **extension_configs: Any,
+        styles: dict[str, Any] | None = None,
+        disabled_messages: list[type[events.Message]] | None = None,
+        callbacks: dict[str, Callable] | None = None,
     ) -> None:
         """Initialize the content switching widget.
 
@@ -35,10 +39,16 @@ class ContentSwitcher(WidgetExtension, widgets.ContentSwitcher):
             classes: The CSS classes of the content switcher.
             disabled: Whether the content switcher is disabled or not.
             initial: The ID of the initial widget to show, ``None`` or empty string for the first tab.
-            extension_configs: Widget extension configurations, such as dynamically provided local callbacks by name.
+            styles: Local inline styles to apply on top of the class' styles for only this instance.
+            disabled_messages: List of messages to disable on this widget instance only.
+            callbacks: Mapping of callbacks to send messages to instead of sending to default handler.
 
         Note:
             If `initial` is not supplied, no children will be shown to start with.
         """
         super().__init__(*children, name=name, id=id, classes=classes, disabled=disabled, initial=initial)
-        self.__extend_widget__(**extension_configs)
+        self.__extend_widget__(
+            styles=styles,
+            disabled_messages=disabled_messages,
+            callbacks=callbacks,
+        )
