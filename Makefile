@@ -54,7 +54,7 @@ security:
 # Check full code quality suite (minus unit tests) against source.
 # Does not enforce unit tests to simplify pushes, unit tests should be automated via pipelines with standardized env.
 .PHONY: qa
-qa: lint style typing security format
+qa: style lint typing security format
 
 # Run basic unit tests.
 .PHONY: test
