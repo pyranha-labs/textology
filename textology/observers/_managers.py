@@ -9,6 +9,7 @@ import logging
 import traceback
 import weakref
 from collections import defaultdict
+from functools import lru_cache
 from inspect import isawaitable
 from typing import Any
 from typing import Callable
@@ -40,6 +41,7 @@ _GLOBAL_OBSERVER_EXC_MAP: dict[type[Exception], list[Observer]] = defaultdict(li
 _GLOBAL_OBSERVER_ID_MAP: dict[str, Observer] = {}
 _GLOBAL_OBSERVER_MAP: dict[str, dict[str, list[Observer]]] = defaultdict(lambda: defaultdict(list))
 
+CALLBACK_CACHE_SIZE = 1024
 WHEN_DECORATOR = "_textology_when"
 
 
@@ -283,6 +285,7 @@ class ObserverManager:
 
         return _on_update
 
+    @lru_cache(maxsize=CALLBACK_CACHE_SIZE)
     def generate_callbacks(self, component_id: str, component_property: str) -> list[ValueUpdateHandler]:
         """Create callbacks that will manage input/output operations for all functions registered to id/property combo.
 
