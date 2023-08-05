@@ -346,7 +346,7 @@ def on_click(event):
     print("Don't press my buttons...")
 
 button = Button(
-    on_button_pressed=on_click,
+    callbacks={"on_button_pressed": on_click},
 )
 ```
 
@@ -369,7 +369,7 @@ from textual import events
 from textology.widgets import ListItem
 
 item = ListItem(
-    disable_messages=[events.Mount, events.Show],
+    disabled_messages=[events.Mount, events.Show],
 )
 ```
 
