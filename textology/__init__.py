@@ -1,3 +1,3 @@
 """Utilities for creating text interfaces."""
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
