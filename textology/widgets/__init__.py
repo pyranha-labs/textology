@@ -37,6 +37,7 @@ from ._textual._footer import Footer
 from ._textual._header import Header
 from ._textual._label import Label
 from ._textual._loading_indicator import LoadingIndicator
+from ._textual._log import Log
 from ._textual._markdown import Markdown
 from ._textual._markdown import MarkdownViewer
 from ._textual._option_list import OptionList
@@ -44,6 +45,7 @@ from ._textual._pretty import Pretty
 from ._textual._progress_bar import ProgressBar
 from ._textual._radio_button import RadioButton
 from ._textual._radio_set import RadioSet
+from ._textual._rich_log import RichLog
 from ._textual._select import Select
 from ._textual._selection_list import SelectionList
 from ._textual._sparkline import Sparkline
@@ -54,6 +56,5 @@ from ._textual._tabbed_content import TabPane
 from ._textual._tabs import Tab
 from ._textual._tabs import Tabs
 from ._textual._text_input import TextInput
-from ._textual._text_log import TextLog
 from ._textual._tooltip import Tooltip
 from ._textual._tree import Tree
