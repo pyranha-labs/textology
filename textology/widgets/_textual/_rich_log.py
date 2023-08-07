@@ -1,4 +1,4 @@
-"""Extended Textual TextLog widget."""
+"""Extended Textual RichLog widget."""
 
 from typing import Any
 from typing import Callable
@@ -9,7 +9,7 @@ from textual import widgets
 from .._extensions import WidgetExtension
 
 
-class TextLog(WidgetExtension, widgets.TextLog):
+class RichLog(WidgetExtension, widgets.RichLog):
     """An extended widget for logging text."""
 
     def __init__(
@@ -29,7 +29,7 @@ class TextLog(WidgetExtension, widgets.TextLog):
         disabled_messages: list[type[events.Message]] | None = None,
         callbacks: dict[str, Callable] | None = None,
     ) -> None:
-        """Initialize a TextLog widget.
+        """Initialize a RichLog widget.
 
         Args:
             max_lines: Maximum number of lines in the log or `None` for no maximum.
