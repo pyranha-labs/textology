@@ -359,7 +359,7 @@ def pytest_sessionfinish(
             template = Path(os.path.dirname(__file__), "test-template.html").read_text(encoding="UTF-8")
         report = template.replace(
             'let testResult = "DUMMIES";',
-            f"let testResult = {json.dumps(final_result, indent=4)};",
+            f"let testResult = {json.dumps(final_result, indent=4, default=str)};",
         )
 
         report_path_opt = session.config.getoption(OPT_SNAP_REPORT)
@@ -423,7 +423,8 @@ def _write_snapshot_failure(item: pytest.Item, snapshot: SnapshotFailure, cursor
                     "console": {
                         "size": app.console.size,
                     },
-                }
+                },
+                default=str,
             ),
         },
     )
