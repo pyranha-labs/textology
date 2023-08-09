@@ -26,12 +26,16 @@
 
 Why should GUIs have all the fun? Textology helps create TUIs by extending the amazing functionality of
 [Textual](https://github.com/Textualize/textual) and [Rich](https://github.com/Textualize/rich),
-with design principles from other well known Python libraries and UI frameworks.
+with design principles from other well known libraries and frameworks.
 
 Commonly known as Text (or Terminal) User Interfaces, the goal of a TUI (Tooey) is to provide as close
 as possible to a traditional GUI experience straight from a terminal. Why? Not all environments allow full graphical
-library access, web access, etc. Specifically, Textology is inspired by the designs of frameworks such as
-Dash/FastAPI/Flask and their use of routing, context managers, and observation patterns. Textology also receives
+library access, web access, etc., but almost all provide access from a terminal. Yes, even terminals can provide
+mouse support, sophisticated layouts, animations, and a wide range of colors!
+
+Like Textual, Textology is inspired by modern web development. Textology extends Textual by bringing together, and
+expanding upon, designs from other frameworks such as Dash/FastAPI/Flask, including their use of routing, annotations,
+and observation patterns. Why? To increase developer velocity based on existing experience. Textology also receives
 inspiration from other UI frameworks external to Python, such as iOS, Android, and Web frameworks. Most importantly
 however, Textology is an extension of Textual: it does not replace Textual, but rather provides additional options
 on top of the core framework.
@@ -68,7 +72,7 @@ exception: Python3.10 minimum requirement.
 - New widgets, such as:
   - ListItemHeaders (non-interactive ListItems)
   - HorizontalMenus (walkable list of ListViews with peeking at following lists)
-- "Observer" apps, with "event driven architecture" to detect changes, and automatically update UI elements.
+- Extended apps, with "event driven architecture"/"observation pattern" to detect changes and automatically update UI.
   - Listen to reactive attribute changes.
   - Listen to posted events/messages.
 - Enhanced testing support
