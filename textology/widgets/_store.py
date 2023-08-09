@@ -37,7 +37,7 @@ class Store(WidgetInitExtension, Widget):
 
     def __init__(
         self,
-        data: Any,
+        data: Any = None,
         id: str | None = None,
         disabled_messages: list[events.Message] | None = None,
         callbacks: dict[str, Callable] | None = None,
