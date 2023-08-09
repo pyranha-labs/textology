@@ -164,6 +164,7 @@ async def compare_snapshots_fixture(request: FixtureRequest) -> Callable:
     Returns:
         Generated fixture to allow reuse multiple times in the same test.
     """
+    test_suffixes = []
 
     async def _compare_snapshots(
         app_or_pilot_or_module: App | Pilot | ModuleType,
@@ -197,6 +198,13 @@ async def compare_snapshots_fixture(request: FixtureRequest) -> Callable:
                 if isinstance(var, (App, Pilot)):
                     app_or_pilot_or_module = var
                     break
+
+        nonlocal test_suffixes
+        if not test_suffix and len(test_suffixes) > 0 and None in test_suffixes:
+            # Create an auto-incremented suffix to ensure a unique file is created when multiple snapshots are taken.
+            test_suffix = f"snap_{len(test_suffixes) + 1}"
+        test_suffixes.append(test_suffix)
+
         if not isinstance(app_or_pilot_or_module, Pilot):
             async with app_or_pilot_or_module.run_test() as pilot:
                 return await compare_snapshots(
