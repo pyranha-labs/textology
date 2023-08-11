@@ -1,5 +1,6 @@
 """Utilities for helping run unit tests with pytest."""
 
+import getpass
 import json
 import os
 import platform
@@ -343,7 +344,7 @@ def pytest_sessionfinish(
                 "host": platform.node(),
                 "platform": platform.platform(),
                 "timezone": time.strftime("%z", time.gmtime()),
-                "user": os.getlogin(),
+                "user": getpass.getuser(),
                 "processor": platform.processor(),
             },
             "libraries": {
