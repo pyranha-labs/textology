@@ -117,13 +117,11 @@ class ListView(WidgetExtension, widgets.ListView):
         """
         if self._is_valid_index(old_index):
             old_child = self._nodes[old_index]
-            assert isinstance(old_child, ListItem)
             old_child.highlighted = False
 
         new_child: Widget | None
         if self._is_valid_index(new_index):
             new_child = self._nodes[new_index]
-            assert isinstance(new_child, ListItem)
             if isinstance(new_child, ListItemHeader):
                 if new_index == 0:
                     if old_index == 0 or not self._nodes:
