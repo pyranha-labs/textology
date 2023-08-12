@@ -9,6 +9,3 @@ exclude_dirs:
 targets:
   - textology
   - examples
-
-skips:
-  - B101
