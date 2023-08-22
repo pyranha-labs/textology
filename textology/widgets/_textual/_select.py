@@ -45,7 +45,7 @@ class Select(WidgetExtension, widgets.Select):
             callbacks: Mapping of callbacks to send messages to instead of sending to default handler.
         """
         super().__init__(
-            *options,
+            options,
             prompt=prompt,
             allow_blank=allow_blank,
             value=value,
