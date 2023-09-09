@@ -78,6 +78,9 @@ exception: Python3.10 minimum requirement.
 - Enhanced testing support
   - Parallel tests via python-xdist
   - Custom testing arguments, such as updating snapshots on failures
+- Multiple theme support
+  - Swap CSS themes live
+  - Apply multiple CSS themes simultaneously
 
 
 ## Getting Started
