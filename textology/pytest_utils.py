@@ -201,7 +201,7 @@ async def compare_snapshots_fixture(request: FixtureRequest) -> Callable:
                     break
 
         nonlocal test_suffixes
-        if not test_suffix and len(test_suffixes) > 0 and None in test_suffixes:
+        if not compare_to and not test_suffix and len(test_suffixes) > 0 and None in test_suffixes:
             # Create an auto-incremented suffix to ensure a unique file is created when multiple snapshots are taken.
             test_suffix = f"snap_{len(test_suffixes) + 1}"
         test_suffixes.append(test_suffix)
