@@ -41,6 +41,10 @@ Core features and functionality.
       * [ ] Allow full folder path to page path. e.g. "docs/doc1" to "/docs/doc1"
       * [ ] Allow full module name to page path. e.g. "docs.doc1" to "/docs/doc1"
     * [ ] Async router serve loop
+- [x] Custom themes
+    * [x] Named themes by CSS paths
+    * [ ] Named themes by raw CSS
+    * [ ] Multiple simultaneous themes
 - [ ] HTML templates for layouts
 - [x] Testing
     * [x] Parallel processing support (python-xdist)

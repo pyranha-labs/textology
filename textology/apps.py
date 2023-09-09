@@ -10,6 +10,7 @@ from typing import Any
 from typing import Callable
 
 from textual import events
+from textual._path import _make_path_object_relative  # pylint: disable=protected-access
 from textual.app import App
 from textual.app import ComposeResult
 from textual.app import CSSPathType
@@ -90,6 +91,9 @@ class ExtendedApp(LayoutApp, ObserverManager):
         - URL history for navigating via ".back()", ".forward()", etc.
     """
 
+    CSS_THEMES: dict[str, list[CSSPathType]] | None = None
+    """Mappings of additional file paths to load CSS from in addition to base CSS."""
+
     def __init__(  # pylint: disable=too-many-arguments
         self,
         layout: Callable | Widget | None = None,
@@ -98,6 +102,8 @@ class ExtendedApp(LayoutApp, ObserverManager):
         driver_class: type[Driver] | None = None,
         css_path: CSSPathType | None = None,
         watch_css: bool = False,
+        css_theme: str | None = None,
+        css_themes: dict[str, list[CSSPathType]] | None = None,
         logger: logging.Logger | None = None,
     ) -> None:
         """Initialize an application with tracking for input/output callbacks.
@@ -115,11 +121,27 @@ class ExtendedApp(LayoutApp, ObserverManager):
                 To load multiple CSS files, pass a list of strings or paths which will be loaded in order.
             watch_css: Reload CSS if the files changed.
                 This is set automatically if you are using `textual run` with the `dev` switch.
+            css_theme: Initial CSS theme to load from "css_themes".
+                Themes are applied in addition to base "css_path" values, rather than in place of.
+            css_themes: Mapping of CSS paths by string names, or `None` to use the `CSS_THEMES` class variable.
             logger: Custom logger to send callback messages to.
 
         Raises:
             CssPathError: When the supplied CSS path(s) are an unexpected type.
         """
+        css_path = css_path or self.CSS_PATH
+        if css_path and not isinstance(css_path, list):
+            css_path = [css_path]
+        self.css_theme = css_theme
+        self.css_themes = css_themes or self.CSS_THEMES or {}
+        for css_theme_name, css_theme_paths in self.css_themes.items():
+            self.css_themes[css_theme_name] = [
+                _make_path_object_relative(css_theme_path, self) for css_theme_path in css_theme_paths
+            ]
+        if self.css_theme and self.css_theme in self.css_themes:
+            css_path = css_path or []
+            css_path.extend(self.css_themes[self.css_theme])
+
         layout = layout or Container(
             Location(id=_DEFAULT_URL_ID),
             Container(id=_DEFAULT_CONTENT_ID) if not use_pages else PageContainer(id=_DEFAULT_CONTENT_ID),
@@ -165,6 +187,50 @@ class ExtendedApp(LayoutApp, ObserverManager):
             component.app.push_screen(value)
         else:
             super().apply_update(observer_id, component, component_id, component_property, value)
+
+    def apply_theme(self, theme: str | None = None) -> None:
+        """Load a CSS theme.
+
+        Themes are applied in addition to base "css_path" values, rather than in place of.
+
+        Args:
+            theme: Name of the CSS theme to load from "css_themes".
+                All other stylesheets not in the base CSS configuration will be unloaded.
+        """
+        css_paths = self.css_path
+        stylesheet = self.stylesheet.copy()
+
+        if self.css_theme and self.css_theme in self.css_themes:
+            for css_theme_path in self.css_themes[self.css_theme]:
+                if css_theme_path in css_paths:
+                    css_paths.remove(css_theme_path)
+                if stylesheet.has_source(css_theme_path):
+                    stylesheet.source.pop(str(css_theme_path))
+            self.log.info(f"Removed CSS theme: {self.css_theme}")
+            self.css_theme = None
+        if theme and theme not in self.css_themes:
+            self.log.error(f"CSS Theme not found: {theme}")
+        for css_theme_path in self.css_themes.get(theme, []):
+            css_paths.append(css_theme_path)
+        self.css_path = css_paths
+        try:
+            stylesheet.read_all(css_paths)
+            stylesheet.parse()
+            self.log.info(f"Applied theme: {theme}")
+        except Exception as error:  # Do not crash app on theme swap failure. pylint: disable=broad-exception-caught
+            self._css_has_errors = True
+            self.log.error(error)
+        else:
+            self.css_theme = theme
+            self._css_has_errors = False
+            self.stylesheet = stylesheet
+            self.refresh_css()
+            for screen in self.screen_stack:
+                # Must call private refresh or rendered layout may be incorrect until next screen change.
+                screen._refresh_layout(self.size, full=True)  # pylint: disable=protected-access
+                self.stylesheet.update(self.screen)
+                self.screen.refresh(layout=True)
+            self.app.refresh(layout=True)
 
     def back(self) -> int:
         """Go back one URL in the history.
