@@ -15,6 +15,7 @@ from textual.app import ComposeResult
 from textual.app import CSSPathType
 from textual.css.query import NoMatches
 from textual.driver import Driver
+from textual.screen import Screen
 from textual.widget import Widget
 
 from .observers import Modified
@@ -172,6 +173,13 @@ class ExtendedApp(LayoutApp, ObserverManager):
             The new index in the history.
         """
         return self.location.back()
+
+    @property
+    def document(self) -> Screen | None:
+        """Provide the base screen of the application, representing the main visible "document" in the window."""
+        screens = list(self.screen_stack)
+        document = screens[0] if screens else None
+        return document
 
     def enable_pages(self) -> None:
         """Set up multi-page application routing."""
