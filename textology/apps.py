@@ -102,7 +102,7 @@ class ExtendedApp(LayoutApp, ObserverManager):
         driver_class: type[Driver] | None = None,
         css_path: CSSPathType | None = None,
         watch_css: bool = False,
-        css_theme: str | None = None,
+        css_theme: str | list[str] | None = None,
         css_themes: dict[str, list[CSSPathType]] | None = None,
         logger: logging.Logger | None = None,
     ) -> None:
@@ -132,15 +132,18 @@ class ExtendedApp(LayoutApp, ObserverManager):
         css_path = css_path or self.CSS_PATH
         if css_path and not isinstance(css_path, list):
             css_path = [css_path]
-        self.css_theme = css_theme
+        if css_theme and not isinstance(css_theme, list):
+            css_theme = [css_theme]
+        self._css_theme: list[str] = css_theme
         self.css_themes = css_themes or self.CSS_THEMES or {}
         for css_theme_name, css_theme_paths in self.css_themes.items():
             self.css_themes[css_theme_name] = [
                 _make_path_object_relative(css_theme_path, self) for css_theme_path in css_theme_paths
             ]
-        if self.css_theme and self.css_theme in self.css_themes:
-            css_path = css_path or []
-            css_path.extend(self.css_themes[self.css_theme])
+        css_path = css_path or []
+        for theme in self._css_theme or []:
+            if theme in self.css_themes:
+                css_path.extend(self.css_themes[theme])
 
         layout = layout or Container(
             Location(id=_DEFAULT_URL_ID),
@@ -188,30 +191,40 @@ class ExtendedApp(LayoutApp, ObserverManager):
         else:
             super().apply_update(observer_id, component, component_id, component_property, value)
 
-    def apply_theme(self, theme: str | None = None) -> None:
+    def apply_theme(self, theme: str | list[str] | None = None) -> None:
         """Load a CSS theme.
 
         Themes are applied in addition to base "css_path" values, rather than in place of.
 
         Args:
-            theme: Name of the CSS theme to load from "css_themes".
+            theme: Name(s) of the CSS theme(s) to load from "css_themes".
                 All other stylesheets not in the base CSS configuration will be unloaded.
         """
+        if theme and not isinstance(theme, list):
+            theme = [theme]
         css_paths = self.css_path
         stylesheet = self.stylesheet.copy()
 
-        if self.css_theme and self.css_theme in self.css_themes:
-            for css_theme_path in self.css_themes[self.css_theme]:
+        # Cleanup old themes first.
+        for css_theme in self._css_theme or []:
+            if css_theme not in self.css_themes:
+                continue
+            for css_theme_path in self.css_themes[css_theme]:
                 if css_theme_path in css_paths:
                     css_paths.remove(css_theme_path)
                 if stylesheet.has_source(css_theme_path):
                     stylesheet.source.pop(str(css_theme_path))
             self.log.info(f"Removed CSS theme: {self.css_theme}")
-            self.css_theme = None
-        if theme and theme not in self.css_themes:
-            self.log.error(f"CSS Theme not found: {theme}")
-        for css_theme_path in self.css_themes.get(theme, []):
-            css_paths.append(css_theme_path)
+
+        # Apply new themes second.
+        for css_theme in theme or []:
+            if css_theme not in self.css_themes:
+                self.log.error(f"CSS Theme not found: {css_theme}")
+                continue
+            for css_theme_path in self.css_themes.get(css_theme, []):
+                css_paths.append(css_theme_path)
+
+        # Force reload of CSS and layouts last.
         self.css_path = css_paths
         try:
             stylesheet.read_all(css_paths)
@@ -221,7 +234,7 @@ class ExtendedApp(LayoutApp, ObserverManager):
             self._css_has_errors = True
             self.log.error(error)
         else:
-            self.css_theme = theme
+            self._css_theme = theme
             self._css_has_errors = False
             self.stylesheet = stylesheet
             self.refresh_css()
@@ -239,6 +252,11 @@ class ExtendedApp(LayoutApp, ObserverManager):
             The new index in the history.
         """
         return self.location.back()
+
+    @property
+    def css_theme(self) -> list[str] | None:
+        """Provide the CSS themes currently applied on top of the base CSS."""
+        return self._css_theme
 
     @property
     def document(self) -> Screen | None:

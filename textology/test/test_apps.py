@@ -11,6 +11,7 @@ from textology import apps
 from textology import observers
 from textology import widgets
 from textology.test import basic_app
+from textology.test import basic_themed_app
 
 SNAPSHOT_DIR = Path(Path(__file__).parent, "snapshots")
 
@@ -176,3 +177,28 @@ async def test_multi_page_app(compare_snapshots: Callable) -> None:
         await pilot.click("#btn2")
         result2 = await compare_snapshots(pilot, test_suffix="page2")
         assert all([result1, result2])
+
+
+@pytest.mark.asyncio
+async def test_themed_app(compare_snapshots: Callable) -> None:
+    """Test application and removal of CSS themes."""
+    async with basic_themed_app.BasicThemedApp().run_test() as pilot:
+        snapshots = [await compare_snapshots(pilot, test_suffix="no_theme")]
+
+        pilot.app.apply_theme("green")
+        snapshots.append(await compare_snapshots(pilot, test_suffix="green"))
+
+        pilot.app.apply_theme("white")
+        snapshots.append(await compare_snapshots(pilot, test_suffix="white"))
+
+        pilot.app.apply_theme(["green", "white"])
+        snapshots.append(await compare_snapshots(pilot, test_suffix="green_white"))
+
+        # Test 1 final reset back to no theme.
+        pilot.app.apply_theme(None)
+        snapshots.append(await compare_snapshots(pilot, test_suffix="no_theme"))
+
+        mismatched = [str(index) for index, matched in enumerate(snapshots) if not matched]
+        assert (
+            not mismatched
+        ), f'{len(mismatched)} snapshot(s) did not match expected results. Mismatched snapshots: {", ".join(mismatched)}'

@@ -44,7 +44,7 @@ Core features and functionality.
 - [x] Custom themes
     * [x] Named themes by CSS paths
     * [ ] Named themes by raw CSS
-    * [ ] Multiple simultaneous themes
+    * [x] Multiple simultaneous themes
 - [ ] HTML templates for layouts
 - [x] Testing
     * [x] Parallel processing support (python-xdist)
