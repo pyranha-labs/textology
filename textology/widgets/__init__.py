@@ -18,6 +18,7 @@ from ._list_item_meta import ListItemMeta
 from ._list_view import ListView
 from ._location import Location
 from ._modal_dialog import ModalDialog
+from ._popup_text import PopupText
 from ._store import Store
 from ._textual._checkbox import Checkbox
 from ._textual._containers import Center
