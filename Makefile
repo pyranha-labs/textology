@@ -1,5 +1,5 @@
-GIT_DIR := $(shell git rev-parse --show-toplevel)
-SETUP_CFG := $(GIT_DIR)/setup.cfg
+PROJECT_ROOT := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
+SETUP_CFG := $(PROJECT_ROOT)setup.cfg
 PYTHON_BIN := python3.10
 NAME := textology
 
@@ -9,15 +9,15 @@ NAME := textology
 # Set up initial environment for development.
 .PHONY: setup
 setup:
-	ln -sfnv $(GIT_DIR)/.hooks/pre-push $(GIT_DIR)/.git/hooks/pre-push
+	ln -sfnv $(PROJECT_ROOT).hooks/pre-push $(PROJECT_ROOT).git/hooks/pre-push
 
 # Create python virtual environment for development/testing.
 .PHONY: venv
 venv:
-	$(PYTHON_BIN) -m venv $(GIT_DIR)/.venv && \
-	source $(GIT_DIR)/.venv/bin/activate && \
+	$(PYTHON_BIN) -m venv $(PROJECT_ROOT).venv && \
+	source $(PROJECT_ROOT).venv/bin/activate && \
 	pip install -r requirements-full-dev.txt -r requirements-dev.txt -r requirements.txt && \
-	echo $(GIT_DIR) > .venv/lib/$(PYTHON_BIN)/site-packages/textology.pth
+	echo $(PROJECT_ROOT) > .venv/lib/$(PYTHON_BIN)/site-packages/$(NAME).pth
 
 
 ##### Quality Assurance #####
@@ -25,10 +25,10 @@ venv:
 # Check source code format for consistent patterns.
 .PHONY: format
 format:
-	$(PYTHON_BIN) -m black --check --diff --line-length=120 $(GIT_DIR) && echo Code format good to go! || \
-		(echo "Please run black against files to update their format:\nblack --line-length=120 $(GIT_DIR)"; exit 1)
-	isort -c $(GIT_DIR) && echo Import format good to go! || \
-		(echo "Please run isort against files to update their format:\nisort $(GIT_DIR)"; exit 1)
+	$(PYTHON_BIN) -m black --check --diff --line-length=120 $(PROJECT_ROOT) && echo Code format good to go! || \
+		(echo "Please run black against files to update their format:\nblack --line-length=120 $(PROJECT_ROOT)"; exit 1)
+	isort -c $(PROJECT_ROOT) && echo Import format good to go! || \
+		(echo "Please run isort against files to update their format:\nisort $(PROJECT_ROOT)"; exit 1)
 
 # Check for common lint/complexity issues.
 .PHONY: lint
@@ -38,18 +38,18 @@ lint:
 # Check documentation and code style to ensure they match expected formats.
 .PHONY: style
 style:
-	$(GIT_DIR)/utils/pydocstyle_patched.py --config $(SETUP_CFG) --count $(GIT_DIR) && echo Doc style good to go!
-	pycodestyle --config $(SETUP_CFG) --count $(GIT_DIR) && echo Code style good to go!
+	$(PROJECT_ROOT)utils/pydocstyle_patched.py --config $(SETUP_CFG) --count $(PROJECT_ROOT) && echo Doc style good to go!
+	pycodestyle --config $(SETUP_CFG) --count $(PROJECT_ROOT) && echo Code style good to go!
 
 # Check typehints for static typing best practices.
 .PHONY: typing
 typing:
-	mypy --config-file $(SETUP_CFG) $(GIT_DIR)
+	mypy --config-file $(SETUP_CFG) $(PROJECT_ROOT)
 
 # Check for common security issues/best practices.
 .PHONY: security
 security:
-	bandit -r -c=$(GIT_DIR)/bandit.yaml $(GIT_DIR) && echo Security good to go!
+	bandit -r -c=$(PROJECT_ROOT)bandit.yaml $(PROJECT_ROOT) && echo Security good to go!
 
 # Check full code quality suite (minus unit tests) against source.
 # Does not enforce unit tests to simplify pushes, unit tests should be automated via pipelines with standardized env.
@@ -59,7 +59,7 @@ qa: style lint typing security format
 # Run basic unit tests.
 .PHONY: test
 test:
-	pytest -n auto $(GIT_DIR)
+	pytest -n auto $(PROJECT_ROOT)
 
 
 ##### Builds #####
@@ -72,4 +72,4 @@ wheel:
 # Clean the packages from all builds.
 .PHONY: clean
 clean:
-	rm -r $(GIT_DIR)/dist $(GIT_DIR)/textology.egg-info
+	rm -r $(PROJECT_ROOT)dist $(PROJECT_ROOT)$(NAME).egg-info
