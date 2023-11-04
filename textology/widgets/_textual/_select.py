@@ -14,7 +14,7 @@ from .._extensions import WidgetExtension
 class Select(WidgetExtension, widgets.Select):
     """An extended widget to select from a list of possible options."""
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         options: Iterable[tuple[str, SelectType]],
         *,

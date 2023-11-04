@@ -12,7 +12,7 @@ from .._extensions import WidgetExtension
 class ProgressBar(WidgetExtension, widgets.ProgressBar):
     """An extended progress bar widget."""
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         total: float | None = None,
         *,

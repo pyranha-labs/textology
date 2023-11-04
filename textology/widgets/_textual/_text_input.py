@@ -19,7 +19,7 @@ class TextInput(WidgetExtension, widgets.Input):
     Renamed from "Input" to avoid conflicts with callback dependency types.
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         value: str | None = None,
         placeholder: str = "",

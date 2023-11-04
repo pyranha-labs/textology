@@ -13,7 +13,7 @@ from .._extensions import WidgetExtension
 class Collapsible(WidgetExtension, widgets.Collapsible):
     """An extended collapsible container."""
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         *children: Widget,
         title: str = "Toggle",

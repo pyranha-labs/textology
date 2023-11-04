@@ -12,7 +12,7 @@ from .._extensions import WidgetExtension
 class TextArea(WidgetExtension, widgets.TextArea):
     """An extended multi-line text input widget."""
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         text: str = "",
         *,
