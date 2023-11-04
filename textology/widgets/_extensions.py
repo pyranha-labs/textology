@@ -196,7 +196,7 @@ class StaticInitExtension(WidgetExtension):
             ...
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         renderable: RenderableType = "",
         *,
@@ -254,7 +254,7 @@ class ToggleButtonInitExtension(WidgetExtension):
             ...
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         label: TextType = "",
         value: bool = False,

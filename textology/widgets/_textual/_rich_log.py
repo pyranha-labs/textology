@@ -12,7 +12,7 @@ from .._extensions import WidgetExtension
 class RichLog(WidgetExtension, widgets.RichLog):
     """An extended widget for logging text."""
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         *,
         max_lines: int | None = None,
