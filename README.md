@@ -1,6 +1,6 @@
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/dfrtz/textology/main/docs/banner.svg" width="450">
+  <img src="https://raw.githubusercontent.com/pyranha-labs/textology/main/docs/banner.svg" width="450">
 </div>
 
 -----------------
@@ -111,7 +111,7 @@ pip install textology[full-dev]
 Textology app classes, such as `ExtendedApp`, can replace any regular Textual App, and be used as is without any
 extensions turned on. Here is an example of the most commonly used application subclass, `ExtendedApp`, and its
 primary extended functionality being used. More detailed examples of applications based around routes, callbacks,
-and standard Textual applications can be found in [Examples](https://github.com/dfrtz/textology/examples).
+and standard Textual applications can be found in [Examples](https://github.com/pyranha-labs/textology/examples).
 
 - Observer/callback application (automatic attribute monitoring and updates by element IDs without manual queries):
 

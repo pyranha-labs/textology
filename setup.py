@@ -37,10 +37,10 @@ setup(
     long_description_content_type="text/markdown",
     version=_find_version("textology"),
     author="David Fritz",
-    url="https://github.com/dfrtz/textology",
+    url="https://github.com/pyranha-labs/textology",
     project_urls={
-        "Issue Tracker": "https://github.com/dfrtz/textology/issues",
-        "Source Code": "https://github.com/dfrtz/textology",
+        "Issue Tracker": "https://github.com/pyranha-labs/textology/issues",
+        "Source Code": "https://github.com/pyranha-labs/textology",
     },
     license="MIT",
     classifiers=[
