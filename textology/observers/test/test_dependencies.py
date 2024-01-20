@@ -144,31 +144,19 @@ TEST_CASES = {
 }
 
 
-@pytest.mark.parametrize(
-    "test_case",
-    list(TEST_CASES["Dependency init"].values()),
-    ids=list(TEST_CASES["Dependency init"].keys()),
-)
+@pytest.mark.parametrize_test_case("test_case", TEST_CASES["Dependency init"])
 def test_dependency_init(test_case: dict, function_tester: Callable) -> None:
     """Test that a generic dependency can be initialized with provided values."""
     function_tester(test_case, Dependency.__call__)
 
 
-@pytest.mark.parametrize(
-    "test_case",
-    list(TEST_CASES["Published init"].values()),
-    ids=list(TEST_CASES["Published init"].keys()),
-)
+@pytest.mark.parametrize_test_case("test_case", TEST_CASES["Published init"])
 def test_published_init(test_case: dict, function_tester: Callable) -> None:
     """Test that a Published dependency can be initialized with provided values."""
     function_tester(test_case, Published.__call__)
 
 
-@pytest.mark.parametrize(
-    "test_case",
-    list(TEST_CASES["validate_dependencies"].values()),
-    ids=list(TEST_CASES["validate_dependencies"].keys()),
-)
+@pytest.mark.parametrize_test_case("test_case", TEST_CASES["validate_dependencies"])
 def test_validate_dependencies(test_case: dict, function_tester: Callable) -> None:
     """Test that validate_dependencies detect incorrect configurations."""
     function_tester(test_case, validate_dependencies)
