@@ -98,13 +98,10 @@ For development of applications based on Textual/Textology (but not development 
 pip install textology[dev]
 ```
 
-For full development of Textology itself, use the `[full-dev]` package. This installs Textual development tools,
+For full development of Textology itself, refer to [Contributing](CONTRIBUTING.md). This installs Textual development tools,
 requirements for Textology testing extensions, and full QA requirements to meet commit standards. This version
 has the highest library requirements, in order to match the versions used by Textology itself for testing. Required if
 developing Textology itself, or recommended if looking to match/exceed the level of QA testing used by Textology.
-```shell
-pip install textology[full-dev]
-```
 
 ### Extended Applications
 
