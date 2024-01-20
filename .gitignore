@@ -59,3 +59,6 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# Local development helpers
+activate
