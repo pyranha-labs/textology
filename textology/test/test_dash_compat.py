@@ -83,11 +83,7 @@ async def test_button_n_clicks() -> None:
         assert store2.data == "Event callback triggered 3 times"
 
 
-@pytest.mark.parametrize(
-    "test_case",
-    list(TEST_CASES["Input"].values()),
-    ids=list(TEST_CASES["Input"].keys()),
-)
+@pytest.mark.parametrize_test_case("test_case", TEST_CASES["Input"])
 def test_input_wrapper(test_case: dict, function_tester: Callable) -> None:
     """Test that a generic input type combo can be converted into underlying dependency type."""
     function_tester(test_case, dash_compat.Input)

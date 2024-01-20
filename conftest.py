@@ -54,3 +54,15 @@ def function_tester() -> Callable:
                 assert equals, f"\nResult:\n\t{result}\nExpected:\n\t{expected}"
 
     return function_tester
+
+
+def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
+    """Process custom paramtrize options to streamline sets of tests with easily identifiable ids."""
+    mark = metafunc.definition.get_closest_marker("parametrize_test_case")
+    if mark:
+        args = list(mark.args)
+        test_case = args[1]
+        args[1] = [value for value in (list(test_case.values()) if isinstance(test_case, dict) else test_case)]
+        kwargs = mark.kwargs
+        kwargs["ids"] = [str(value) for value in (list(test_case.keys()) if isinstance(test_case, dict) else test_case)]
+        metafunc.parametrize(*args, **kwargs)

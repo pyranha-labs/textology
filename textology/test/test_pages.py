@@ -64,11 +64,7 @@ TEST_CASES = {
 }
 
 
-@pytest.mark.parametrize(
-    "test_case",
-    list(TEST_CASES["Page"].values()),
-    ids=list(TEST_CASES["Page"].keys()),
-)
+@pytest.mark.parametrize_test_case("test_case", TEST_CASES["Page"])
 def test_page_init(test_case: dict, function_tester: Callable) -> None:
     """Test that page initializes with explicit values or automatically populated values."""
     function_tester(test_case, pages.Page)
