@@ -52,3 +52,51 @@ class ContentSwitcher(WidgetExtension, widgets.ContentSwitcher):
             disabled_messages=disabled_messages,
             callbacks=callbacks,
         )
+
+    def next_child(self) -> str | None:
+        """Find the next child available in the content list.
+
+        Returns:
+            The id of the next child if not currently displaying last, None otherwise.
+        """
+        next_child = None
+        children = [child.id for child in self.children if child.id]
+        if self.current != children[-1]:
+            current_index = children.index(self.current)
+            next_child = children[current_index + 1]
+        return next_child
+
+    def previous_child(self) -> str | None:
+        """Find the previous child available in the content list.
+
+        Returns:
+            The id of the previous child if not currently displaying first, None otherwise.
+        """
+        previous_child = None
+        children = [child.id for child in self.children if child.id]
+        if self.current != children[0]:
+            current_index = children.index(self.current)
+            previous_child = children[current_index - 1]
+        return previous_child
+
+    def switch_to_next(self) -> str | None:
+        """Find and switch to the last child available in the content list.
+
+        Returns:
+            The id of the new child if not currently displaying last, None otherwise.
+        """
+        next_child = self.next_child()
+        if next_child:
+            self.current = next_child
+        return next_child
+
+    def switch_to_previous(self) -> str | None:
+        """Find and switch to the previous child available in the content list.
+
+        Returns:
+            The id of the new child if not currently displaying first, None otherwise.
+        """
+        previous_child = self.previous_child()
+        if previous_child:
+            self.current = previous_child
+        return previous_child
