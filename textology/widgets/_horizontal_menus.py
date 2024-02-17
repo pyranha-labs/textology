@@ -15,6 +15,7 @@ from textual.reactive import reactive
 from textual.widget import Widget
 
 from ._extensions import WidgetExtension
+from ._extensions import walk_all_children
 from ._list_item import ListItem
 from ._list_item_header import ListItemHeader
 from ._list_item_meta import ListItemMeta
@@ -139,27 +140,28 @@ class HorizontalMenus(WidgetExtension, containers.HorizontalScroll):
             if isinstance(child, ListView):
                 menu = child
             else:
-                for node in child.walk_children():
+                for node in walk_all_children(child):
                     if isinstance(node, ListView):
                         menu = node
                         break
-            if not menu:
+            if menu is None:
                 raise ValueError("All menu children must contain a ListView widget")
             self.menus.append(menu)
 
     def _add_menu(self, items: list[ListItem]) -> None:
         """Create and add a menu to the list of available menus."""
-        if new_menu := self.menu_creator(len(self.menus), items):
+        new_menu = self.menu_creator(len(self.menus), items)
+        if new_menu is not None:
             self.mount(new_menu)
             list_view = None
             if isinstance(new_menu, ListView):
                 list_view = new_menu
             else:
-                for node in new_menu.walk_children():
+                for node in walk_all_children(new_menu):
                     if isinstance(node, ListView):
                         list_view = node
                         break
-            if not list_view:
+            if list_view is None:
                 raise ValueError("Menus must contain a ListView widget for navigation")
             self.menus.append(list_view)
 

@@ -95,13 +95,15 @@ async def test_horizontal_menu_with_listview(compare_snapshots: Callable) -> Non
 async def test_list_items(compare_snapshots: Callable) -> None:
     """Validate all ListItem types and combinations render correctly."""
     app = apps.LayoutApp(
-        layout=widgets.ListView(
-            widgets.ListItemHeader(widgets.Label("Header From Widget")),
-            widgets.ListItemHeader(data={"label": "Header From Label"}),
-            widgets.ListItemHeader(name="Header from Name"),
-            widgets.ListItem(widgets.Label("Item From Widget")),
-            widgets.ListItem(data={"label": "Item from Label"}),
-            widgets.ListItem(name="Item from Name"),
+        layout=widgets.Container(
+            widgets.ListView(
+                widgets.ListItemHeader(widgets.Label("Header From Widget")),
+                widgets.ListItemHeader(data={"label": "Header From Label"}),
+                widgets.ListItemHeader(name="Header from Name"),
+                widgets.ListItem(widgets.Label("Item From Widget")),
+                widgets.ListItem(data={"label": "Item from Label"}),
+                widgets.ListItem(name="Item from Name"),
+            )
         )
     )
 

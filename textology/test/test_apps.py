@@ -1,5 +1,6 @@
 """Unit tests for apps module."""
 
+import asyncio
 from pathlib import Path
 from typing import Callable
 
@@ -128,6 +129,7 @@ async def test_callback_registration_per_scope(compare_snapshots: Callable) -> N
         await pilot.click("#btn2")
         await pilot.click("#btn3")
         await pilot.click("#btn4")
+        await asyncio.sleep(1)  # Sleep for a second after button click to guarantee "active" effect was removed.
         assert await compare_snapshots(pilot)
 
 
@@ -174,6 +176,7 @@ async def test_multi_page_app(compare_snapshots: Callable) -> None:
     async with app.run_test() as pilot:
         await pilot.click("#btn1")
         result1 = await compare_snapshots(pilot, test_suffix="page1")
+        await asyncio.sleep(1)  # Sleep for a second after button click to guarantee "active" effect was removed.
         await pilot.click("#btn2")
         result2 = await compare_snapshots(pilot, test_suffix="page2")
         assert all([result1, result2])
