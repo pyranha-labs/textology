@@ -5,6 +5,7 @@ from inspect import isawaitable
 from typing import Any
 from typing import Awaitable
 from typing import Callable
+from typing import Generator
 from typing import Iterable
 
 from rich.console import RenderableType
@@ -184,6 +185,19 @@ class WidgetExtension:
             await super()._on_message(message)
         return None
 
+    def walk_all_children(self) -> Generator[Widget, None, None]:
+        """Walk the subtree rooted at this node, and return every descendant encountered.
+
+        Compared to walk_children, this function will also walk all pending children, starting in Textual 0.47.0.
+        Prior to .47, this function will only use walk_children() to walk the tree. Post .47, pending children
+        will be walked first, followed by results from walk_children().
+
+        Yields:
+            Every child, pending or standard, starting from the top down, and pending before standard.
+        """
+        for child in walk_all_children(self):
+            yield child
+
 
 class StaticInitExtension(WidgetExtension):
     """Extension for textual widgets that inherit from Static class.
@@ -344,3 +358,21 @@ class WidgetInitExtension(WidgetExtension):
             disabled_messages=disabled_messages,
             callbacks=callbacks,
         )
+
+
+def walk_all_children(widget: Widget) -> Generator[Widget, None, None]:
+    """Walk the subtree of a node, and return every descendant encountered.
+
+    Compared to walk_children, this function will also walk all pending children, starting in Textual 0.47.0.
+    Prior to .47, this function will only use walk_children() to walk the tree. Post .47, pending children
+    will be walked first, followed by results from walk_children().
+
+    Yields:
+        Every child, pending or standard, starting from the top down, and pending before standard.
+    """
+    for pending_child in getattr(widget, "_pending_children", []):
+        yield pending_child
+        for nested_child in walk_all_children(pending_child):
+            yield nested_child
+    for child in widget.walk_children():
+        yield child

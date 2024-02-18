@@ -4,15 +4,13 @@ This interface file must be kept in sync with the __init__.py's `__all__` list.
 This file is used by text editors and type checkers to see the lazily loaded classes.
 """
 
-from textual import __version__ as textual_version
-
-_major, _minor, _maintenance = textual_version.split(".")
-_major, _minor, _maintenance = int(_major), int(_minor), int(_maintenance)
+from textology.textual_utils import textual_version
 
 from ._button import Button as Button
 from ._extensions import Clickable as Clickable
 from ._extensions import WidgetExtension as WidgetExtension
 from ._extensions import WidgetInitExtension as WidgetInitExtension
+from ._extensions import walk_all_children as walk_all_children
 from ._horizontal_menus import HorizontalMenus as HorizontalMenus
 from ._list_item import ListItem as ListItem
 from ._list_item_header import ListItemHeader as ListItemHeader
@@ -62,12 +60,12 @@ from ._textual._text_input import TextInput as TextInput
 from ._textual._tooltip import Tooltip as Tooltip
 from ._textual._tree import Tree as Tree
 
-if _major >= 0:
-    if _minor >= 32:
+if textual_version.major >= 0:
+    if textual_version.minor >= 32:
         from ._textual._digits import Digits as Digits
-    if _minor >= 36:
+    if textual_version.minor >= 36:
         from ._textual._rule import Rule as Rule
-    if _minor >= 37:
+    if textual_version.minor >= 37:
         from ._textual._collapsible import Collapsible as Collapsible
-    if _minor >= 38:
+    if textual_version.minor >= 38:
         from ._textual._text_area import TextArea as TextArea

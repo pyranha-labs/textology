@@ -13,11 +13,9 @@ The pyi file is used by text editors and type checkers to see the lazily loaded 
 import typing
 from importlib import import_module
 
-from textual import __version__ as textual_version  # Dynamic attribute in textual. pylint: disable=no-name-in-module
 from textual.widget import Widget
 
-_major, _minor, _maintenance = textual_version.split(".")
-_major, _minor, _maintenance = int(_major), int(_minor), int(_maintenance)
+from textology.textual_utils import textual_version
 
 # Lazily load widgets to decrease startup time and allow multi version support.
 if typing.TYPE_CHECKING:
@@ -25,6 +23,7 @@ if typing.TYPE_CHECKING:
     from ._extensions import Clickable
     from ._extensions import WidgetExtension
     from ._extensions import WidgetInitExtension
+    from ._extensions import walk_all_children
     from ._horizontal_menus import HorizontalMenus
     from ._list_item import ListItem
     from ._list_item_header import ListItemHeader
@@ -74,20 +73,20 @@ if typing.TYPE_CHECKING:
     from ._textual._tooltip import Tooltip
     from ._textual._tree import Tree
 
-    if _major >= 0:
-        if _minor >= 32:
+    if textual_version.major >= 0:
+        if textual_version.minor >= 32:
             from ._textual._digits import Digits
-        if _minor >= 36:
+        if textual_version.minor >= 36:
             from ._textual._rule import Rule
-        if _minor >= 37:
+        if textual_version.minor >= 37:
             from ._textual._collapsible import Collapsible
-        if _minor >= 38:
+        if textual_version.minor >= 38:
             from ._textual._text_area import TextArea
 
-_widget_cache: dict[str, type[Widget]] = {
+_module_cache: dict[str, type[Widget]] = {
     "Widget": Widget,
 }
-_widget_module_map = {
+_module_map = {
     "Button": "._button",
     "Center": "._textual._containers",
     "Checkbox": "._textual._checkbox",
@@ -140,33 +139,32 @@ _widget_module_map = {
     "VerticalScroll": "._textual._containers",
     "WidgetExtension": "._extensions",
     "WidgetInitExtension": "._extensions",
+    "walk_all_children": "._extensions",
 }
-if _major >= 0:
-    if _minor >= 33:
-        _widget_module_map["Digits"] = "._textual._digits"
-    if _minor >= 36:
-        _widget_module_map["Rule"] = "._textual._rule"
-    if _minor >= 37:
-        _widget_module_map["Collapsible"] = "._textual._collapsible"
-    if _minor >= 38:
-        _widget_module_map["TextArea"] = "._textual._text_area"
-__all__ = [
-    *_widget_module_map.keys(),
-]
+if textual_version.major >= 0:
+    if textual_version.minor >= 33:
+        _module_map["Digits"] = "._textual._digits"
+    if textual_version.minor >= 36:
+        _module_map["Rule"] = "._textual._rule"
+    if textual_version.minor >= 37:
+        _module_map["Collapsible"] = "._textual._collapsible"
+    if textual_version.minor >= 38:
+        _module_map["TextArea"] = "._textual._text_area"
+__all__ = tuple(_module_map.keys())
 
 
-def __getattr__(class_name: str) -> type[Widget]:
-    """Lazily load widgets to decrease startup time."""
+def __getattr__(attr_name: str) -> typing.Any:
+    """Lazily load widgets, functions, and constants to decrease startup time."""
     try:
-        return _widget_cache[class_name]
+        return _module_cache[attr_name]
     except KeyError:
         pass
 
-    if class_name not in __all__:
-        raise ImportError(f"Package 'textology.widgets' has no class '{class_name}'")
+    if attr_name not in __all__:
+        raise AttributeError(f"module 'textology.widgets' has no attribute '{attr_name}'")
 
-    widget_module_path = _widget_module_map.get(class_name)
+    widget_module_path = _module_map.get(attr_name)
     module = import_module(widget_module_path, package="textology.widgets")
-    widget_class = getattr(module, class_name)
-    _widget_cache[class_name] = widget_class
-    return widget_class
+    attr = getattr(module, attr_name)
+    _module_cache[attr_name] = attr
+    return attr

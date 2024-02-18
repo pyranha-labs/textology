@@ -32,6 +32,7 @@ from .widgets import Container
 from .widgets import Label
 from .widgets import Location
 from .widgets import PageContainer
+from .widgets import walk_all_children
 
 _DEFAULT_CONTENT_ID = "content"
 _DEFAULT_URL_ID = "url"
@@ -200,8 +201,7 @@ class ExtendedApp(LayoutApp, ObserverManager):
             theme: Name(s) of the CSS theme(s) to load from "css_themes".
                 All other stylesheets not in the base CSS configuration will be unloaded.
         """
-        if theme and not isinstance(theme, list):
-            theme = [theme]
+        theme = [theme] if theme and not isinstance(theme, list) else theme
         css_paths = self.css_path
         stylesheet = self.stylesheet.copy()
 
@@ -212,8 +212,13 @@ class ExtendedApp(LayoutApp, ObserverManager):
             for css_theme_path in self.css_themes[css_theme]:
                 if css_theme_path in css_paths:
                     css_paths.remove(css_theme_path)
-                if stylesheet.has_source(css_theme_path):
-                    stylesheet.source.pop(str(css_theme_path))
+                # Post Textual 0.42.0 no longer casts to string, and stores as tuple.
+                # Manually cast to string for guaranteed behavior, and attempt to pop both types.
+                str_path = str(css_theme_path)
+                if (str_path, "") in stylesheet.source:
+                    stylesheet.source.pop((str_path, ""))
+                elif str_path in stylesheet.source:
+                    stylesheet.source.pop(str_path)
             self.log.info(f"Removed CSS theme: {self.css_theme}")
 
         # Apply new themes second.
@@ -237,13 +242,14 @@ class ExtendedApp(LayoutApp, ObserverManager):
             self._css_theme = theme
             self._css_has_errors = False
             self.stylesheet = stylesheet
+            self.stylesheet.update(self)
             self.refresh_css()
+            self.refresh(layout=True)
             for screen in self.screen_stack:
                 # Must call private refresh or rendered layout may be incorrect until next screen change.
                 screen._refresh_layout(self.size, full=True)  # pylint: disable=protected-access
                 self.stylesheet.update(self.screen)
                 self.screen.refresh(layout=True)
-            self.app.refresh(layout=True)
 
     def back(self) -> int:
         """Go back one URL in the history.
@@ -277,7 +283,7 @@ class ExtendedApp(LayoutApp, ObserverManager):
             raise ValueError("Location widget must have an id if pages are enabled")
 
         page_container = None
-        for node in self.layout.walk_children():
+        for node in walk_all_children(self.layout):
             if isinstance(node, PageContainer):
                 page_container = node
                 break
@@ -473,10 +479,10 @@ class ExtendedApp(LayoutApp, ObserverManager):
 
     def _update_location(self) -> None:
         """Walk the layout tree to allow finding the application's Location widget at any point in the lifecycle."""
-        for node in self.layout.walk_children():
+        for node in walk_all_children(self.layout):
             if isinstance(node, Location):
                 self._location = node
-                break
+                return
 
 
 def _post_mount_patch(self: Widget) -> None:
