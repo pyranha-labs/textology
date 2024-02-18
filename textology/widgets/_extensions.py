@@ -188,8 +188,7 @@ class WidgetExtension:
     def walk_all_children(self) -> Generator[Widget, None, None]:
         """Walk the subtree rooted at this node, and return every descendant encountered.
 
-        Compared to walk_children, this function will also walk all pending children, starting in Textual 0.47.0.
-        Prior to .47, this function will only use walk_children() to walk the tree. Post .47, pending children
+        Compared to walk_children, this function will also walk all pending children. Pending children
         will be walked first, followed by results from walk_children().
 
         Yields:
@@ -363,8 +362,7 @@ class WidgetInitExtension(WidgetExtension):
 def walk_all_children(widget: Widget) -> Generator[Widget, None, None]:
     """Walk the subtree of a node, and return every descendant encountered.
 
-    Compared to walk_children, this function will also walk all pending children, starting in Textual 0.47.0.
-    Prior to .47, this function will only use walk_children() to walk the tree. Post .47, pending children
+    Compared to walk_children, this function will also walk all pending children. Pending children
     will be walked first, followed by results from walk_children().
 
     Yields:

@@ -34,6 +34,7 @@ if typing.TYPE_CHECKING:
     from ._popup_text import PopupText
     from ._store import Store
     from ._textual._checkbox import Checkbox
+    from ._textual._collapsible import Collapsible
     from ._textual._containers import Center
     from ._textual._containers import Container
     from ._textual._containers import Grid
@@ -46,6 +47,7 @@ if typing.TYPE_CHECKING:
     from ._textual._containers import VerticalScroll
     from ._textual._content_switcher import ContentSwitcher
     from ._textual._data_table import DataTable
+    from ._textual._digits import Digits
     from ._textual._directory_tree import DirectoryTree
     from ._textual._footer import Footer
     from ._textual._header import Header
@@ -60,6 +62,7 @@ if typing.TYPE_CHECKING:
     from ._textual._radio_button import RadioButton
     from ._textual._radio_set import RadioSet
     from ._textual._rich_log import RichLog
+    from ._textual._rule import Rule
     from ._textual._select import Select
     from ._textual._selection_list import SelectionList
     from ._textual._sparkline import Sparkline
@@ -69,19 +72,10 @@ if typing.TYPE_CHECKING:
     from ._textual._tabbed_content import TabPane
     from ._textual._tabs import Tab
     from ._textual._tabs import Tabs
+    from ._textual._text_area import TextArea
     from ._textual._text_input import TextInput
     from ._textual._tooltip import Tooltip
     from ._textual._tree import Tree
-
-    if textual_version.major >= 0:
-        if textual_version.minor >= 32:
-            from ._textual._digits import Digits
-        if textual_version.minor >= 36:
-            from ._textual._rule import Rule
-        if textual_version.minor >= 37:
-            from ._textual._collapsible import Collapsible
-        if textual_version.minor >= 38:
-            from ._textual._text_area import TextArea
 
 _module_cache: dict[str, type[Widget]] = {
     "Widget": Widget,
@@ -91,9 +85,11 @@ _module_map = {
     "Center": "._textual._containers",
     "Checkbox": "._textual._checkbox",
     "Clickable": "._extensions",
+    "Collapsible": "._textual._collapsible",
     "Container": "._textual._containers",
     "ContentSwitcher": "._textual._content_switcher",
     "DataTable": "._textual._data_table",
+    "Digits": "._textual._digits",
     "DirectoryTree": "._textual._directory_tree",
     "Footer": "._textual._footer",
     "Grid": "._textual._containers",
@@ -121,6 +117,7 @@ _module_map = {
     "RadioButton": "._textual._radio_button",
     "RadioSet": "._textual._radio_set",
     "RichLog": "._textual._rich_log",
+    "Rule": "._textual._rule",
     "ScrollableContainer": "._textual._containers",
     "Select": "._textual._select",
     "SelectionList": "._textual._selection_list",
@@ -132,6 +129,7 @@ _module_map = {
     "TabbedContent": "._textual._tabbed_content",
     "Tabs": "._textual._tabs",
     "TabPane": "._textual._tabbed_content",
+    "TextArea": "._textual._text_area",
     "TextInput": "._textual._text_input",
     "Tooltip": "._textual._tooltip",
     "Tree": "._textual._tree",
@@ -141,15 +139,6 @@ _module_map = {
     "WidgetInitExtension": "._extensions",
     "walk_all_children": "._extensions",
 }
-if textual_version.major >= 0:
-    if textual_version.minor >= 33:
-        _module_map["Digits"] = "._textual._digits"
-    if textual_version.minor >= 36:
-        _module_map["Rule"] = "._textual._rule"
-    if textual_version.minor >= 37:
-        _module_map["Collapsible"] = "._textual._collapsible"
-    if textual_version.minor >= 38:
-        _module_map["TextArea"] = "._textual._text_area"
 __all__ = tuple(_module_map.keys())
 
 
