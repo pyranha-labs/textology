@@ -157,18 +157,18 @@ item = ListItem(
 
 ### Extended Applications
 
-Textology App classes, such as `LayoutApp`, can replace any regular Textual App, and be used as is without any
-extensions turned on. Here are examples of the most commonly used application subclasses, `LayoutApp` and
+Textology App classes, such as `WidgetApp`, can replace any regular Textual App, and be used as is without any
+extensions turned on. Here are examples of the most commonly used application subclasses, `WidgetApp` and
 `ExtendedApp`, and their primary extended functionality being used. More detailed examples of applications based
 around routes, callbacks, and standard Textual applications can be found in [Examples](https://github.com/pyranha-labs/textology/examples).
 
 - Basic App without subclassing:
 
   ```python
-  from textology.apps import LayoutApp
+  from textology.apps import WidgetApp
   from textology.widgets import Button, Container, Label
   
-  app = LayoutApp(
+  app = WidgetApp(
       Container(
           Button("Ping", callbacks={
               "on_button_pressed": lambda event: app.query_one('#label').update("Ping")
@@ -193,7 +193,7 @@ around routes, callbacks, and standard Textual applications can be found in [Exa
   from textology.widgets import Button, Container, Label
   
   app = ExtendedApp(
-      layout=Container(
+      child=Container(
           Button("Ping", id="ping-btn"),
           Button("Pong", id="pong-btn"),
           Button("Sing-a-long", id="sing-btn"),
@@ -261,7 +261,7 @@ around routes, callbacks, and standard Textual applications can be found in [Exa
   from textology.widgets import Button, Container, Label
   
   app = ExtendedApp(
-      layout=Container(
+      child=Container(
           Button("Ping", id="ping-btn"),
           Button("Pong", id="pong-btn"),
           Button("Sing-a-long", id="sing-btn"),
@@ -342,7 +342,7 @@ around routes, callbacks, and standard Textual applications can be found in [Exa
           return Label(f"Ping, pong, sing-a-long song pressed {event.button.n_clicks}")
   
   app = ExtendedApp(
-      layout=Page()
+      child=Page()
   )
   
   app.run()

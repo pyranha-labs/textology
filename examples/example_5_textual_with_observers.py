@@ -16,7 +16,7 @@ from textology.widgets import ListView
 
 menu_item_styles = {"height": 3, "padding": 1}
 app = ExtendedApp(
-    layout=Horizontal(
+    child=Horizontal(
         ListView(
             ListItem(
                 Label("Page 1", styles={**menu_item_styles, "color": "lightgreen"}),

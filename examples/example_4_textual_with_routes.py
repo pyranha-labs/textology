@@ -28,7 +28,7 @@ class SimpleApp(ExtendedApp):
 
 menu_item_styles = {"height": 3, "padding": 1}
 app = SimpleApp(
-    layout=Horizontal(
+    child=Horizontal(
         Location(id="url"),
         ListView(
             ListItem(Label("Page 1", styles={**menu_item_styles, "color": "lightgreen"}), data=1),

@@ -38,7 +38,7 @@ _DEFAULT_CONTENT_ID = "content"
 _DEFAULT_URL_ID = "url"
 
 
-class LayoutApp(App):
+class WidgetApp(App):
     """Application with a single widget for the root layout, and basic extensions.
 
     Extensions:
@@ -51,17 +51,18 @@ class LayoutApp(App):
 
     def __init__(
         self,
-        layout: Callable | Widget | None = None,
+        child: Callable | Widget | None = None,
         driver_class: type[Driver] | None = None,
         css_path: CSSPathType | None = None,
         watch_css: bool = False,
         css_theme: str | list[str] | None = None,
         css_themes: dict[str, list[CSSPathType]] | None = None,
     ) -> None:
-        """Initialize an application with a layout.
+        """Initialize an application with a widget for the layout.
 
         Args:
-            layout: Primary content widget, or function to create primary content widget.
+            child: Root widget, or function to create root widget.
+                Use a callable to delay creation until end of initialization.
                 Defaults to a blank Container with "content" id.
             driver_class: Driver class or `None` to auto-detect.
                 This will be used by some Textual tools.
@@ -96,11 +97,11 @@ class LayoutApp(App):
             css_path=css_path,
             watch_css=watch_css,
         )
-        if not layout:
-            layout = Container(id=_DEFAULT_CONTENT_ID)
+        if not child:
+            child = Container(id=_DEFAULT_CONTENT_ID)
         else:
-            layout = layout() if isinstance(layout, Callable) else layout
-        self.layout = layout
+            child = child() if isinstance(child, Callable) else child
+        self.child = child
 
     def apply_theme(self, theme: str | list[str] | None = None) -> None:
         """Load a CSS theme.
@@ -163,15 +164,15 @@ class LayoutApp(App):
         return self._css_theme
 
     def compose(self) -> ComposeResult:
-        """Default compose with provided layout.
+        """Provide the root widget for the application.
 
         Yields:
-            Layout widget set on instantiation.
+            Child widget set on instantiation that will be used as the root of the application.
         """
-        yield self.layout() if isinstance(self.layout, Callable) else self.layout
+        yield self.child
 
 
-class ExtendedApp(LayoutApp, ObserverManager):
+class ExtendedApp(WidgetApp, ObserverManager):
     """Textual application with multiple Textology extensions for automating UI updates.
 
     Extensions:
@@ -183,7 +184,7 @@ class ExtendedApp(LayoutApp, ObserverManager):
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        layout: Callable | Widget | None = None,
+        child: Callable | Widget | None = None,
         use_pages: bool = False,
         pages: list[Page | ModuleType | str | Callable] | None = None,
         driver_class: type[Driver] | None = None,
@@ -196,7 +197,9 @@ class ExtendedApp(LayoutApp, ObserverManager):
         """Initialize an application with tracking for input/output callbacks.
 
         Args:
-            layout: Primary content widget, or function to create primary content widget.
+            child: Root widget, or function to create root widget.
+                Use a callable to delay creation until end of initialization.
+                Defaults to a blank Container with "content" id.
             use_pages: Whether to enable multi-page application support.
                 When enabled, this will include automatic URL routing callbacks via "widgets.Location".
                 Force enabled if "pages" are provided. Enabling without "pages" allows registering pages later.
@@ -216,12 +219,12 @@ class ExtendedApp(LayoutApp, ObserverManager):
         Raises:
             CssPathError: When the supplied CSS path(s) are an unexpected type.
         """
-        layout = layout or Container(
+        child = child or Container(
             Location(id=_DEFAULT_URL_ID),
             Container(id=_DEFAULT_CONTENT_ID) if not use_pages else PageContainer(id=_DEFAULT_CONTENT_ID),
         )
         super().__init__(
-            layout=layout,
+            child=child,
             driver_class=driver_class,
             css_path=css_path,
             watch_css=watch_css,
@@ -291,7 +294,7 @@ class ExtendedApp(LayoutApp, ObserverManager):
             raise ValueError("Location widget must have an id if pages are enabled")
 
         page_container = None
-        for node in walk_all_children(self.layout):
+        for node in walk_all_children(self.child):
             if isinstance(node, PageContainer):
                 page_container = node
                 break
@@ -487,7 +490,7 @@ class ExtendedApp(LayoutApp, ObserverManager):
 
     def _update_location(self) -> None:
         """Walk the layout tree to allow finding the application's Location widget at any point in the lifecycle."""
-        for node in walk_all_children(self.layout):
+        for node in walk_all_children(self.child):
             if isinstance(node, Location):
                 self._location = node
                 return

@@ -144,7 +144,7 @@ async def test_multi_page_app(compare_snapshots: Callable) -> None:
         return widgets.Label(f"Page 2 clicks {clicks}")
 
     app = apps.ExtendedApp(
-        layout=widgets.Container(
+        child=widgets.Container(
             widgets.Button("Button 1", id="btn1"),
             widgets.Button("Button 2", id="btn2"),
             widgets.Location(id="url"),
