@@ -45,7 +45,9 @@ Core features and functionality.
     * [x] Named themes by CSS paths
     * [ ] Named themes by raw CSS
     * [x] Multiple simultaneous themes
-- [ ] HTML templates for layouts
+- [ ] External layouts
+    * [ ] HTML templates
+    * [ ] JSON templates
 - [x] Testing
     * [x] Parallel processing support (python-xdist)
     * [x] Async support (python-asyncio)
