@@ -39,7 +39,15 @@ _DEFAULT_URL_ID = "url"
 
 
 class LayoutApp(App):
-    """Application with a single widget for the root layout."""
+    """Application with a single widget for the root layout, and basic extensions.
+
+    Extensions:
+        - Compose layout without subclassing.
+        - Ability to swap themes.
+    """
+
+    CSS_THEMES: dict[str, list[CSSPathType]] | None = None
+    """Mappings of additional file paths to load CSS from in addition to base CSS."""
 
     def __init__(
         self,
@@ -47,75 +55,14 @@ class LayoutApp(App):
         driver_class: type[Driver] | None = None,
         css_path: CSSPathType | None = None,
         watch_css: bool = False,
+        css_theme: str | list[str] | None = None,
+        css_themes: dict[str, list[CSSPathType]] | None = None,
     ) -> None:
         """Initialize an application with a layout.
 
         Args:
             layout: Primary content widget, or function to create primary content widget.
-            driver_class: Driver class or `None` to auto-detect.
-                This will be used by some Textual tools.
-            css_path: Path to CSS or `None` to use the `CSS_PATH` class variable.
-                To load multiple CSS files, pass a list of strings or paths which will be loaded in order.
-            watch_css: Reload CSS if the files changed.
-                This is set automatically if you are using `textual run` with the `dev` switch.
-
-        Raises:
-            CssPathError: When the supplied CSS path(s) are an unexpected type.
-        """
-        super().__init__(
-            driver_class=driver_class,
-            css_path=css_path,
-            watch_css=watch_css,
-        )
-        if not layout:
-            layout = Container(id=_DEFAULT_CONTENT_ID)
-        else:
-            layout = layout() if isinstance(layout, Callable) else layout
-        self.layout = layout
-
-    def compose(self) -> ComposeResult:
-        """Default compose with provided layout.
-
-        Yields:
-            Layout widget set on instantiation.
-        """
-        yield self.layout
-
-
-class ExtendedApp(LayoutApp, ObserverManager):
-    """Textual application with multiple Textology extensions for automating UI updates.
-
-    Additional functionality:
-        - Automatic input/output callbacks for managing application state via ".when()" registration.
-        - URL based multi-page content via ".register_page()".
-        - URL routing for resource requests within the application via ".location.get()".
-        - URL history for navigating via ".back()", ".forward()", etc.
-    """
-
-    CSS_THEMES: dict[str, list[CSSPathType]] | None = None
-    """Mappings of additional file paths to load CSS from in addition to base CSS."""
-
-    def __init__(  # pylint: disable=too-many-arguments
-        self,
-        layout: Callable | Widget | None = None,
-        use_pages: bool = False,
-        pages: list[Page | ModuleType | str | Callable] | None = None,
-        driver_class: type[Driver] | None = None,
-        css_path: CSSPathType | None = None,
-        watch_css: bool = False,
-        css_theme: str | list[str] | None = None,
-        css_themes: dict[str, list[CSSPathType]] | None = None,
-        logger: logging.Logger | None = None,
-    ) -> None:
-        """Initialize an application with tracking for input/output callbacks.
-
-        Args:
-            layout: Primary content widget, or function to create primary content widget.
-            use_pages: Whether to enable multi-page application support.
-                When enabled, this will include automatic URL routing callbacks via "widgets.Location".
-                Force enabled if "pages" are provided. Enabling without "pages" allows registering pages later.
-            pages: Initial pages to load into multi-page applications.
-                Refer to "register_page()" for options.
+                Defaults to a blank Container with "content" id.
             driver_class: Driver class or `None` to auto-detect.
                 This will be used by some Textual tools.
             css_path: Path to CSS or `None` to use the `CSS_PATH` class variable.
@@ -125,7 +72,6 @@ class ExtendedApp(LayoutApp, ObserverManager):
             css_theme: Initial CSS theme to load from "css_themes".
                 Themes are applied in addition to base "css_path" values, rather than in place of.
             css_themes: Mapping of CSS paths by string names, or `None` to use the `CSS_THEMES` class variable.
-            logger: Custom logger to send callback messages to.
 
         Raises:
             CssPathError: When the supplied CSS path(s) are an unexpected type.
@@ -145,52 +91,16 @@ class ExtendedApp(LayoutApp, ObserverManager):
         for theme in self._css_theme or []:
             if theme in self.css_themes:
                 css_path.extend(self.css_themes[theme])
-
-        layout = layout or Container(
-            Location(id=_DEFAULT_URL_ID),
-            Container(id=_DEFAULT_CONTENT_ID) if not use_pages else PageContainer(id=_DEFAULT_CONTENT_ID),
-        )
         super().__init__(
-            layout=layout,
             driver_class=driver_class,
             css_path=css_path,
             watch_css=watch_css,
         )
-        # Manually set up observer manager mixin since App inheritance does not automatically trigger.
-        ObserverManager.__init__(self, logger=logger or logging.root)
-        self.attach_to_observers(self)
-
-        self._observer_message_handler_map = {}
-        self._location: Location | None = None
-        self._page_registry: dict[str, Page] = {}
-        self._use_pages = use_pages or bool(pages)
-
-        self.enable_pages()
-        if pages:
-            for page in pages:
-                self.register_page(page)
-
-    def apply_update(
-        self,
-        observer_id: str,
-        component: Widget,
-        component_id: str,
-        component_property: str,
-        value: Any,
-    ) -> None:
-        """Apply an update operation on a Widget."""
-        if component_property == "children":
-            # Children is a special property on widgets, it cannot be directly applied. Manually swap children.
-            component.remove_children()
-            if value:
-                if not isinstance(value, list):
-                    value = [value]
-                component.mount_all(value)
-        elif component_property == "screen":
-            # Screen is a special property on applications, it cannot be directly applied. Manually add to stack.
-            component.app.push_screen(value)
+        if not layout:
+            layout = Container(id=_DEFAULT_CONTENT_ID)
         else:
-            super().apply_update(observer_id, component, component_id, component_property, value)
+            layout = layout() if isinstance(layout, Callable) else layout
+        self.layout = layout
 
     def apply_theme(self, theme: str | list[str] | None = None) -> None:
         """Load a CSS theme.
@@ -251,6 +161,113 @@ class ExtendedApp(LayoutApp, ObserverManager):
                 self.stylesheet.update(self.screen)
                 self.screen.refresh(layout=True)
 
+    @property
+    def css_theme(self) -> list[str] | None:
+        """Provide the CSS themes currently applied on top of the base CSS."""
+        return self._css_theme
+
+    def compose(self) -> ComposeResult:
+        """Default compose with provided layout.
+
+        Yields:
+            Layout widget set on instantiation.
+        """
+        yield self.layout() if isinstance(self.layout, Callable) else self.layout
+
+
+class ExtendedApp(LayoutApp, ObserverManager):
+    """Textual application with multiple Textology extensions for automating UI updates.
+
+    Extensions:
+        - Automatic input/output callbacks for managing application state via ".when()" registration.
+        - URL based multi-page content via ".register_page()".
+        - URL routing for resource requests within the application via ".location.get()".
+        - URL history for navigating via ".back()", ".forward()", etc.
+    """
+
+    def __init__(  # pylint: disable=too-many-arguments
+        self,
+        layout: Callable | Widget | None = None,
+        use_pages: bool = False,
+        pages: list[Page | ModuleType | str | Callable] | None = None,
+        driver_class: type[Driver] | None = None,
+        css_path: CSSPathType | None = None,
+        watch_css: bool = False,
+        css_theme: str | list[str] | None = None,
+        css_themes: dict[str, list[CSSPathType]] | None = None,
+        logger: logging.Logger | None = None,
+    ) -> None:
+        """Initialize an application with tracking for input/output callbacks.
+
+        Args:
+            layout: Primary content widget, or function to create primary content widget.
+            use_pages: Whether to enable multi-page application support.
+                When enabled, this will include automatic URL routing callbacks via "widgets.Location".
+                Force enabled if "pages" are provided. Enabling without "pages" allows registering pages later.
+            pages: Initial pages to load into multi-page applications.
+                Refer to "register_page()" for options.
+            driver_class: Driver class or `None` to auto-detect.
+                This will be used by some Textual tools.
+            css_path: Path to CSS or `None` to use the `CSS_PATH` class variable.
+                To load multiple CSS files, pass a list of strings or paths which will be loaded in order.
+            watch_css: Reload CSS if the files changed.
+                This is set automatically if you are using `textual run` with the `dev` switch.
+            css_theme: Initial CSS theme to load from "css_themes".
+                Themes are applied in addition to base "css_path" values, rather than in place of.
+            css_themes: Mapping of CSS paths by string names, or `None` to use the `CSS_THEMES` class variable.
+            logger: Custom logger to send callback messages to.
+
+        Raises:
+            CssPathError: When the supplied CSS path(s) are an unexpected type.
+        """
+        layout = layout or Container(
+            Location(id=_DEFAULT_URL_ID),
+            Container(id=_DEFAULT_CONTENT_ID) if not use_pages else PageContainer(id=_DEFAULT_CONTENT_ID),
+        )
+        super().__init__(
+            layout=layout,
+            driver_class=driver_class,
+            css_path=css_path,
+            watch_css=watch_css,
+            css_theme=css_theme,
+            css_themes=css_themes,
+        )
+        # Manually set up observer manager mixin since App inheritance does not automatically trigger.
+        ObserverManager.__init__(self, logger=logger or logging.root)
+        self.attach_to_observers(self)
+
+        self._observer_message_handler_map = {}
+        self._location: Location | None = None
+        self._page_registry: dict[str, Page] = {}
+        self._use_pages = use_pages or bool(pages)
+
+        self.enable_pages()
+        if pages:
+            for page in pages:
+                self.register_page(page)
+
+    def apply_update(
+        self,
+        observer_id: str,
+        component: Widget,
+        component_id: str,
+        component_property: str,
+        value: Any,
+    ) -> None:
+        """Apply an update operation on a Widget."""
+        if component_property == "children":
+            # Children is a special property on widgets, it cannot be directly applied. Manually swap children.
+            component.remove_children()
+            if value:
+                if not isinstance(value, list):
+                    value = [value]
+                component.mount_all(value)
+        elif component_property == "screen":
+            # Screen is a special property on applications, it cannot be directly applied. Manually add to stack.
+            component.app.push_screen(value)
+        else:
+            super().apply_update(observer_id, component, component_id, component_property, value)
+
     def back(self) -> int:
         """Go back one URL in the history.
 
@@ -258,11 +275,6 @@ class ExtendedApp(LayoutApp, ObserverManager):
             The new index in the history.
         """
         return self.location.back()
-
-    @property
-    def css_theme(self) -> list[str] | None:
-        """Provide the CSS themes currently applied on top of the base CSS."""
-        return self._css_theme
 
     @property
     def document(self) -> Screen | None:
