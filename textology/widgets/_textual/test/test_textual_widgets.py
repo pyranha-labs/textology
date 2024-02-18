@@ -12,7 +12,7 @@ from textology import widgets
 @pytest.mark.asyncio
 async def test_containers(compare_snapshots: Callable) -> None:
     """Validate all extended container types render correctly, similar to native containers."""
-    app = apps.LayoutApp(
+    app = apps.WidgetApp(
         widgets.Container(
             # Native containers.
             containers.Horizontal(

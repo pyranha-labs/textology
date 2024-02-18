@@ -10,8 +10,13 @@ it will be included here, but this is not Dash. In order to access the full rang
 developers may need to leverage the native classes and designs from the base libraries.
 """
 
+import logging
 from types import ModuleType
 from typing import Callable
+
+from textual.app import CSSPathType
+from textual.driver import Driver
+from textual.widget import Widget
 
 from .apps import ExtendedApp
 
@@ -43,6 +48,57 @@ class DashCompatApp(ExtendedApp):
         - URL routing for resource requests within the application via ".location.get()".
         - URL history for navigating via ".back()", ".forward()", etc.
     """
+
+    def __init__(
+        self,
+        layout: Callable | Widget | None = None,
+        use_pages: bool = False,
+        pages: list[Page | ModuleType | str | Callable] | None = None,
+        driver_class: type[Driver] | None = None,
+        css_path: CSSPathType | None = None,
+        watch_css: bool = False,
+        css_theme: str | list[str] | None = None,
+        css_themes: dict[str, list[CSSPathType]] | None = None,
+        logger: logging.Logger | None = None,
+    ) -> None:
+        """Initialize an application with a widget for the layout.
+
+        Compatibility alias for ExtendedApp.__init__() call with Dash variable names.
+
+        Args:
+            layout: Root widget, or function to create root widget.
+                Use a callable to delay creation until end of initialization.
+                Defaults to a blank Container with "content" id.
+            use_pages: Whether to enable multi-page application support.
+                When enabled, this will include automatic URL routing callbacks via "widgets.Location".
+                Force enabled if "pages" are provided. Enabling without "pages" allows registering pages later.
+            pages: Initial pages to load into multi-page applications.
+                Refer to "register_page()" for options.
+            driver_class: Driver class or `None` to auto-detect.
+                This will be used by some Textual tools.
+            css_path: Path to CSS or `None` to use the `CSS_PATH` class variable.
+                To load multiple CSS files, pass a list of strings or paths which will be loaded in order.
+            watch_css: Reload CSS if the files changed.
+                This is set automatically if you are using `textual run` with the `dev` switch.
+            css_theme: Initial CSS theme to load from "css_themes".
+                Themes are applied in addition to base "css_path" values, rather than in place of.
+            css_themes: Mapping of CSS paths by string names, or `None` to use the `CSS_THEMES` class variable.
+            logger: Custom logger to send callback messages to.
+
+        Raises:
+            CssPathError: When the supplied CSS path(s) are an unexpected type.
+        """
+        super().__init__(
+            child=layout,
+            use_pages=use_pages,
+            pages=pages,
+            driver_class=driver_class,
+            css_path=css_path,
+            watch_css=watch_css,
+            css_theme=css_theme,
+            css_themes=css_themes,
+            logger=logger,
+        )
 
     def callback(
         self,
