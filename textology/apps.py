@@ -122,13 +122,9 @@ class LayoutApp(App):
             for css_theme_path in self.css_themes[css_theme]:
                 if css_theme_path in css_paths:
                     css_paths.remove(css_theme_path)
-                # Post Textual 0.42.0 no longer casts to string, and stores as tuple.
-                # Manually cast to string for guaranteed behavior, and attempt to pop both types.
                 str_path = str(css_theme_path)
                 if (str_path, "") in stylesheet.source:
                     stylesheet.source.pop((str_path, ""))
-                elif str_path in stylesheet.source:
-                    stylesheet.source.pop(str_path)
             self.log.info(f"Removed CSS theme: {self.css_theme}")
 
         # Apply new themes second.

@@ -21,6 +21,7 @@ from ._modal_dialog import ModalDialog as ModalDialog
 from ._popup_text import PopupText as PopupText
 from ._store import Store as Store
 from ._textual._checkbox import Checkbox as Checkbox
+from ._textual._collapsible import Collapsible as Collapsible
 from ._textual._containers import Center as Center
 from ._textual._containers import Container as Container
 from ._textual._containers import Grid as Grid
@@ -33,6 +34,7 @@ from ._textual._containers import Vertical as Vertical
 from ._textual._containers import VerticalScroll as VerticalScroll
 from ._textual._content_switcher import ContentSwitcher as ContentSwitcher
 from ._textual._data_table import DataTable as DataTable
+from ._textual._digits import Digits as Digits
 from ._textual._directory_tree import DirectoryTree as DirectoryTree
 from ._textual._footer import Footer as Footer
 from ._textual._header import Header as Header
@@ -47,6 +49,7 @@ from ._textual._progress_bar import ProgressBar as ProgressBar
 from ._textual._radio_button import RadioButton as RadioButton
 from ._textual._radio_set import RadioSet as RadioSet
 from ._textual._rich_log import RichLog as RichLog
+from ._textual._rule import Rule as Rule
 from ._textual._select import Select as Select
 from ._textual._selection_list import SelectionList as SelectionList
 from ._textual._sparkline import Sparkline as Sparkline
@@ -56,16 +59,7 @@ from ._textual._tabbed_content import TabbedContent as TabbedContent
 from ._textual._tabbed_content import TabPane as TabPane
 from ._textual._tabs import Tab as Tab
 from ._textual._tabs import Tabs as Tabs
+from ._textual._text_area import TextArea as TextArea
 from ._textual._text_input import TextInput as TextInput
 from ._textual._tooltip import Tooltip as Tooltip
 from ._textual._tree import Tree as Tree
-
-if textual_version.major >= 0:
-    if textual_version.minor >= 32:
-        from ._textual._digits import Digits as Digits
-    if textual_version.minor >= 36:
-        from ._textual._rule import Rule as Rule
-    if textual_version.minor >= 37:
-        from ._textual._collapsible import Collapsible as Collapsible
-    if textual_version.minor >= 38:
-        from ._textual._text_area import TextArea as TextArea
