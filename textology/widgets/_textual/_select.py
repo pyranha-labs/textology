@@ -6,6 +6,7 @@ from typing import Iterable
 
 from textual import events
 from textual import widgets
+from textual.widgets._select import NoSelection
 from textual.widgets._select import SelectType
 
 from .._extensions import WidgetExtension
@@ -20,7 +21,7 @@ class Select(WidgetExtension, widgets.Select):
         *,
         prompt: str = "Select",
         allow_blank: bool = True,
-        value: SelectType | None = None,
+        value: SelectType | NoSelection = widgets.Select.BLANK,
         name: str | None = None,
         id: str | None = None,
         classes: str | None = None,
