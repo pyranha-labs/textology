@@ -272,7 +272,7 @@
                 <div id="results" class="content">
                     <div id="result-template" class="mdc-card mdc-elevation--z2 result-card">
                         <div id="test-card-{{ elementIndex }}" class="card-title">
-                            <h6 class="mdc-typography--headline6">{{ name }}</h6>
+                            <h6 class="mdc-typography--headline6">{{ name }}:{{ filename }}</h6>
                             <div class="mdc-typography--subtitle2">
                                 {{ path }}:{{ line }}
                             </div>
@@ -915,6 +915,13 @@
                     <span class="mdc-deprecated-list-item__text">${test.name}</span>
                 </a>`;
         }
+        links += `
+            <hr class="mdc-deprecated-list-divider">
+            <a class="mdc-deprecated-list-item" role="menuitem"
+                onclick="openDialog('help');navMDCTopAppBar()">
+                <span class="mdc-deprecated-list-item__ripple"></span>
+                <span class="mdc-deprecated-list-item__text">Help</span>
+            </a>`;
         document.getElementById("test-nav-links").innerHTML = links;
     }
 
@@ -992,6 +999,7 @@
         for (const [index, test] of Object.entries(testResult.items)) {
             test.index = parseInt(index);
             test.elementIndex = test.index  + 1;
+            test.filename = test.expectedPath.split("/").slice(-1);
             if (test.expected) {
                 test.expected_diff = test.expected;
             } else {
