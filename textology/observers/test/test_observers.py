@@ -196,8 +196,8 @@ async def test_callback_failure() -> None:
     ping2_comp.value = "test2"
     ping3_comp.value = "test3"
     await asyncio.sleep(0.1)
-    assert ping1_comp.value is "test1"
-    assert ping2_comp.value is "test2"
-    assert ping3_comp.value is "test3"
-    assert pong_comp.value is "Third time is the charm!"
+    assert ping1_comp.value == "test1"
+    assert ping2_comp.value == "test2"
+    assert ping3_comp.value == "test3"
+    assert pong_comp.value == "Third time is the charm!"
     assert error_comp.value == "Culprit: I got caught red handed"

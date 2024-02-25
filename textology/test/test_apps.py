@@ -202,6 +202,4 @@ async def test_themed_app(compare_snapshots: Callable) -> None:
         snapshots.append(await compare_snapshots(pilot, test_suffix="no_theme"))
 
         mismatched = [str(index) for index, matched in enumerate(snapshots) if not matched]
-        assert (
-            not mismatched
-        ), f'{len(mismatched)} snapshot(s) did not match expected results. Mismatched snapshots: {", ".join(mismatched)}'
+        assert not mismatched, f'{len(mismatched)} snapshot(s) did not match expected results. Mismatched snapshots: {", ".join(mismatched)}'
