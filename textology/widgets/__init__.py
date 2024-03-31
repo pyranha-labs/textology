@@ -31,6 +31,7 @@ if typing.TYPE_CHECKING:
     from ._list_view import ListView
     from ._location import Location
     from ._modal_dialog import ModalDialog
+    from ._multi_select import MultiSelect
     from ._popup_text import PopupText
     from ._store import Store
     from ._textual._checkbox import Checkbox
@@ -109,6 +110,7 @@ _module_map = {
     "MarkdownViewer": "._textual._markdown",
     "Middle": "._textual._containers",
     "ModalDialog": "._modal_dialog",
+    "MultiSelect": "._multi_select",
     "OptionList": "._textual._option_list",
     "PageContainer": "._textual._containers",
     "PopupText": "._popup_text",

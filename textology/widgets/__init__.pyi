@@ -18,6 +18,7 @@ from ._list_item_meta import ListItemMeta as ListItemMeta
 from ._list_view import ListView as ListView
 from ._location import Location as Location
 from ._modal_dialog import ModalDialog as ModalDialog
+from ._multi_select import MultiSelect as MultiSelect
 from ._popup_text import PopupText as PopupText
 from ._store import Store as Store
 from ._textual._checkbox import Checkbox as Checkbox

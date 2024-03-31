@@ -78,6 +78,7 @@ Examples for Textology extensions, such as callback based applications, are incl
 - New widgets, including (but not limited to):
   - ListItemHeaders (non-interactive ListItems)
   - HorizontalMenus (walkable list of ListViews with peeking at following lists)
+  - MultiSelect (dropdown list with ability to select multiple items).
 - Enhanced testing support
   - Parallel tests via python-xdist
   - Custom testing arguments, such as updating snapshots on failures

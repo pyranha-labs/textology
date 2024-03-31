@@ -113,3 +113,53 @@ async def test_list_items(compare_snapshots: Callable) -> None:
                 await compare_snapshots(pilot),
             ]
         )
+
+
+@pytest.mark.asyncio
+async def test_multi_select(compare_snapshots: Callable) -> None:
+    """Validate basic MultiSelect functionality with allow_blank true and false combinations."""
+    app = apps.WidgetApp(
+        child=widgets.Vertical(
+            widgets.MultiSelect(
+                [
+                    ("test1", "test1"),
+                    ("test2", "test2"),
+                    ("test3", "test3"),
+                ],
+                allow_blank=True,
+            ),
+            widgets.MultiSelect(
+                [
+                    ("test1", "test1"),
+                    ("test2", "test2", True),
+                    ("test3", "test3"),
+                ],
+                allow_blank=False,
+            ),
+        )
+    )
+
+    async with app.run_test() as pilot:
+        assert all(
+            [
+                await compare_snapshots(
+                    pilot,
+                    test_suffix="idle",
+                ),
+                await compare_snapshots(
+                    pilot,
+                    press=["space", "down", "space", "down", "enter"],
+                    test_suffix="with_multiple_selected",
+                ),
+                await compare_snapshots(
+                    pilot,
+                    press=["space", "up", "space", "esc", "escape"],
+                    test_suffix="after_deselect_all",
+                ),
+                await compare_snapshots(
+                    pilot,
+                    press=["tab", "space", "down", "space"],
+                    test_suffix="after_blocked_deselect",
+                ),
+            ]
+        )
