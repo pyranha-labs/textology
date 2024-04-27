@@ -43,7 +43,7 @@ format:
 lint:
 	@echo Running code style checks: isort, pycodestyle
 	@ruff check $(PROJECT_ROOT) && echo "🏆 Code style good to go!" || \
-		(echo "💔 Please resolve all code style warnings to ensure scalability and maintainability."; exit 1)
+		(echo "💔 Please resolve all code style warnings to ensure scalability and maintainability:\nruff check --fix $(PROJECT_ROOT)"; exit 1)
 	@echo Running code quality checks: pylint
 	@pylint $(NAME) examples utils && echo "🏆 Code quality good to go!" || \
 		(echo "💔 Please resolve all code quality warnings to ensure scalability and maintainability."; exit 1)
