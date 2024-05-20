@@ -4,7 +4,9 @@ This interface file must be kept in sync with the __init__.py's `__all__` list.
 This file is used by text editors and type checkers to see the lazily loaded classes.
 """
 
-from textology.textual_utils import textual_version
+from textual.widget import Widget as Widget
+
+from textology.textual_utils import textual_version as textual_version
 
 from ._button import Button as Button
 from ._extensions import Clickable as Clickable
