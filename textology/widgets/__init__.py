@@ -141,7 +141,7 @@ _module_map = {
     "WidgetInitExtension": "._extensions",
     "walk_all_children": "._extensions",
 }
-__all__ = tuple(_module_map.keys())
+__all__ = tuple(_module_cache.keys()) + tuple(_module_map.keys())
 
 
 def __getattr__(attr_name: str) -> typing.Any:
