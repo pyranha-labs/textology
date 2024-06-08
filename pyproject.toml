@@ -193,6 +193,7 @@ select = [
     "I", # isort
     "E", # pycodestyle
     "W", # pycodestyle
+    "D", # pydocstyle
 ]
 ignore = [
     # Ignore E402 import not at top of file. Pylint will catch, and we do not want double ignore lines in the code.
@@ -201,9 +202,16 @@ ignore = [
     "E402",
     "E501",
     "E722",
+    # Ignore D102, Missing docstring in public method. Pylint will catch, and detects overrides properly.
+    # Ignore D105, Missing docstring in magic method. Pylint will catch, and detects overrides properly.
+    "D102",
+    "D105",
 ]
 # Preview required for pycodestyle rules as of ruff 0.2.2.
 preview = true
 
 [tool.ruff.lint.isort]
 force-single-line = true
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
