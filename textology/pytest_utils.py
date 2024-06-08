@@ -20,6 +20,7 @@ import textual
 from pytest import FixtureRequest
 from textual.app import App
 from textual.pilot import Pilot
+from textual.widget import Widget
 
 from textology import __version__
 
@@ -45,6 +46,7 @@ class SnapshotFailure:
 async def auto_pilot(
     pilot: Pilot,
     press: Iterable[str] = (),
+    click: list[type[Widget] | str | None] = (),
     wait_for_animation: bool = True,
 ) -> None:
     """Automate user actions with an application test pilot.
@@ -52,10 +54,13 @@ async def auto_pilot(
     Args:
         pilot: Active test pilot for an application.
         press: Key presses to run before waiting for animations to complete.
+        click: Selectors to specify widgets that should be used as the reference for the click offset.
         wait_for_animation: Whether to wait for animations to complete before returning.
     """
     await pilot.pause()
     await pilot.press(*press)
+    for selector in click:
+        await pilot.click(selector)
     if wait_for_animation:
         await pilot.wait_for_scheduled_animations()
         await pilot.pause()
@@ -64,6 +69,7 @@ async def auto_pilot(
 async def capture_snapshot(
     pilot: Pilot,
     press: Iterable[str] = (),
+    click: list[type[Widget] | str | None] = (),
     snap_title: str = None,
     wait_for_animation: bool = True,
 ) -> str:
@@ -72,13 +78,14 @@ async def capture_snapshot(
     Args:
         pilot: Active test pilot for an application.
         press: Key presses to run before waiting for animations to complete.
+        click: Selectors to specify widgets that should be used as the reference for the click offset.
         snap_title: The title of the exported screenshot or None to use app title.
         wait_for_animation: Whether to wait for animations to complete before returning.
 
     Returns:
         SVG screenshot of the current screen.
     """
-    await auto_pilot(pilot, press, wait_for_animation=wait_for_animation)
+    await auto_pilot(pilot, press=press, click=click, wait_for_animation=wait_for_animation)
     svg = pilot.app.export_screenshot(title=snap_title)
     return svg
 
@@ -89,6 +96,7 @@ async def compare_snapshots(  # pylint: disable=too-many-arguments
     compare_to: str | PathLike | None = None,
     test_suffix: str | None = None,
     press: Iterable[str] = (),
+    click: list[type[Widget] | str | None] = (),
     snap_title: str = None,
     wait_for_animation: bool = True,
 ) -> bool:
@@ -106,6 +114,7 @@ async def compare_snapshots(  # pylint: disable=too-many-arguments
         test_suffix: Optional suffix to add to the snapshot image name after the name of the test.
             Mutually exclusive with "compare_to" full path being provided.
         press: Key presses to run before waiting for animations to complete.
+        click: Selectors to specify widgets that should be used as the reference for the click offset.
         snap_title: The title of the exported screenshot or None to use app title.
         wait_for_animation: Whether to wait for animations to complete before returning.
 
@@ -117,6 +126,7 @@ async def compare_snapshots(  # pylint: disable=too-many-arguments
     result_svg = await capture_snapshot(
         pilot,
         press=press,
+        click=click,
         snap_title=snap_title,
         wait_for_animation=wait_for_animation,
     )
@@ -172,6 +182,7 @@ async def compare_snapshots_fixture(request: FixtureRequest) -> Callable:
         compare_to: str | PathLike | None = None,
         test_suffix: str | None = None,
         press: Iterable[str] = (),
+        click: list[type[Widget] | str | None] = (),
         snap_title: str = None,
         wait_for_animation: bool = True,
     ) -> bool:
@@ -187,6 +198,7 @@ async def compare_snapshots_fixture(request: FixtureRequest) -> Callable:
             test_suffix: Optional suffix to add to the snapshot image name after the name of the test.
                 Mutually exclusive with "compare_to" full path being provided.
             press: Key presses to run before waiting for animations to complete.
+            click: Selectors to specify widgets that should be used as the reference for the click offset.
             snap_title: The title of the exported screenshot or None to use app title.
             wait_for_animation: Whether to wait for animations to complete before returning.
 
@@ -214,6 +226,7 @@ async def compare_snapshots_fixture(request: FixtureRequest) -> Callable:
                     compare_to=compare_to,
                     test_suffix=test_suffix,
                     press=press,
+                    click=click,
                     snap_title=snap_title,
                     wait_for_animation=wait_for_animation,
                 )
@@ -223,6 +236,7 @@ async def compare_snapshots_fixture(request: FixtureRequest) -> Callable:
             compare_to=compare_to,
             test_suffix=test_suffix,
             press=press,
+            click=click,
             snap_title=snap_title,
             wait_for_animation=wait_for_animation,
         )

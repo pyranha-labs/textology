@@ -153,13 +153,57 @@ async def test_multi_select(compare_snapshots: Callable) -> None:
                 ),
                 await compare_snapshots(
                     pilot,
-                    press=["space", "up", "space", "esc", "escape"],
+                    press=["space", "up", "space", "escape"],
                     test_suffix="after_deselect_all",
                 ),
                 await compare_snapshots(
                     pilot,
                     press=["tab", "space", "down", "space"],
                     test_suffix="after_blocked_deselect",
+                ),
+            ]
+        )
+
+
+@pytest.mark.asyncio
+async def test_modal_dialog(compare_snapshots: Callable) -> None:
+    """Validate basic MultiSelect functionality with allow_blank true and false combinations."""
+
+    def _show_dialog(_: widgets.Button.Pressed) -> None:
+        dialog = widgets.ModalDialog(
+            widgets.Label("Dialog Content"),
+        )
+        dialog.show(app)
+
+    app = apps.WidgetApp(
+        child=widgets.Vertical(
+            widgets.Label("App Content"),
+            widgets.Button(
+                "Show Dialog",
+                id="dialog-btn",
+                callbacks={
+                    "on_button_pressed": _show_dialog,
+                },
+            ),
+        )
+    )
+
+    async with app.run_test() as pilot:
+        assert all(
+            [
+                await compare_snapshots(
+                    pilot,
+                    test_suffix="idle",
+                ),
+                await compare_snapshots(
+                    pilot,
+                    click=["#dialog-btn"],
+                    test_suffix="after_show",
+                ),
+                await compare_snapshots(
+                    pilot,
+                    press=["escape"],
+                    test_suffix="after_dismiss",
                 ),
             ]
         )
