@@ -114,6 +114,14 @@ class WidgetExtension:
         for key, value in styles.items():
             setattr(self.styles, key, value)
 
+    def action_focus_next(self) -> None:
+        """Focus the next widget when the action is called."""
+        self.app.action_focus_next()
+
+    def action_focus_previous(self) -> None:
+        """Focus the previous widget when the action is called."""
+        self.app.action_focus_previous()
+
     def after(
         self,
         awaitable: Awaitable,

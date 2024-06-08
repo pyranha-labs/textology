@@ -41,7 +41,10 @@ class MultiSelectOverlay(SelectionList):  # pylint: disable=too-many-ancestors
     Based off textual.widgets.select.SelectOverlay, but uses SelectionList for multiple choice selection.
     """
 
-    BINDINGS = [("escape", "dismiss"), ("backspace,delete", "clear")]
+    BINDINGS = [
+        ("escape", "dismiss"),
+        ("backspace,delete", "clear"),
+    ]
 
     DEFAULT_CSS = """
     MultiSelectOverlay {
