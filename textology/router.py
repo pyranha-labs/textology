@@ -250,7 +250,7 @@ class Router:
         self.static_endpoints: dict[str, dict[str, Endpoint]] = {}  # static_endpoints[path][method]
         self.endpoint_not_allowed: Endpoint = Endpoint([], "", self._default_not_allowed_handler)
         self.endpoint_not_found: Endpoint = Endpoint([], "", self._default_not_found_handler)
-        self.error_handler = self._default_error_handler
+        self.error_handler: Callable[[Request, BaseException], Any] = self._default_error_handler
 
     def _add(
         self,
@@ -366,7 +366,7 @@ class Router:
         # Look in static endpoints first due to performance of exact matches.
         methods = self.static_endpoints.get(path)
         if methods is not None:
-            endpoint = methods[method] or self.endpoint_not_allowed
+            endpoint = methods.get(method) or self.endpoint_not_allowed
         else:
             # Look in dynamic endpoints to see if any match the pattern.
             for weighted_endpoint in self.weighted_endpoints:
@@ -449,7 +449,9 @@ class Router:
         except BaseException as base_error:  # pylint: disable=broad-exception-caught
             # Catch all errors to allow preventing fatal crashes in server loops during the error handler.
             try:
-                self.error_handler(request, base_error)
+                result = self.error_handler(  # Overrides can return a value. pylint: disable=assignment-from-no-return
+                    request, base_error
+                )
             except Exception as error:  # pylint: disable=broad-exception-caught
                 self.logger.error(f"Failed to handle error with error handler {method} {request.url.path} {error}")
         return result

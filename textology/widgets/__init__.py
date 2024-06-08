@@ -18,7 +18,7 @@ from textual.widget import Widget
 from textology.textual_utils import textual_version
 
 # Lazily load widgets to decrease startup time and allow multi version support.
-if typing.TYPE_CHECKING:
+if typing.TYPE_CHECKING:  # pragma: no cover. Exclude from coverage to allow lazy imports without import errors.
     from ._button import Button
     from ._extensions import Clickable
     from ._extensions import WidgetExtension
