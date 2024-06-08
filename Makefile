@@ -38,23 +38,15 @@ format:
 		(echo "💔 Please run formatter to ensure code consistency and quality:\nruff format $(PROJECT_ROOT)"; exit 1)
 
 # Check for common lint/complexity/style issues.
-# Ruff is used for isort and pycodestyle.
+# Ruff is used for isort, pycodestyle, pydocstyle. Pylint is used separately for greater coverage.
 .PHONY: lint
 lint:
-	@echo Running code style checks: isort, pycodestyle
-	@ruff check $(PROJECT_ROOT) && echo "🏆 Code style good to go!" || \
-		(echo "💔 Please resolve all code style warnings to ensure scalability and maintainability:\nruff check --fix $(PROJECT_ROOT)"; exit 1)
+	@echo Running code and documentation style checks: isort, pycodestyle, pydocstyle
+	@ruff check $(PROJECT_ROOT) && echo "🏆 Code/Doc style good to go!" || \
+		(echo "💔 Please resolve all style warnings to ensure readability, scalability, and maintainability:\nruff check --fix $(PROJECT_ROOT)"; exit 1)
 	@echo Running code quality checks: pylint
-	@pylint $(NAME) examples utils && echo "🏆 Code quality good to go!" || \
+	@pylint $(NAME) examples && echo "🏆 Code quality good to go!" || \
 		(echo "💔 Please resolve all code quality warnings to ensure scalability and maintainability."; exit 1)
-
-# Check documentation style to ensure it matches expected format.
-# Code style is checked as part of lint recipe.
-.PHONY: style
-style:
-	@echo Running documentation style checks: pydocstyle
-	@$(PROJECT_ROOT)utils/pydocstyle_patched.py $(PROJECT_ROOT) && echo "🏆 Doc style good to go!" || \
-		(echo "💔 Please resolve all documentation warnings to ensure readability and maintainability."; exit 1)
 
 # Check typehints for static typing best practices.
 .PHONY: typing
@@ -74,7 +66,7 @@ security:
 # Does not enforce unit tests to simplify pushes, unit tests should be automated via pipelines with standardized env.
 # Ensure format is first, as it will often solve many style and lint failures.
 .PHONY: qa
-qa: format style lint typing security
+qa: format lint typing security
 
 # Run basic unit tests.
 .PHONY: test
