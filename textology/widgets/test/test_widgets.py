@@ -1,8 +1,11 @@
 """Unit tests for widgets module."""
 
+import asyncio
+from textwrap import dedent
 from typing import Callable
 
 import pytest
+from typing_extensions import override
 
 from textology import apps
 from textology import widgets
@@ -189,21 +192,95 @@ async def test_modal_dialog(compare_snapshots: Callable) -> None:
     )
 
     async with app.run_test() as pilot:
-        assert all(
-            [
-                await compare_snapshots(
-                    pilot,
-                    test_suffix="idle",
-                ),
-                await compare_snapshots(
-                    pilot,
-                    click=["#dialog-btn"],
-                    test_suffix="after_show",
-                ),
-                await compare_snapshots(
-                    pilot,
-                    press=["escape"],
-                    test_suffix="after_dismiss",
-                ),
-            ]
+        snapshots = [
+            await compare_snapshots(
+                pilot,
+                test_suffix="idle",
+            ),
+            await compare_snapshots(
+                pilot,
+                click=["#dialog-btn"],
+                test_suffix="after_show",
+            ),
+        ]
+        await asyncio.sleep(0.25)
+        snapshots.append(
+            await compare_snapshots(
+                pilot,
+                press=["escape"],
+                test_suffix="after_dismiss",
+            )
         )
+        assert all(snapshots)
+
+
+@pytest.mark.asyncio
+async def test_widgets_render(compare_snapshots: Callable) -> None:
+    """Validate basic widget initialization and render."""
+
+    class Widgets(apps.App):
+        @override
+        def compose(self) -> apps.ComposeResult:
+            text_input = widgets.TextInput("Value")
+            text_input.cursor_blink = False
+
+            tree = widgets.Tree("Tree", styles={"height": "auto"})
+            tree.root.expand()
+            characters = tree.root.add("Root", expand=True)
+            characters.add_leaf("Branch 1")
+            characters.add_leaf("Branch 2")
+
+            with widgets.Container():
+                yield widgets.Markdown(
+                    dedent("""\
+                    # Widget Render Tests
+
+                    Markdown text
+                    """)
+                )
+                yield widgets.Label("Label")
+                yield widgets.Static("Static")
+                yield text_input
+                yield widgets.Select([("Select 1", "1"), ("Select 2", "2")])
+                yield widgets.SelectionList(("SelectionList 1", "1"), ("SelectionList 2", "2"))
+                yield widgets.OptionList("OptionList 1", "OptionList 2")
+                with widgets.RadioSet():
+                    yield widgets.RadioButton("RadioButton 1")
+                    yield widgets.RadioButton("RadioButton 2")
+                with widgets.TabbedContent(initial="tab1"):
+                    with widgets.TabPane("Tab 1", id="tab1"):
+                        yield widgets.Label("This is tab 1.")
+                    with widgets.TabPane("Tab 2", id="tab2"):
+                        yield widgets.Label("This is tab 2.")
+                yield widgets.Rule()
+                yield tree
+                with widgets.Collapsible(title="Collapsible", collapsed=False):
+                    yield widgets.Label("Hello from collapsible.")
+                yield widgets.DataTable()
+                yield widgets.DirectoryTree("fakedir", styles={"height": "auto"})
+                yield widgets.Pretty({"key1": {"key2": "value2"}})
+                yield widgets.Sparkline(data=[1, 2, 3])
+                yield widgets.Digits("123")
+                yield widgets.ProgressBar(1)
+                yield widgets.Switch(value=True)
+                yield widgets.Checkbox(label="Checkbox", value=True)
+                with widgets.Container(styles={"height": 4}):
+                    yield widgets.TextArea.code_editor(
+                        dedent("""\
+                        # Comment
+                        var = 123"""),
+                        language="python",
+                    )
+                yield widgets.ContentSwitcher(
+                    widgets.Label("ContentSwitcher Label 1", id="content-switcher-1"),
+                    widgets.Label("ContentSwitcher Label 2", id="content-switcher-2"),
+                    initial="content-switcher-2",
+                )
+
+        def on_mount(self) -> None:
+            table = self.query_one(widgets.DataTable)
+            table.add_columns("C1", "C2")
+            table.add_rows([[1, 2]])
+
+    async with Widgets().run_test(size=(80, 80)) as pilot:
+        assert await compare_snapshots(pilot)

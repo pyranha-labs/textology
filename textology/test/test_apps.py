@@ -43,6 +43,48 @@ async def test_button_n_clicks() -> None:
 
 
 @pytest.mark.asyncio
+async def test_extended_app(compare_snapshots: Callable) -> None:
+    """Validate generic extended application behavior."""
+    async with apps.ExtendedApp().run_test() as pilot:
+        # Validate the application adds the default content container.
+        await pilot.app.query_one("#content").mount(widgets.Label("Added to default"))
+        assert await compare_snapshots(pilot, test_suffix="default_child")
+
+        # Validate that the application contains the correct document root.
+        assert pilot.app.document == pilot.app.screen_stack[0]
+
+    with pytest.raises(ValueError):
+        async with apps.ExtendedApp(child=widgets.Label("Extended app content"), use_pages=False).run_test() as pilot:
+            # Validate that the application raises if pages are not enabled, and one is attempted to be added.
+            pilot.app.register_page()
+
+    with pytest.raises(ValueError):
+        async with apps.ExtendedApp(child=widgets.Label("Extended app content"), use_pages=True).run_test() as pilot:
+            # Validate that the application raises if pages enabled, but no location element in document.
+            pilot.app.enable_pages()
+
+    with pytest.raises(ValueError):
+        async with apps.ExtendedApp(
+            child=widgets.Container(
+                widgets.Label("Extended app content"),
+                widgets.Location(),
+            ),
+            use_pages=True,
+        ).run_test() as pilot:
+            # Validate that the application raises if pages enabled, and location is missing an id.
+            pilot.app.enable_pages()
+
+    async with apps.ExtendedApp(use_pages=True).run_test() as pilot:
+        await pilot.app.query_one("#content").mount(widgets.Label("Added to default"))
+        # Validate there are no pages registered on start.
+        assert pilot.app.page_registry == {}
+
+        # Validate that the application loads a missing content page when invalid route is used.
+        pilot.app.location.url = "/bad-route"
+        assert await compare_snapshots(pilot, test_suffix="bad_route")
+
+
+@pytest.mark.asyncio
 async def test_snapshot_with_app(compare_snapshots: Callable) -> None:
     """Validate that snapshot fixture/test works with instantiated app."""
     assert await compare_snapshots(basic_app.BasicApp(), Path(SNAPSHOT_DIR, "test_basic_app.svg"))
@@ -184,7 +226,17 @@ async def test_multi_page_app(compare_snapshots: Callable) -> None:
 
 @pytest.mark.asyncio
 async def test_themed_app(compare_snapshots: Callable) -> None:
-    """Test application and removal of CSS themes."""
+    """Test basic behavior of CSS themed apps."""
+    async with basic_themed_app.BasicThemedApp(
+        css_path="basic_themed_app-white_border.css",
+    ).run_test() as pilot:
+        assert await compare_snapshots(pilot, test_suffix="manual_css_path")
+
+    async with basic_themed_app.BasicThemedApp(
+        css_theme="white",
+    ).run_test() as pilot:
+        assert await compare_snapshots(pilot, test_suffix="manual_css_theme")
+
     async with basic_themed_app.BasicThemedApp().run_test() as pilot:
         snapshots = [await compare_snapshots(pilot, test_suffix="no_theme")]
 
@@ -203,3 +255,12 @@ async def test_themed_app(compare_snapshots: Callable) -> None:
 
         mismatched = [str(index) for index, matched in enumerate(snapshots) if not matched]
         assert not mismatched, f'{len(mismatched)} snapshot(s) did not match expected results. Mismatched snapshots: {", ".join(mismatched)}'
+
+
+@pytest.mark.asyncio
+async def test_widget_app(compare_snapshots: Callable) -> None:
+    """Validate generic widget application behavior."""
+    async with apps.WidgetApp().run_test() as pilot:
+        # Validate the application adds the default content container.
+        await pilot.app.query_one("#content").mount(widgets.Label("Added to default"))
+        assert await compare_snapshots(pilot, test_suffix="default_child")
