@@ -502,21 +502,3 @@ class ExtendedApp(WidgetApp, ObserverManager):
             if isinstance(node, Location):
                 self._location = node
                 return
-
-
-def _post_mount_patch(self: Widget) -> None:
-    """Called after the object has been mounted, regardless of mount event, to register observer support."""
-    # Call the original function being patched to ensure the widget is fully set up before registering.
-    _widget_post_mount(self)
-    attach_to_observers = getattr(self.app, "attach_to_observers", None)
-    if attach_to_observers:
-        attach_to_observers(self)
-    if self.id:
-        _register_reactive_observers = getattr(self.app, "_register_reactive_observers", None)
-        if _register_reactive_observers:
-            _register_reactive_observers(self)
-
-
-# Patch the base Widget class to allow all reactive attributes to register to observer applications.
-_widget_post_mount = Widget._post_mount  # pylint: disable=protected-access
-Widget._post_mount = _post_mount_patch  # pylint: disable=protected-access
