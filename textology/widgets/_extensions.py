@@ -193,6 +193,17 @@ class WidgetExtension:
             await super()._on_message(message)
         return None
 
+    def _post_mount(self) -> None:
+        """Overrides native post mount actions to register observer support."""
+        super()._post_mount()
+        attach_to_observers = getattr(self.app, "attach_to_observers", None)
+        if attach_to_observers:
+            attach_to_observers(self)
+        if self.id:
+            _register_reactive_observers = getattr(self.app, "_register_reactive_observers", None)
+            if _register_reactive_observers:
+                _register_reactive_observers(self)
+
     def walk_all_children(self) -> Generator[Widget, None, None]:
         """Walk the subtree rooted at this node, and return every descendant encountered.
 
