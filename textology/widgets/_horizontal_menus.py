@@ -9,6 +9,7 @@ from typing import Iterable
 
 from textual import containers
 from textual import events
+from textual.await_complete import AwaitComplete
 from textual.binding import Binding
 from textual.binding import BindingType
 from textual.reactive import reactive
@@ -148,11 +149,18 @@ class HorizontalMenus(WidgetExtension, containers.HorizontalScroll):
                 raise ValueError("All menu children must contain a ListView widget")
             self.menus.append(menu)
 
-    def _add_menu(self, items: list[ListItem]) -> None:
+    def action_focus_next(self) -> None:
+        """Focus the next widget and ensure the first item is highlighted."""
+        self.app.action_focus_next()
+        focused = self.app.focused
+        if focused in self.menus and focused.index is None and any(focused.children):
+            focused.index = 0
+
+    def _add_menu(self, items: list[ListItem]) -> AwaitComplete:
         """Create and add a menu to the list of available menus."""
         new_menu = self.menu_creator(len(self.menus), items)
+        mount = None
         if new_menu is not None:
-            self.mount(new_menu)
             list_view = None
             if isinstance(new_menu, ListView):
                 list_view = new_menu
@@ -164,6 +172,12 @@ class HorizontalMenus(WidgetExtension, containers.HorizontalScroll):
             if list_view is None:
                 raise ValueError("Menus must contain a ListView widget for navigation")
             self.menus.append(list_view)
+            mount = self.mount(new_menu)
+            await_complete = AwaitComplete(mount)
+        else:
+            await_complete = AwaitComplete()
+        self.call_next(await_complete)
+        return await_complete
 
     @staticmethod
     def _default_menu_creator(menu_index: int, items: list) -> ListView | None:
@@ -171,6 +185,7 @@ class HorizontalMenus(WidgetExtension, containers.HorizontalScroll):
         return (
             ListView(
                 *items,
+                auto_highlight=False,
                 initial_index=None,
                 classes=f"--horizontal-menu-{menu_index}",
             )
@@ -195,7 +210,7 @@ class HorizontalMenus(WidgetExtension, containers.HorizontalScroll):
                 highlights.append(highlighted)
         return highlights
 
-    def on_descendant_focus(self, _: events.DescendantFocus) -> None:
+    def on_descendant_focus(self, focus_event: events.DescendantFocus) -> None:
         """Update highlighted and focused items when focus on nested menus updates."""
         focused = None
         for menu in reversed(self.menus):
@@ -208,6 +223,8 @@ class HorizontalMenus(WidgetExtension, containers.HorizontalScroll):
         self.focused = focused
         self.highlighted = self._find_highlighted()
         self.highlights = self._find_highlights()
+        if not self.highlighted and self.menus and focus_event.widget == self.menus[0]:
+            focus_event.widget.index = 0
 
     def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
         """Update highlighted items and focused menus when highlight on nested item updates."""
@@ -235,28 +252,32 @@ class HorizontalMenus(WidgetExtension, containers.HorizontalScroll):
             child.remove()
             self.menus.pop(index)
 
-    def show_menu(self, index: int, items: list[ListItem]) -> None:
+    def show_menu(self, index: int, items: list[ListItem]) -> AwaitComplete:
         """Show a new set of items, either by creating a new menu, or updating an existing menu.
 
         Args:
             index: Position of the menu to create or update.
             items: New items to show in the menu at the provided index.
+
+        Returns:
+            An awaitable object that waits for menus to be added or updated.
         """
-        for item in items:
-            item.menu_index = index
         self._update_menu_index(items, index)
         if index >= len(self.menus):
-            self._add_menu(items)
-        else:
-            self._update_menu(index, items)
+            return self._add_menu(items)
+        return self._update_menu(index, items)
 
-    def _update_menu(self, index: int, new_items: list[ListItem]) -> None:
+    def _update_menu(self, index: int, new_items: list[ListItem]) -> AwaitComplete:
         """Update the items in an existing menu."""
         # Do not count headers towards the available items to display in a sub-menu.
         non_headers = [item for item in new_items if not isinstance(item, ListItemHeader)]
         self.remove_menus(index if non_headers else index - 1)
         if index < len(self.menus):
-            self.menus[index].replace(new_items)
+            awaitable = self.menus[index].replace(new_items)
+        else:
+            awaitable = AwaitComplete()
+            self.call_next(awaitable)
+        return awaitable
 
     @staticmethod
     def _update_menu_index(items: Iterable[ListItem | ListItemMeta], index: int) -> None:

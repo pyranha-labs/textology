@@ -5,8 +5,8 @@ from typing import Callable
 
 from textual import events
 from textual import widgets
+from textual.await_complete import AwaitComplete
 from textual.reactive import reactive
-from textual.widget import AwaitMount
 from textual.widget import Widget
 from textual.widgets import ListItem
 
@@ -91,24 +91,34 @@ class ListView(WidgetExtension, widgets.ListView):
         """Update reactive attributes on highlight changes."""
         self.highlighted = self.highlighted_child
 
+    async def _replace(
+        self,
+        items: list[ListItem],
+    ) -> None:
+        """Simultaneously swap all the items in the list."""
+        # Semantically equivalent to `self.remove_children` + `self.mount`,
+        # but reduces refreshes to improve performance.
+        self.index = None
+        # pylint: disable=protected-access
+        to_remove = self.app._detach_from_dom(list(self.children))
+        await self.app._prune_nodes(to_remove)
+        await self.mount(*items)
+
     def replace(
         self,
         items: list[ListItem],
-        new_index: int | None = None,
-    ) -> AwaitMount:
+    ) -> AwaitComplete:
         """Simultaneously swap all the items in the list.
 
         Args:
             items: New items to place in the list.
-            new_index: New item index to set after items are updated.
 
         Returns:
             An awaitable object that waits for items to be mounted.
         """
-        self.remove_children()
-        mounted = self.mount_all(items)
-        self.index = new_index
-        return mounted
+        await_complete = AwaitComplete(self._replace(items))
+        self.call_next(await_complete)
+        return await_complete
 
     def watch_index(self, old_index: int, new_index: int) -> None:
         """Updates the highlighted when the index changes.
