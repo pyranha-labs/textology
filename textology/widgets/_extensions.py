@@ -150,6 +150,18 @@ class WidgetExtension:
 
         return self.post_message(events.Callback(callback=awaiter))
 
+    def disable_child_messages(
+        self,
+        *messages: type[events.Message],
+    ) -> None:
+        """Recursively disable message types from being processed on all child widgets.
+
+        Args:
+            messages: Message types to disable on all children of this widget.
+        """
+        for child in self.walk_all_children():
+            child.disable_messages(*messages)
+
     async def _handle_local_callback(self, message: Message) -> bool:
         """Route message to a local callback if available, or recommend sending to native widget message handler.
 
