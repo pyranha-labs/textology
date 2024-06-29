@@ -1,11 +1,12 @@
 """Extended Textual RadioSet widget."""
 
 from typing import Any
-from typing import Callable
+from typing import Iterable
 
 from textual import events
 from textual import widgets
 
+from .._extensions import Callback
 from .._extensions import WidgetExtension
 
 
@@ -20,8 +21,8 @@ class RadioSet(WidgetExtension, widgets.RadioSet):
         classes: str | None = None,
         disabled: bool = False,
         styles: dict[str, Any] | None = None,
-        disabled_messages: list[type[events.Message]] | None = None,
-        callbacks: dict[str, Callable] | None = None,
+        disabled_messages: Iterable[type[events.Message]] | None = None,
+        callbacks: dict[str, Callback] | None = None,
     ) -> None:
         """Initialize the radio set.
 

@@ -1,10 +1,11 @@
 """Widget metadata that is used to create an item within a ListView on demand."""
 
 from typing import Any
-from typing import Callable
+from typing import Iterable
 
 from textual import events
 
+from ._extensions import Callback
 from ._list_item import ListItem
 
 
@@ -20,8 +21,8 @@ class ListItemMeta:
         disabled: bool = False,
         data: Any = None,
         styles: dict[str, Any] | None = None,
-        disabled_messages: list[type[events.Message]] | None = None,
-        callbacks: dict[str, Callable] | None = None,
+        disabled_messages: Iterable[type[events.Message]] | None = None,
+        callbacks: dict[str, Callback] | None = None,
     ) -> None:
         """Initialize metadata object to allow creating list items on demand.
 

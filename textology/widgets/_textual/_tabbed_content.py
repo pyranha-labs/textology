@@ -1,13 +1,14 @@
 """Extended Textual Tab Content widgets."""
 
 from typing import Any
-from typing import Callable
+from typing import Iterable
 
 from rich.text import TextType
 from textual import events
 from textual import widgets
 from textual.widget import Widget
 
+from .._extensions import Callback
 from .._extensions import WidgetExtension
 
 
@@ -23,8 +24,8 @@ class TabbedContent(WidgetExtension, widgets.TabbedContent):
         classes: str | None = None,
         disabled: bool = False,
         styles: dict[str, Any] | None = None,
-        disabled_messages: list[type[events.Message]] | None = None,
-        callbacks: dict[str, Callable] | None = None,
+        disabled_messages: Iterable[type[events.Message]] | None = None,
+        callbacks: dict[str, Callback] | None = None,
     ) -> None:
         """Initialize a TabbedContent widgets.
 
@@ -66,8 +67,8 @@ class TabPane(WidgetExtension, widgets.TabPane):
         classes: str | None = None,
         disabled: bool = False,
         styles: dict[str, Any] | None = None,
-        disabled_messages: list[type[events.Message]] | None = None,
-        callbacks: dict[str, Callable] | None = None,
+        disabled_messages: Iterable[type[events.Message]] | None = None,
+        callbacks: dict[str, Callback] | None = None,
     ) -> None:
         """Initialize a TabPane.
 

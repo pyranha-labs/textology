@@ -9,6 +9,7 @@ from textual.widget import Widget as Widget
 from textology.textual_utils import textual_version as textual_version
 
 from ._button import Button as Button
+from ._extensions import Callback as Callback
 from ._extensions import Clickable as Clickable
 from ._extensions import WidgetExtension as WidgetExtension
 from ._extensions import WidgetInitExtension as WidgetInitExtension

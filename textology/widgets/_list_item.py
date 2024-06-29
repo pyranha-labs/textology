@@ -1,12 +1,13 @@
 """Extended Textual widget that is an item within a ListView, and contains metadata about the selection."""
 
 from typing import Any
-from typing import Callable
+from typing import Iterable
 
 from textual import events
 from textual import widgets
 from textual.widget import Widget
 
+from ._extensions import Callback
 from ._extensions import WidgetExtension
 from ._textual._label import Label
 
@@ -32,8 +33,8 @@ class ListItem(WidgetExtension, widgets.ListItem):
         disabled: bool = False,
         data: Any = None,
         styles: dict[str, Any] | None = None,
-        disabled_messages: list[type[events.Message]] | None = None,
-        callbacks: dict[str, Callable] | None = None,
+        disabled_messages: Iterable[type[events.Message]] | None = None,
+        callbacks: dict[str, Callback] | None = None,
     ) -> None:
         """Initialize a ListItem with extension arguments.
 

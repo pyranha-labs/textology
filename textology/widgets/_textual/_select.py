@@ -1,7 +1,6 @@
 """Extended Textual Select widget."""
 
 from typing import Any
-from typing import Callable
 from typing import Iterable
 
 from textual import events
@@ -9,6 +8,7 @@ from textual import widgets
 from textual.widgets._select import NoSelection
 from textual.widgets._select import SelectType
 
+from .._extensions import Callback
 from .._extensions import WidgetExtension
 
 
@@ -27,8 +27,8 @@ class Select(WidgetExtension, widgets.Select):
         classes: str | None = None,
         disabled: bool = False,
         styles: dict[str, Any] | None = None,
-        disabled_messages: list[type[events.Message]] | None = None,
-        callbacks: dict[str, Callable] | None = None,
+        disabled_messages: Iterable[type[events.Message]] | None = None,
+        callbacks: dict[str, Callback] | None = None,
     ) -> None:
         """Initialize the Select control.
 
