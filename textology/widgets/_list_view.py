@@ -1,7 +1,7 @@
 """Extended Textual vertical list view widget."""
 
 from typing import Any
-from typing import Callable
+from typing import Iterable
 
 from textual import events
 from textual import widgets
@@ -10,6 +10,7 @@ from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import ListItem
 
+from ._extensions import Callback
 from ._extensions import WidgetExtension
 from ._list_item_header import ListItemHeader
 
@@ -35,8 +36,8 @@ class ListView(WidgetExtension, widgets.ListView):
         disabled: bool = False,
         auto_highlight: bool = True,
         styles: dict[str, Any] | None = None,
-        disabled_messages: list[events.Message] | None = None,
-        callbacks: dict[str, Callable] | None = None,
+        disabled_messages: Iterable[type[events.Message]] | None = None,
+        callbacks: dict[str, Callback] | None = None,
     ) -> None:
         """Initialize a ListView with extension arguments.
 

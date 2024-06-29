@@ -2,13 +2,14 @@
 
 import time
 from typing import Any
-from typing import Callable
+from typing import Iterable
 from typing import TypeVar
 
 from textual import events
 from textual.reactive import reactive
 from textual.widget import Widget
 
+from ._extensions import Callback
 from ._extensions import WidgetInitExtension
 
 JsonType = TypeVar("JsonType", dict, list, bool, float, int, str, None)  # Custom type. pylint: disable=invalid-name
@@ -39,8 +40,8 @@ class Store(WidgetInitExtension, Widget):
         self,
         data: Any = None,
         id: str | None = None,
-        disabled_messages: list[events.Message] | None = None,
-        callbacks: dict[str, Callable] | None = None,
+        disabled_messages: Iterable[type[events.Message]] | None = None,
+        callbacks: dict[str, Callback] | None = None,
     ) -> None:
         """Initialize the data store.
 

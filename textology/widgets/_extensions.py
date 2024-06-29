@@ -5,6 +5,7 @@ from inspect import isawaitable
 from typing import Any
 from typing import Awaitable
 from typing import Callable
+from typing import Coroutine
 from typing import Generator
 from typing import Iterable
 
@@ -14,6 +15,8 @@ from textual import events
 from textual.message import Message
 from textual.reactive import reactive
 from textual.widget import Widget
+
+Callback = Callable | Coroutine
 
 
 class Clickable:
@@ -64,13 +67,13 @@ class WidgetExtension:
             ...
     """
 
-    default_disabled_messages = ()
+    default_disabled_messages: Iterable[type[events.Message]] = ()
 
     def __extend_widget__(
         self,
         styles: dict[str, Any] | None = None,
         disabled_messages: Iterable[type[events.Message]] | None = None,
-        callbacks: dict[str, Callable] | None = None,
+        callbacks: dict[str, Callback] | None = None,
     ) -> None:
         """Set up the widget's extensions.
 
@@ -99,7 +102,7 @@ class WidgetExtension:
 
     def __extend_widget_messaging_callbacks__(
         self,
-        local_callbacks: dict[str, Callable],
+        local_callbacks: dict[str, Callback],
     ) -> None:
         """Validate and set up message callbacks."""
         for key, value in local_callbacks.items():
@@ -253,7 +256,7 @@ class StaticInitExtension(WidgetExtension):
         disabled: bool = False,
         styles: dict[str, Any] | None = None,
         disabled_messages: Iterable[type[events.Message]] | None = None,
-        callbacks: dict[str, Callable] | None = None,
+        callbacks: dict[str, Callback] | None = None,
     ) -> None:
         """Initialize a Static widget with extension arguments.
 
@@ -310,7 +313,7 @@ class ToggleButtonInitExtension(WidgetExtension):
         disabled: bool = False,
         styles: dict[str, Any] | None = None,
         disabled_messages: Iterable[type[events.Message]] | None = None,
-        callbacks: dict[str, Callable] | None = None,
+        callbacks: dict[str, Callback] | None = None,
     ) -> None:
         """Initialize the toggle.
 
@@ -361,8 +364,8 @@ class WidgetInitExtension(WidgetExtension):
         classes: str | None = None,
         disabled: bool = False,
         styles: dict[str, Any] | None = None,
-        disabled_messages: Iterable[events.Message] | None = None,
-        callbacks: dict[str, Callable] | None = None,
+        disabled_messages: Iterable[type[events.Message]] | None = None,
+        callbacks: dict[str, Callback] | None = None,
     ) -> None:
         """Initialize a Widget with support for extension arguments.
 

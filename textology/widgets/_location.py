@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from typing import Any
-from typing import Callable
+from typing import Iterable
 from urllib.parse import urlparse
 
 from textual import events
@@ -17,6 +17,7 @@ from textology.router import Endpoint
 from textology.router import Request
 from textology.router import Router
 
+from ._extensions import Callback
 from ._extensions import WidgetInitExtension
 
 
@@ -88,8 +89,8 @@ class Location(WidgetInitExtension, Widget, Router):
         logger: logging.Logger | None = None,
         enable_url_events: bool = False,
         enable_history_events: bool = False,
-        disabled_messages: list[events.Message] | None = None,
-        callbacks: dict[str, Callable] | None = None,
+        disabled_messages: Iterable[type[events.Message]] | None = None,
+        callbacks: dict[str, Callback] | None = None,
     ) -> None:
         """Initialize the location, routing, and history.
 

@@ -5,7 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
 from typing import Generic
 from typing import Iterable
 
@@ -27,7 +26,8 @@ from textual.widgets.select import InvalidSelectValueError
 from textual.widgets.selection_list import Selection
 from textual.widgets.selection_list import SelectionType
 
-from textology.widgets import Vertical
+from ._extensions import Callback
+from ._textual._containers import Vertical
 
 if TYPE_CHECKING:
     from textual.app import ComposeResult
@@ -184,8 +184,8 @@ class MultiSelect(Generic[SelectType], Vertical, can_focus=True):  # pylint: dis
         classes: str | None = None,
         disabled: bool = False,
         styles: dict[str, Any] | None = None,
-        disabled_messages: Iterable[events.Message] | None = None,
-        callbacks: dict[str, Callable] | None = None,
+        disabled_messages: Iterable[type[events.Message]] | None = None,
+        callbacks: dict[str, Callback] | None = None,
     ) -> None:
         """Initialize the MultiSelect control.
 
