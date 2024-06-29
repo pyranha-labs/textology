@@ -23,6 +23,7 @@ from ._modal_dialog import ModalDialog as ModalDialog
 from ._multi_select import MultiSelect as MultiSelect
 from ._popup_text import PopupText as PopupText
 from ._store import Store as Store
+from ._text import Text as Text
 from ._textual._checkbox import Checkbox as Checkbox
 from ._textual._collapsible import Collapsible as Collapsible
 from ._textual._containers import Center as Center

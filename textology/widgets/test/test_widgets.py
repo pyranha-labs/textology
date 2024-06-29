@@ -226,9 +226,9 @@ async def test_widgets_render(compare_snapshots: Callable) -> None:
 
             tree = widgets.Tree("Tree", styles={"height": "auto"})
             tree.root.expand()
-            characters = tree.root.add("Root", expand=True)
-            characters.add_leaf("Branch 1")
-            characters.add_leaf("Branch 2")
+            branches = tree.root.add("Root", expand=True)
+            branches.add_leaf("Branch 1")
+            branches.add_leaf("Branch 2")
 
             with widgets.Container():
                 yield widgets.Markdown(
@@ -240,6 +240,20 @@ async def test_widgets_render(compare_snapshots: Callable) -> None:
                 )
                 yield widgets.Label("Label")
                 yield widgets.Static("Static")
+                yield widgets.Horizontal(
+                    widgets.Label(
+                        widgets.Text("Overflow left", overflow="ellipsis", overflow_side="left", no_wrap=True),
+                        styles={"width": "1fr"},
+                    ),
+                    widgets.Label(
+                        widgets.Text("Overflow right", overflow="ellipsis", overflow_side="right", no_wrap=True),
+                        styles={"width": "1fr"},
+                    ),
+                    styles={
+                        "width": 24,
+                        "height": 2,
+                    },
+                )
                 yield text_input
                 yield widgets.Select([("Select 1", "1"), ("Select 2", "2")])
                 yield widgets.SelectionList(("SelectionList 1", "1"), ("SelectionList 2", "2"))

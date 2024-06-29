@@ -34,6 +34,7 @@ if typing.TYPE_CHECKING:  # pragma: no cover. Exclude from coverage to allow laz
     from ._multi_select import MultiSelect
     from ._popup_text import PopupText
     from ._store import Store
+    from ._text import Text
     from ._textual._checkbox import Checkbox
     from ._textual._collapsible import Collapsible
     from ._textual._containers import Center
@@ -131,6 +132,7 @@ _module_map = {
     "TabbedContent": "._textual._tabbed_content",
     "Tabs": "._textual._tabs",
     "TabPane": "._textual._tabbed_content",
+    "Text": "._text",
     "TextArea": "._textual._text_area",
     "TextInput": "._textual._text_input",
     "Tooltip": "._textual._tooltip",
