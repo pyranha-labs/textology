@@ -36,7 +36,9 @@ async def test_button_n_clicks() -> None:
         assert store.data == "Update me!"
 
         await pilot.click(widgets.Button)
+        await asyncio.sleep(0.5)
         await pilot.click(widgets.Button)
+        await asyncio.sleep(0.5)
         await pilot.click(widgets.Button)
         assert button.n_clicks == 3
         assert store.data == "Button clicked 3 times"
