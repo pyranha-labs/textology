@@ -2,8 +2,8 @@
 
 from textual import widgets
 
-from .._extensions import StaticInitExtension
+from .._extensions import StaticFactory
 
 
-class Tooltip(StaticInitExtension, widgets.Tooltip):
+class Tooltip(StaticFactory(widgets.Tooltip)):
     """An extended widget for displaying short tip messages."""

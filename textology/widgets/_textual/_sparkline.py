@@ -12,7 +12,7 @@ from .._extensions import Callback
 from .._extensions import WidgetExtension
 
 
-class Sparkline(WidgetExtension, widgets.Sparkline):
+class Sparkline(widgets.Sparkline, WidgetExtension):
     """An extended sparkline widget to display numerical data."""
 
     def __init__(

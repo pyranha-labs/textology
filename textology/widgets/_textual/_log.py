@@ -10,7 +10,7 @@ from .._extensions import Callback
 from .._extensions import WidgetExtension
 
 
-class Log(WidgetExtension, widgets.Log):
+class Log(widgets.Log, WidgetExtension):
     """An extended widget to log text."""
 
     def __init__(  # pylint: disable=too-many-arguments

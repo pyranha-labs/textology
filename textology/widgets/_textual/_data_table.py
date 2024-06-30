@@ -11,7 +11,7 @@ from .._extensions import Callback
 from .._extensions import WidgetExtension
 
 
-class DataTable(WidgetExtension, widgets.DataTable):  # pylint: disable=too-many-ancestors
+class DataTable(widgets.DataTable, WidgetExtension):  # pylint: disable=too-many-ancestors
     """An extended tabular widget that contains data."""
 
     def __init__(  # pylint: disable=too-many-locals,too-many-arguments

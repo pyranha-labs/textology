@@ -17,7 +17,7 @@ from .._extensions import WidgetExtension
 InputType = Literal["integer", "number", "text"]
 
 
-class TextInput(WidgetExtension, widgets.Input):
+class TextInput(widgets.Input, WidgetExtension):
     """An extended text input widget.
 
     Renamed from "Input" to avoid conflicts with callback dependency types.

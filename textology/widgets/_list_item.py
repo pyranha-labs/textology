@@ -12,7 +12,7 @@ from ._extensions import WidgetExtension
 from ._textual._label import Label
 
 
-class ListItem(WidgetExtension, widgets.ListItem):
+class ListItem(widgets.ListItem, WidgetExtension):
     """An extended widget that is an item within a ListView, and contains metadata about the selection."""
 
     # Recommended events to ignore when widgets are used in ListViews to prevent large unneeded event batches.

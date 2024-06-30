@@ -107,7 +107,7 @@ async def test_snapshot_with_pilot(compare_snapshots: Callable) -> None:
 async def test_callback_registration_per_scope(compare_snapshots: Callable) -> None:
     """Validate that observer/callback registration works at all scopes."""
 
-    class DisplayWidget(widgets.WidgetInitExtension, Widget):
+    class DisplayWidget(widgets.Widget):
         """Widget used to test callbacks attached at a widget level."""
 
         def compose(self) -> ComposeResult:

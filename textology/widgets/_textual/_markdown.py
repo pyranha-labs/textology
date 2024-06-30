@@ -12,7 +12,7 @@ from .._extensions import Callback
 from .._extensions import WidgetExtension
 
 
-class Markdown(WidgetExtension, widgets.Markdown):
+class Markdown(widgets.Markdown, WidgetExtension):
     """An extended widget for rendering markdown."""
 
     def __init__(

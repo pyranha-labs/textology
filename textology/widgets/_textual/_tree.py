@@ -12,7 +12,7 @@ from .._extensions import Callback
 from .._extensions import WidgetExtension
 
 
-class Tree(WidgetExtension, widgets.Tree):  # pylint: disable=too-many-ancestors
+class Tree(widgets.Tree, WidgetExtension):  # pylint: disable=too-many-ancestors
     """An extended widget for displaying and navigating data in a tree."""
 
     def __init__(

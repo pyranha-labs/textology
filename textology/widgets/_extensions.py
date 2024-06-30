@@ -14,12 +14,14 @@ from rich.text import TextType
 from textual import events
 from textual.message import Message
 from textual.reactive import reactive
-from textual.widget import Widget
+from textual.widget import Widget as TextualWidget
+from textual.widgets import Static as TextualStatic
+from textual.widgets._toggle_button import ToggleButton as TextualToggleButton
 
 Callback = Callable | Coroutine
 
 
-class Clickable:
+class Clickable(TextualWidget):
     """Add reactive attributes for clicking on a widget.
 
     Use "update_n_clicks()" to trigger reactive attributes in a consistent manner.
@@ -42,8 +44,18 @@ class Clickable:
         self.n_clicks_timestamp = time.time()
 
 
-class WidgetExtension:
+class WidgetExtension(TextualWidget):
     """Extension for textual widgets to allow various overrides and control of behaviors at an instance level.
+
+    Use `WidgetExtension` class, if:
+        - Subclassing a Textual widget, and overriding the `__init__`.
+        - Example: `class MyButton(Button, WidgetExtension):` + `def __init__(self, ...)`
+    Use `Widget` class, if:
+        - Creating a new widget, that inherits directly from `Widget`.
+        - Example: `class MyWidget(Widget):`
+    Use `WidgetFactory` function if:
+        - Subclassing a Textual widget, that uses the `__init__` from Textual `Widget`, but needs extensions.
+        - Example: `class MyContainer(WidgetFactory(Container))
 
     Key Features:
     - Handles messages at lowest level available for control of disables, intercepts, and more per instance.
@@ -59,12 +71,6 @@ class WidgetExtension:
     handling logic from the global app namespace. If there is no local callback for a message, or the local callback
     returns True (for continue), the message will be sent to the original widget message handler, and propagate
     throughout the app as normal.
-
-    If creating a new basic widget, use WidgetInitExtension + Widget instead. If subclassing an existing,
-    basic, textual widget,  the extension class must be placed before base class to ensure custom behaviors
-    take priority. Example:
-        class MyContainer(WidgetExtension, Container):
-            ...
     """
 
     default_disabled_messages: Iterable[type[events.Message]] = ()
@@ -219,7 +225,7 @@ class WidgetExtension:
             if _register_reactive_observers:
                 _register_reactive_observers(self)
 
-    def walk_all_children(self) -> Generator[Widget, None, None]:
+    def walk_all_children(self) -> Generator[TextualWidget, None, None]:
         """Walk the subtree rooted at this node, and return every descendant encountered.
 
         Compared to walk_children, this function will also walk all pending children. Pending children
@@ -232,15 +238,11 @@ class WidgetExtension:
             yield child
 
 
-class StaticInitExtension(WidgetExtension):
-    """Extension for textual widgets that inherit from Static class.
+class Static(TextualStatic, WidgetExtension):
+    """An extended widget to display simple static content, or use as a base class for more complex widgets.
 
     Includes all extensions provided by WidgetExtension, and automatically calls the extension set up.
-    See WidgetExtension for full details on all extended features.
-
-    Example:
-        class Label(StaticInitExtension, widgets.Label):
-            ...
+    See WidgetExtension for full details on all extended features and proper usage.
     """
 
     def __init__(  # pylint: disable=too-many-arguments
@@ -290,15 +292,11 @@ class StaticInitExtension(WidgetExtension):
         )
 
 
-class ToggleButtonInitExtension(WidgetExtension):
-    """Extension for textual widgets that inherit from ToggleButton class.
+class ToggleButton(TextualToggleButton, WidgetExtension):
+    """An extended base toggle button widget.
 
     Includes all extensions provided by WidgetExtension, and automatically calls the extension set up.
-    See WidgetExtension for full details on all extended features.
-
-    Example:
-        class Checkbox(ToggleButtonInitExtension, containers.Checkbox):
-            ...
+    See WidgetExtension for full details on all extended features and proper usage.
     """
 
     def __init__(  # pylint: disable=too-many-arguments
@@ -345,20 +343,16 @@ class ToggleButtonInitExtension(WidgetExtension):
         )
 
 
-class WidgetInitExtension(WidgetExtension):
-    """Extension for textual widgets that inherit from base Widget class.
+class Widget(WidgetExtension):
+    """Extended widget to allow various overrides and control of behaviors at an instance level.
 
     Includes all extensions provided by WidgetExtension, and automatically calls the extension set up.
-    See WidgetExtension for full details on all extended features.
-
-    Example:
-        class Container(WidgetInitExtension, containers.Container):
-            ...
+    See WidgetExtension for full details on all extended features and proper usage.
     """
 
     def __init__(
         self,
-        *children: Widget,
+        *children: TextualWidget,
         name: str | None = None,
         id: str | None = None,
         classes: str | None = None,
@@ -393,7 +387,186 @@ class WidgetInitExtension(WidgetExtension):
         )
 
 
-def walk_all_children(widget: Widget) -> Generator[Widget, None, None]:
+def StaticFactory(cls: type[Static]) -> type[Static]:  # pylint: disable=invalid-name
+    """Create a Static subclass tha preserves the original class as the primary, and uses the extended init.
+
+    See `WidgetExtension` for details on proper usage, and when to use this over alternatives.
+
+    Args:
+        cls: Original class that is a subclass of `Static`.
+
+    Return:
+        New class with the original as the base, combined with widget extensions, and init override.
+    """
+
+    class ExtendedStatic(cls, Static):
+        """An extended widget to display simple static content, or use as a base class for more complex widgets."""
+
+        # Redeclare init from class otherwise E1120 errors are thrown by all subclasses.
+        def __init__(  # pylint: disable=too-many-arguments
+            self,
+            renderable: RenderableType = "",
+            *,
+            expand: bool = False,
+            shrink: bool = False,
+            markup: bool = True,
+            name: str | None = None,
+            id: str | None = None,
+            classes: str | None = None,
+            disabled: bool = False,
+            styles: dict[str, Any] | None = None,
+            disabled_messages: Iterable[type[events.Message]] | None = None,
+            callbacks: dict[str, Callback] | None = None,
+        ) -> None:
+            """Initialize a Static widget with extension arguments.
+
+            Args:
+                renderable: A Rich renderable, or string containing console markup.
+                expand: Expand content if required to fill container.
+                shrink: Shrink content if required to fill container.
+                markup: True if markup should be parsed and rendered.
+                name: Name of widget.
+                id: ID of Widget.
+                classes: Space separated list of class names.
+                disabled: Whether the static is disabled or not.
+                styles: Local inline styles to apply on top of the class' styles for only this instance.
+                disabled_messages: List of messages to disable on this widget instance only.
+                callbacks: Mapping of callbacks to send messages to instead of sending to default handler.
+            """
+            Static.__init__(
+                self,
+                renderable,
+                expand=expand,
+                shrink=shrink,
+                markup=markup,
+                name=name,
+                id=id,
+                classes=classes,
+                disabled=disabled,
+                styles=styles,
+                disabled_messages=disabled_messages,
+                callbacks=callbacks,
+            )
+
+    return ExtendedStatic
+
+
+def ToggleButtonFactory(cls: type[TextualToggleButton]) -> type[ToggleButton]:  # pylint: disable=invalid-name
+    """Create a ToggleButton subclass tha preserves the original class as the primary, and uses the extended init.
+
+    See `WidgetExtension` for details on proper usage, and when to use this over alternatives.
+
+    Args:
+        cls: Original class that is a subclass of `ToggleButton`.
+
+    Return:
+        New class with the original as the base, combined with widget extensions, and init override.
+    """
+
+    class ExtendedToggleButton(cls, ToggleButton):
+        """An extended base toggle button widget."""
+
+        # Redeclare init from class otherwise E1120 errors are thrown by all subclasses.
+        def __init__(  # pylint: disable=too-many-arguments
+            self,
+            label: TextType = "",
+            value: bool = False,
+            button_first: bool = True,
+            *,
+            name: str | None = None,
+            id: str | None = None,
+            classes: str | None = None,
+            disabled: bool = False,
+            styles: dict[str, Any] | None = None,
+            disabled_messages: Iterable[type[events.Message]] | None = None,
+            callbacks: dict[str, Callback] | None = None,
+        ) -> None:
+            """Initialize the toggle.
+
+            Args:
+                label: The label for the toggle.
+                value: The initial value of the toggle.
+                button_first: Should the button come before the label, or after?
+                name: The name of the toggle.
+                id: The ID of the toggle in the DOM.
+                classes: The CSS classes of the toggle.
+                disabled: Whether the button is disabled or not.
+                styles: Local inline styles to apply on top of the class' styles for only this instance.
+                disabled_messages: List of messages to disable on this widget instance only.
+                callbacks: Mapping of callbacks to send messages to instead of sending to default handler.
+            """
+            ToggleButton.__init__(
+                self,
+                label=label,
+                value=value,
+                button_first=button_first,
+                name=name,
+                id=id,
+                classes=classes,
+                disabled=disabled,
+                styles=styles,
+                disabled_messages=disabled_messages,
+                callbacks=callbacks,
+            )
+
+    return ExtendedToggleButton
+
+
+def WidgetFactory(cls: type[TextualWidget]) -> type[Widget]:  # pylint: disable=invalid-name
+    """Create a Widget subclass tha preserves the original class as the primary, and uses the extended init.
+
+    See `WidgetExtension` for details on proper usage, and when to use this over alternatives.
+
+    Args:
+        cls: Original class that is a subclass of `Widget`.
+
+    Return:
+        New class with the original as the base, combined with widget extensions, and init override.
+    """
+
+    class ExtendedWidget(cls, Widget):
+        """Extended widget to allow various overrides and control of behaviors at an instance level."""
+
+        # Redeclare init from class otherwise E1120 errors are thrown by all subclasses.
+        def __init__(
+            self,
+            *children: TextualWidget,
+            name: str | None = None,
+            id: str | None = None,
+            classes: str | None = None,
+            disabled: bool = False,
+            styles: dict[str, Any] | None = None,
+            disabled_messages: Iterable[type[events.Message]] | None = None,
+            callbacks: dict[str, Callback] | None = None,
+        ) -> None:
+            """Initialize a Widget with support for extension arguments.
+
+            Args:
+                *children: Child widgets.
+                name: The name of the widget.
+                id: The ID of the widget in the DOM.
+                classes: The CSS classes for the widget.
+                disabled: Whether the widget is disabled or not.
+                styles: Local inline styles to apply on top of the class' styles for only this instance.
+                disabled_messages: List of messages to disable on this widget instance only.
+                callbacks: Mapping of callbacks to send messages to instead of sending to default handler.
+            """
+            Widget.__init__(
+                self,
+                *children,
+                name=name,
+                id=id,
+                classes=classes,
+                disabled=disabled,
+                styles=styles,
+                disabled_messages=disabled_messages,
+                callbacks=callbacks,
+            )
+
+    return ExtendedWidget
+
+
+def walk_all_children(widget: TextualWidget) -> Generator[TextualWidget, None, None]:
     """Walk the subtree of a node, and return every descendant encountered.
 
     Compared to walk_children, this function will also walk all pending children. Pending children

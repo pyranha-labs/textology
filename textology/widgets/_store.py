@@ -7,15 +7,14 @@ from typing import TypeVar
 
 from textual import events
 from textual.reactive import reactive
-from textual.widget import Widget
 
 from ._extensions import Callback
-from ._extensions import WidgetInitExtension
+from ._extensions import Widget
 
 JsonType = TypeVar("JsonType", dict, list, bool, float, int, str, None)  # Custom type. pylint: disable=invalid-name
 
 
-class Store(WidgetInitExtension, Widget):
+class Store(Widget):
     """Hidden widget for basic data storage.
 
     Intended to only be used for sharing data between callbacks.

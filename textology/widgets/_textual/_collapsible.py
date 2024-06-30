@@ -11,7 +11,7 @@ from .._extensions import Callback
 from .._extensions import WidgetExtension
 
 
-class Collapsible(WidgetExtension, widgets.Collapsible):
+class Collapsible(widgets.Collapsible, WidgetExtension):
     """An extended collapsible container."""
 
     def __init__(  # pylint: disable=too-many-arguments

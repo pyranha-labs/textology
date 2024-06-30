@@ -10,7 +10,7 @@ from .._extensions import Callback
 from .._extensions import WidgetExtension
 
 
-class RadioSet(WidgetExtension, widgets.RadioSet):
+class RadioSet(widgets.RadioSet, WidgetExtension):
     """Widget for grouping a collection of radio buttons into a set."""
 
     def __init__(

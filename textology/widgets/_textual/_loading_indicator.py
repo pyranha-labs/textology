@@ -12,7 +12,7 @@ from .._extensions import Callback
 from .._extensions import WidgetExtension
 
 
-class LoadingIndicator(WidgetExtension, widgets.LoadingIndicator):
+class LoadingIndicator(widgets.LoadingIndicator, WidgetExtension):
     """An extended display for an animated loading indicator."""
 
     def __init__(
