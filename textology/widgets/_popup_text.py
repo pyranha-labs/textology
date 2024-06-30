@@ -2,7 +2,7 @@
 
 from textual.reactive import reactive
 
-from ._textual._static import Static
+from ._extensions import Static
 
 
 class PopupText(Static):

@@ -11,7 +11,7 @@ from .._extensions import Callback
 from .._extensions import WidgetExtension
 
 
-class TextArea(WidgetExtension, widgets.TextArea):
+class TextArea(widgets.TextArea, WidgetExtension):
     """An extended multi-line text input widget."""
 
     def __init__(  # pylint: disable=too-many-arguments,too-many-locals

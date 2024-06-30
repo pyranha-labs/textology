@@ -11,7 +11,7 @@ from .._extensions import Callback
 from .._extensions import WidgetExtension
 
 
-class DirectoryTree(WidgetExtension, widgets.DirectoryTree):  # pylint: disable=too-many-ancestors
+class DirectoryTree(widgets.DirectoryTree, WidgetExtension):  # pylint: disable=too-many-ancestors
     """An extended Tree widget that presents files and directories."""
 
     def __init__(

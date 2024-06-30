@@ -24,7 +24,7 @@ from ._list_item_meta import ListItemMeta
 from ._list_view import ListView
 
 
-class HorizontalMenus(WidgetExtension, containers.HorizontalScroll):
+class HorizontalMenus(containers.HorizontalScroll, WidgetExtension):
     """Progressive horizontal set of ListViews with tracking for active item(s).
 
     Compared to a Tree view, horizontal menus provide quick navigation and visibility into nested objects.

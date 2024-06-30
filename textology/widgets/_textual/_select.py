@@ -12,7 +12,7 @@ from .._extensions import Callback
 from .._extensions import WidgetExtension
 
 
-class Select(WidgetExtension, widgets.Select):
+class Select(widgets.Select, WidgetExtension):
     """An extended widget to select from a list of possible options."""
 
     def __init__(  # pylint: disable=too-many-arguments

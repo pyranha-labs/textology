@@ -13,7 +13,7 @@ from .._extensions import Callback
 from .._extensions import WidgetExtension
 
 
-class SelectionList(WidgetExtension, widgets.SelectionList):  # pylint: disable=too-many-ancestors
+class SelectionList(widgets.SelectionList, WidgetExtension):  # pylint: disable=too-many-ancestors
     """An extended vertical selection list that allows making multiple selections."""
 
     def __init__(

@@ -15,7 +15,7 @@ from ._extensions import WidgetExtension
 from ._list_item_header import ListItemHeader
 
 
-class ListView(WidgetExtension, widgets.ListView):
+class ListView(widgets.ListView, WidgetExtension):
     """An extended vertical list view widget."""
 
     default_disabled_messages = [

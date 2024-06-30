@@ -14,7 +14,7 @@ from ._extensions import Clickable
 from ._extensions import WidgetExtension
 
 
-class Button(Clickable, WidgetExtension, widgets.Button):
+class Button(widgets.Button, WidgetExtension, Clickable):
     """An extended, simple, clickable button."""
 
     def __init__(

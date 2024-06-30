@@ -10,7 +10,7 @@ from .._extensions import Callback
 from .._extensions import WidgetExtension
 
 
-class Footer(WidgetExtension, widgets.Footer):
+class Footer(widgets.Footer, WidgetExtension):
     """An extended simple footer widget which docks itself to the bottom of the parent container."""
 
     def __init__(

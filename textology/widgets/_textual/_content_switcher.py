@@ -11,7 +11,7 @@ from .._extensions import Callback
 from .._extensions import WidgetExtension
 
 
-class ContentSwitcher(WidgetExtension, widgets.ContentSwitcher):
+class ContentSwitcher(widgets.ContentSwitcher, WidgetExtension):
     """An extended widget for switching between different children.
 
     Note:

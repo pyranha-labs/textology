@@ -10,7 +10,7 @@ from .._extensions import Callback
 from .._extensions import WidgetExtension
 
 
-class Pretty(WidgetExtension, widgets.Pretty):
+class Pretty(widgets.Pretty, WidgetExtension):
     """An extended pretty-printing widget."""
 
     DEFAULT_CSS = """

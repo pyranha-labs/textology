@@ -10,7 +10,7 @@ from .._extensions import Callback
 from .._extensions import WidgetExtension
 
 
-class ProgressBar(WidgetExtension, widgets.ProgressBar):
+class ProgressBar(widgets.ProgressBar, WidgetExtension):
     """An extended progress bar widget."""
 
     def __init__(  # pylint: disable=too-many-arguments

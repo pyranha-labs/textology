@@ -13,17 +13,16 @@ The pyi file is used by text editors and type checkers to see the lazily loaded 
 import typing
 from importlib import import_module
 
-from textual.widget import Widget
-
-from textology.textual_utils import textual_version
+from ._extensions import Widget
 
 # Lazily load widgets to decrease startup time and allow multi version support.
 if typing.TYPE_CHECKING:  # pragma: no cover. Exclude from coverage to allow lazy imports without import errors.
     from ._button import Button
     from ._extensions import Callback
     from ._extensions import Clickable
+    from ._extensions import Static
+    from ._extensions import ToggleButton
     from ._extensions import WidgetExtension
-    from ._extensions import WidgetInitExtension
     from ._extensions import walk_all_children
     from ._horizontal_menus import HorizontalMenus
     from ._list_item import ListItem
@@ -69,7 +68,6 @@ if typing.TYPE_CHECKING:  # pragma: no cover. Exclude from coverage to allow laz
     from ._textual._select import Select
     from ._textual._selection_list import SelectionList
     from ._textual._sparkline import Sparkline
-    from ._textual._static import Static
     from ._textual._switch import Switch
     from ._textual._tabbed_content import TabbedContent
     from ._textual._tabbed_content import TabPane
@@ -127,7 +125,8 @@ _module_map = {
     "Select": "._textual._select",
     "SelectionList": "._textual._selection_list",
     "Sparkline": "._textual._sparkline",
-    "Static": "._textual._static",
+    "Static": "._extensions",
+    "StaticFactory": "._extensions",
     "Store": "._store",
     "Switch": "._textual._switch",
     "Tab": "._textual._tabs",
@@ -137,12 +136,13 @@ _module_map = {
     "Text": "._text",
     "TextArea": "._textual._text_area",
     "TextInput": "._textual._text_input",
+    "ToggleButtonFactory": "._extensions",
     "Tooltip": "._textual._tooltip",
     "Tree": "._textual._tree",
     "Vertical": "._textual._containers",
     "VerticalScroll": "._textual._containers",
     "WidgetExtension": "._extensions",
-    "WidgetInitExtension": "._extensions",
+    "WidgetFactory": "._extensions",
     "walk_all_children": "._extensions",
 }
 __all__ = tuple(_module_cache.keys()) + tuple(_module_map.keys())

@@ -12,7 +12,7 @@ from .._extensions import Callback
 from .._extensions import WidgetExtension
 
 
-class TabbedContent(WidgetExtension, widgets.TabbedContent):
+class TabbedContent(widgets.TabbedContent, WidgetExtension):
     """An extended container with associated tabs to toggle content visibility."""
 
     def __init__(
@@ -55,7 +55,7 @@ class TabbedContent(WidgetExtension, widgets.TabbedContent):
         )
 
 
-class TabPane(WidgetExtension, widgets.TabPane):
+class TabPane(widgets.TabPane, WidgetExtension):
     """An extended container for switchable content, with additional title."""
 
     def __init__(

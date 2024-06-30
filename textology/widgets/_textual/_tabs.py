@@ -11,7 +11,7 @@ from .._extensions import Callback
 from .._extensions import WidgetExtension
 
 
-class Tab(WidgetExtension, widgets.Tab):
+class Tab(widgets.Tab, WidgetExtension):
     """An extended widget to manage a single tab within a Tabs widget."""
 
     def __init__(
@@ -20,6 +20,7 @@ class Tab(WidgetExtension, widgets.Tab):
         *,
         id: str | None = None,
         classes: str | None = None,
+        disabled: bool = False,
         styles: dict[str, Any] | None = None,
         disabled_messages: Iterable[type[events.Message]] | None = None,
         callbacks: dict[str, Callback] | None = None,
@@ -30,6 +31,7 @@ class Tab(WidgetExtension, widgets.Tab):
             label: The label to use in the tab.
             id: Optional ID for the widget.
             classes: Space separated list of class names.
+            disabled: Whether the tab is disabled or not.
             styles: Local inline styles to apply on top of the class' styles for only this instance.
             disabled_messages: List of messages to disable on this widget instance only.
             callbacks: Mapping of callbacks to send messages to instead of sending to default handler.
@@ -38,6 +40,7 @@ class Tab(WidgetExtension, widgets.Tab):
             label,
             id=id,
             classes=classes,
+            disabled=disabled,
         )
         self.__extend_widget__(
             styles=styles,
@@ -46,7 +49,7 @@ class Tab(WidgetExtension, widgets.Tab):
         )
 
 
-class Tabs(WidgetExtension, widgets.Tabs):
+class Tabs(widgets.Tabs, WidgetExtension):
     """An extended row of tabs."""
 
     def __init__(

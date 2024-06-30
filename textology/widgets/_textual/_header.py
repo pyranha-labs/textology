@@ -10,7 +10,7 @@ from .._extensions import Callback
 from .._extensions import WidgetExtension
 
 
-class Header(WidgetExtension, widgets.Header):
+class Header(widgets.Header, WidgetExtension):
     """An extended header widget with icon and clock."""
 
     def __init__(

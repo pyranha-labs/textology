@@ -10,7 +10,7 @@ from .._extensions import Callback
 from .._extensions import WidgetExtension
 
 
-class Digits(WidgetExtension, widgets.Digits):
+class Digits(widgets.Digits, WidgetExtension):
     """An extended widget to display numerical values using a 3x3 grid of unicode characters."""
 
     def __init__(

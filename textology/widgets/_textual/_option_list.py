@@ -11,7 +11,7 @@ from .._extensions import Callback
 from .._extensions import WidgetExtension
 
 
-class OptionList(WidgetExtension, widgets.OptionList):
+class OptionList(widgets.OptionList, WidgetExtension):
     """An extended vertical option list with bounce-bar highlighting."""
 
     def __init__(

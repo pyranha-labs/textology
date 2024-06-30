@@ -10,7 +10,7 @@ from .._extensions import Callback
 from .._extensions import WidgetExtension
 
 
-class Switch(WidgetExtension, widgets.Switch):
+class Switch(widgets.Switch, WidgetExtension):
     """An extended switch widget that represents a boolean value."""
 
     def __init__(

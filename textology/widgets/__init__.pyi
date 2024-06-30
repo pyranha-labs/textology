@@ -11,8 +11,9 @@ from textology.textual_utils import textual_version as textual_version
 from ._button import Button as Button
 from ._extensions import Callback as Callback
 from ._extensions import Clickable as Clickable
+from ._extensions import Static as Static
+from ._extensions import Widget as Widget
 from ._extensions import WidgetExtension as WidgetExtension
-from ._extensions import WidgetInitExtension as WidgetInitExtension
 from ._extensions import walk_all_children as walk_all_children
 from ._horizontal_menus import HorizontalMenus as HorizontalMenus
 from ._list_item import ListItem as ListItem
@@ -58,7 +59,6 @@ from ._textual._rule import Rule as Rule
 from ._textual._select import Select as Select
 from ._textual._selection_list import SelectionList as SelectionList
 from ._textual._sparkline import Sparkline as Sparkline
-from ._textual._static import Static as Static
 from ._textual._switch import Switch as Switch
 from ._textual._tabbed_content import TabbedContent as TabbedContent
 from ._textual._tabbed_content import TabPane as TabPane

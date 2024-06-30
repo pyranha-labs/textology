@@ -12,7 +12,7 @@ from .._extensions import Callback
 from .._extensions import WidgetExtension
 
 
-class Rule(WidgetExtension, widgets.Rule):
+class Rule(widgets.Rule, WidgetExtension):
     """An extended rule widget to separate content, similar to a `<hr>` HTML tag."""
 
     def __init__(
