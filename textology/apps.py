@@ -28,7 +28,6 @@ from .pages import Page
 from .pages import register_page
 from .router import Endpoint
 from .router import Request
-from .textual_utils import textual_version
 from .widgets import Container
 from .widgets import Label
 from .widgets import Location
@@ -172,10 +171,7 @@ class WidgetApp(App):
         """Refresh the themes applied to screens."""
         for screen in self.screen_stack:
             # Must call private refresh or rendered layout may be incorrect until next screen change.
-            if textual_version.major <= 0 and textual_version.minor < 53:
-                screen._refresh_layout(self.size, full=True)  # pylint: disable=protected-access
-            else:
-                screen._refresh_layout(self.size)  # pylint: disable=protected-access
+            screen._refresh_layout(self.size)  # pylint: disable=protected-access
             self.stylesheet.update(self.screen)
             self.screen.refresh(layout=True)
 
