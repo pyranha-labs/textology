@@ -1,5 +1,6 @@
 """Modal screen to show a provided widget and add basic navigation."""
 
+from asyncio import Future
 from typing import ClassVar
 
 from textual.app import App
@@ -50,7 +51,8 @@ class ModalDialog(ModalScreen):
         self,
         app: App,
         callback: ScreenResultCallbackType[ScreenResultType] | None = None,
-    ) -> AwaitMount:
+        wait_for_dismiss: bool = False,
+    ) -> AwaitMount | Future[ScreenResultType]:
         """Display the dialog on top of an application.
 
         Alias for app.push_screen().
@@ -58,8 +60,10 @@ class ModalDialog(ModalScreen):
         Args:
             app: Application to push the dialog on top of.
             callback: An optional callback function that will be called if the screen is dismissed with a result.
+            wait_for_dismiss: Whether the return will wait for the screen to dismiss, or mount.
+                Should only be set to True when running in a worker. See `App.push_screen` for more details.
 
         Returns:
-            An optional awaitable that awaits the mounting of the screen and its children.
+            An optional awaitable that awaits the mounting of the screen and its children, or the result of the screen.
         """
-        return app.push_screen(self, callback=callback)
+        return app.push_screen(self, callback=callback, wait_for_dismiss=wait_for_dismiss)
