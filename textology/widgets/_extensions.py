@@ -12,11 +12,17 @@ from typing import Iterable
 from rich.console import RenderableType
 from rich.text import TextType
 from textual import events
+from textual.app import ScreenStackError
+from textual.await_complete import AwaitComplete
+from textual.await_remove import AwaitRemove
+from textual.dom import NoScreen
 from textual.message import Message
 from textual.reactive import reactive
 from textual.widget import Widget as TextualWidget
 from textual.widgets import Static as TextualStatic
 from textual.widgets._toggle_button import ToggleButton as TextualToggleButton
+
+from textology.textual_utils import textual_version
 
 Callback = Callable | Coroutine
 
@@ -224,6 +230,91 @@ class WidgetExtension(TextualWidget):
             _register_reactive_observers = getattr(self.app, "_register_reactive_observers", None)
             if _register_reactive_observers:
                 _register_reactive_observers(self)
+
+    def _detach_and_prune(self, widgets: list[TextualWidget]) -> AwaitRemove:
+        """Detach ana d prune a list of widgets from the DOM without forced refresh.
+
+        If a refresh is needed, it must be called manully after this method completes.
+        """
+        # pylint: disable=protected-access
+        if textual_version.major <= 0 and textual_version.minor < 72:
+            # Fallback to original behavior on older versions.
+            to_remove = self.app._detach_from_dom(list(self.children))
+            return self.app._prune_nodes(to_remove)
+
+        # Hybrid approach that combines Textual < 0.72.0's app._detach_from_dom and 0.72.0's app._prune.
+        # Compared to a standard remove_children, or _prune, this does not call an immediate refresh.
+        # This approach may become too complicated to keep inline with Textual behavior in the future,
+        # and may have ot be revisited.
+        # pylint: disable=import-outside-toplevel
+        from textual.messages import Prune
+
+        everything_to_remove: list[Widget] = []
+        for widget in widgets:
+            everything_to_remove.extend(widget.walk_children(Widget, with_self=True, method="depth", reverse=True))
+            widget.post_message(Prune())
+
+        dedupe_to_remove = set(everything_to_remove)
+        try:
+            if self.app.screen.focused in dedupe_to_remove:
+                self.app.screen._reset_focus(
+                    self.app.screen.focused,
+                    [to_remove for to_remove in dedupe_to_remove if to_remove.can_focus],
+                )
+        except ScreenStackError:
+            pass
+
+        request_remove = set(widgets)
+        pruned_remove = [widget for widget in widgets if request_remove.isdisjoint(widget.ancestors)]
+
+        for widget in pruned_remove:
+            if widget.parent is not None:
+                widget.parent._nodes._remove(widget)
+            widget._pruning = True
+
+        def post_remove() -> None:
+            """Called after removing children."""
+            if self.parent is not None:
+                try:
+                    screen = self.parent.screen
+                except (ScreenStackError, NoScreen):
+                    pass
+                else:
+                    if screen._running:
+                        self.app._update_mouse_over(screen)
+
+        await_remove = AwaitRemove(
+            [task for node in widgets if (task := node._task) is not None and node.parent],
+            post_remove,
+        )
+        self.call_next(await_remove)
+        return await_remove
+
+    async def _replace(
+        self,
+        widgets: list[TextualWidget],
+    ) -> None:
+        """Simultaneously swap all the children in the widget."""
+        # Semantically equivalent to `self.remove_children` + `self.mount`, but reduces refreshes
+        # to improve performance.
+        await self._detach_and_prune(list(self.children))
+        await self.mount(*widgets)
+
+    def replace(
+        self,
+        widgets: list[TextualWidget],
+    ) -> AwaitComplete:
+        """Simultaneously swap all the children in the widget.
+
+        Args:
+            widgets: The widget(s) to mount.
+
+        Returns:
+            An awaitable object that waits for widgets to be mounted.
+        """
+        await_complete = AwaitComplete(self._replace(widgets))
+        self.call_next(await_complete)
+        return await_complete
 
     def walk_all_children(self) -> Generator[TextualWidget, None, None]:
         """Walk the subtree rooted at this node, and return every descendant encountered.

@@ -1,21 +1,23 @@
 """Extended Textual vertical list view widget."""
 
+from __future__ import annotations
+
 from typing import Any
 from typing import Iterable
 
 from textual import events
-from textual import widgets
-from textual.await_complete import AwaitComplete
 from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import ListItem
+from textual.widgets import ListView as TextualListView
+from typing_extensions import override
 
 from ._extensions import Callback
 from ._extensions import WidgetExtension
 from ._list_item_header import ListItemHeader
 
 
-class ListView(widgets.ListView, WidgetExtension):
+class ListView(TextualListView, WidgetExtension):
     """An extended vertical list view widget."""
 
     default_disabled_messages = [
@@ -88,38 +90,17 @@ class ListView(widgets.ListView, WidgetExtension):
         event.prevent_default()
         super()._on_list_item__child_clicked(event)
 
-    def on_list_view_highlighted(self, _: widgets.ListView.Highlighted) -> None:
+    def on_list_view_highlighted(self, _: ListView.Highlighted) -> None:
         """Update reactive attributes on highlight changes."""
         self.highlighted = self.highlighted_child
 
+    @override
     async def _replace(
         self,
-        items: list[ListItem],
+        widgets: list[ListItem],
     ) -> None:
-        """Simultaneously swap all the items in the list."""
-        # Semantically equivalent to `self.remove_children` + `self.mount`,
-        # but reduces refreshes to improve performance.
         self.index = None
-        # pylint: disable=protected-access
-        to_remove = self.app._detach_from_dom(list(self.children))
-        await self.app._prune_nodes(to_remove)
-        await self.mount(*items)
-
-    def replace(
-        self,
-        items: list[ListItem],
-    ) -> AwaitComplete:
-        """Simultaneously swap all the items in the list.
-
-        Args:
-            items: New items to place in the list.
-
-        Returns:
-            An awaitable object that waits for items to be mounted.
-        """
-        await_complete = AwaitComplete(self._replace(items))
-        self.call_next(await_complete)
-        return await_complete
+        await super()._replace(widgets)
 
     def watch_index(self, old_index: int, new_index: int) -> None:
         """Updates the highlighted when the index changes.
