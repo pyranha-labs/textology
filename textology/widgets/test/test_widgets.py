@@ -215,6 +215,69 @@ async def test_modal_dialog(compare_snapshots: Callable) -> None:
 
 
 @pytest.mark.asyncio
+async def test_temporary_callbacks() -> None:
+    """Validate basic permanent and temporary callback functionality."""
+    store = {
+        "temporary": 0,
+        "permanent": 0,
+    }
+
+    def _permanent_click(_: widgets.Button.Pressed) -> None:
+        store["permanent"] += 1
+
+    def _temporary_click(_: widgets.Button.Pressed) -> None:
+        store["temporary"] += 1
+
+    app = apps.WidgetApp(
+        child=widgets.Button(
+            "Clicker",
+            id="clicker",
+            callbacks={
+                "on_button_pressed": _permanent_click,
+            },
+        )
+    )
+
+    async with app.run_test() as pilot:
+        clicker = app.query_one("#clicker")
+        clicker.add_callback(on_button_pressed=(_temporary_click, False))
+
+        # Ensure no callbacks have been triggered.
+        assert store == {
+            "temporary": 0,
+            "permanent": 0,
+        }
+
+        # Click twice to ensure temporary is called once, and permanent once.
+        await pilot.click("#clicker")
+        assert store == {
+            "temporary": 1,
+            "permanent": 0,
+        }
+        await asyncio.sleep(0.25)
+        await pilot.click("#clicker")
+        assert store == {
+            "temporary": 1,
+            "permanent": 1,
+        }
+
+        # Add another temporary clicker after usage and repeat
+        clicker.add_callback(on_button_pressed=(_temporary_click, False))
+        await asyncio.sleep(0.25)
+        await pilot.click("#clicker")
+        assert store == {
+            "temporary": 2,
+            "permanent": 1,
+        }
+        await asyncio.sleep(0.25)
+        await pilot.click("#clicker")
+        assert store == {
+            "temporary": 2,
+            "permanent": 2,
+        }
+
+
+@pytest.mark.asyncio
 async def test_widgets_render(compare_snapshots: Callable) -> None:
     """Validate basic widget initialization and render."""
 

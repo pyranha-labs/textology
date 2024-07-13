@@ -24,7 +24,7 @@ from textual.widgets._toggle_button import ToggleButton as TextualToggleButton
 
 from textology.textual_utils import textual_version
 
-Callback = Callable | Coroutine
+Callback = Callable | Coroutine | tuple[Callable | Coroutine, bool]
 
 
 class Clickable(TextualWidget):
@@ -72,10 +72,10 @@ class WidgetExtension(TextualWidget):
     messages added directly to the queue are handled based on Widget rules. Widgets that inherit from this
     class can also "intercept" the messages to route them manually, swap them with new messages, absorb them, etc.
 
-    If a message is not disabled, or returned after being intercepted, it will then route to a local callback
-    if one was provided to the widget on instantiation. Local callbacks provide additional isolation of message
-    handling logic from the global app namespace. If there is no local callback for a message, or the local callback
-    returns True (for continue), the message will be sent to the original widget message handler, and propagate
+    If a message is not disabled, or returned after being intercepted, it will then route to local callbacks
+    if provided to the widget on instantiation. Local callbacks provide additional isolation of message
+    handling logic from the global app namespace. If there are no local callbacks for a message, or the local callbacks
+    return True (for continue), the message will be sent to the original widget message handler, and propagate
     throughout the app as normal.
     """
 
@@ -96,9 +96,11 @@ class WidgetExtension(TextualWidget):
             callbacks: Mapping of callbacks to send messages to instead of sending to default handler.
                 Callbacks behave the same as "on_*" functions declared at class level.
                 Return "True" in callbacks to send the messages to the default widget handler.
-                May be provided as direct arguments to "additional_configs". e.g. "on_button_pressed=on_press"
+                By default, callbacks are permanent. A tuple with "false" can be used to make them fire once.
+                A widget may have both permanent callbacks, and single fire callbacks, at the same time.
         """
-        self._local_callback_map = {}
+        self._permanent_callbacks = {}
+        self._temporary_callbacks = {}
 
         if styles:
             self.__extend_widget_styles__(styles)
@@ -114,15 +116,21 @@ class WidgetExtension(TextualWidget):
 
     def __extend_widget_messaging_callbacks__(
         self,
-        local_callbacks: dict[str, Callback],
+        callbacks: dict[str, Callback],
     ) -> None:
         """Validate and set up message callbacks."""
-        for key, value in local_callbacks.items():
+        for key, callback in callbacks.items():
             if not key.startswith("on_"):
                 raise ValueError(
                     'Callbacks must start with "on_" and end with the name of the event type in camel_case'
                 )
-            self._local_callback_map[key] = value
+            permanent = True
+            if isinstance(callback, tuple):
+                callback, permanent = callback
+            if permanent:
+                self._permanent_callbacks[key] = callback
+            else:
+                self._temporary_callbacks[key] = callback
 
     def __extend_widget_styles__(self, styles: dict) -> None:
         """Apply inline/local styles for the instance."""
@@ -136,6 +144,19 @@ class WidgetExtension(TextualWidget):
     def action_focus_previous(self) -> None:
         """Focus the previous widget when the action is called."""
         self.app.action_focus_previous()
+
+    def add_callback(self, **callbacks: Callback) -> None:
+        """Add one or more callbacks to the widget.
+
+        Args:
+            callbacks: Callbacks to send messages to instead of sending to default handler.
+                Callbacks behave the same as "on_*" functions declared at class level.
+                Return "True" in callbacks to send the messages to the default widget handler.
+                By default, callbacks are permanent. A tuple with "false" can be used to make them fire once.
+                A widget may have both permanent callbacks, and single fire callbacks, at the same time.
+        """
+        if callbacks:
+            self.__extend_widget_messaging_callbacks__(callbacks)
 
     def after(
         self,
@@ -164,72 +185,6 @@ class WidgetExtension(TextualWidget):
                 await result
 
         return self.post_message(events.Callback(callback=awaiter))
-
-    def disable_child_messages(
-        self,
-        *messages: type[events.Message],
-    ) -> None:
-        """Recursively disable message types from being processed on all child widgets.
-
-        Args:
-            messages: Message types to disable on all children of this widget.
-        """
-        for child in self.walk_all_children():
-            child.disable_messages(*messages)
-
-    async def _handle_local_callback(self, message: Message) -> bool:
-        """Route message to a local callback if available, or recommend sending to native widget message handler.
-
-        If callback manually returns a truthy value, the message will also be handled by native widget message handler.
-        """
-        handle_natively = True
-        handler_name = message.handler_name
-        if handler_name in self._local_callback_map:
-            handle_natively = self._local_callback_map[handler_name](message)
-            if isawaitable(handle_natively):
-                handle_natively = await handle_natively
-        return handle_natively
-
-    async def intercept_message(self, message: Message) -> Message | None:
-        """Intercept a message for this widget before processing.
-
-        Args:
-            message: Original message pending processing.
-
-        Returns:
-            Message to process after being intercepted by this widget, None to disable further processing.
-        """
-        # Defaults to returning to the original message to process as normal.
-        return message
-
-    async def _on_message(self, message: Message) -> None:
-        """Override default message processing to allow disables, intercepts, and local callbacks, at lowest level."""
-        if not self.check_message_enabled(message):
-            # Ensure no other handlers see the message as being valid for further processing.
-            message.stop()
-            message.prevent_default()
-            return
-
-        message = await self.intercept_message(message)
-        if not message:
-            return
-        if not await self._handle_local_callback(message):
-            message.stop()
-            message.prevent_default()
-        else:
-            await super()._on_message(message)
-        return None
-
-    def _post_mount(self) -> None:
-        """Overrides native post mount actions to register observer support."""
-        super()._post_mount()
-        attach_to_observers = getattr(self.app, "attach_to_observers", None)
-        if attach_to_observers:
-            attach_to_observers(self)
-        if self.id:
-            _register_reactive_observers = getattr(self.app, "_register_reactive_observers", None)
-            if _register_reactive_observers:
-                _register_reactive_observers(self)
 
     def _detach_and_prune(self, widgets: list[TextualWidget]) -> AwaitRemove:
         """Detach ana d prune a list of widgets from the DOM without forced refresh.
@@ -289,6 +244,88 @@ class WidgetExtension(TextualWidget):
         )
         self.call_next(await_remove)
         return await_remove
+
+    def disable_child_messages(
+        self,
+        *messages: type[events.Message],
+    ) -> None:
+        """Recursively disable message types from being processed on all child widgets.
+
+        Args:
+            messages: Message types to disable on all children of this widget.
+        """
+        for child in self.walk_all_children():
+            child.disable_messages(*messages)
+
+    async def _handle_permanent_callback(self, message: Message) -> bool:
+        """Route message to a local callback if available, or recommend sending to native widget message handler.
+
+        If callback manually returns a truthy value, the message will also be handled by native widget message handler.
+        """
+        propagate = True
+        handler_name = message.handler_name
+        if handler_name in self._permanent_callbacks:
+            propagate = self._permanent_callbacks[handler_name](message)
+            if isawaitable(propagate):
+                propagate = await propagate
+        return propagate
+
+    async def _handle_temporary_callback(self, message: Message) -> bool:
+        """Route message to a single fire callback if available, or recommend sending to native widget message handler.
+
+        If callback manually returns a truthy value, the message will also be handled by native widget message handler.
+        """
+        propagate = True
+        handler_name = message.handler_name
+        if handler_name in self._temporary_callbacks:
+            propagate = self._temporary_callbacks.pop(handler_name)(message)
+            if isawaitable(propagate):
+                propagate = await propagate
+        return propagate
+
+    async def intercept_message(self, message: Message) -> Message | None:
+        """Intercept a message for this widget before processing.
+
+        Args:
+            message: Original message pending processing.
+
+        Returns:
+            Message to process after being intercepted by this widget, None to disable further processing.
+        """
+        # Defaults to returning to the original message to process as normal.
+        return message
+
+    async def _on_message(self, message: Message) -> None:
+        """Override default message processing to allow disables, intercepts, and local callbacks, at lowest level."""
+        if not self.check_message_enabled(message):
+            # Ensure no other handlers see the message as being valid for further processing.
+            message.stop()
+            message.prevent_default()
+            return
+
+        message = await self.intercept_message(message)
+        if not message:
+            return
+        if not await self._handle_temporary_callback(message):
+            message.stop()
+            message.prevent_default()
+            return
+        if not await self._handle_permanent_callback(message):
+            message.stop()
+            message.prevent_default()
+            return
+        return await super()._on_message(message)
+
+    def _post_mount(self) -> None:
+        """Overrides native post mount actions to register observer support."""
+        super()._post_mount()
+        attach_to_observers = getattr(self.app, "attach_to_observers", None)
+        if attach_to_observers:
+            attach_to_observers(self)
+        if self.id:
+            _register_reactive_observers = getattr(self.app, "_register_reactive_observers", None)
+            if _register_reactive_observers:
+                _register_reactive_observers(self)
 
     async def _replace(
         self,

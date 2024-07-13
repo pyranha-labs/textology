@@ -67,7 +67,9 @@ Examples for Textology extensions, such as callback based applications, are incl
   - Swap CSS themes live
   - Apply multiple CSS themes simultaneously
 - Extended callbacks
-  - Declare Widget callbacks/event handling without subclassing
+  - Declare Widget callbacks/event handling on instantiation or subclassing
+  - Add Widget callbacks after instantiation
+  - Use temporary callbacks that only trigger once
   - Declare Apps with "event driven architecture/observation pattern" to detect changes and automatically update UI
     - Listen to reactive attribute changes.
     - Listen to events/messages/errors.
