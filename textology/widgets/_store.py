@@ -1,5 +1,7 @@
 """Widget container for basic data storage and sharing between callbacks."""
 
+from __future__ import annotations
+
 import time
 from typing import Any
 from typing import Iterable
@@ -35,6 +37,27 @@ class Store(Widget):
     # Sentinel value used to trigger clears from callbacks. Set to True to manually trigger a clear.
     clear_data: bool = reactive(False, always_update=True, repaint=False, init=False)
 
+    class Updated(events.Message):
+        """Posted when the backend data is updated."""
+
+        def __init__(self, store: Store, data: Any, modified_timestamp: float) -> None:
+            """Initialize the data update event.
+
+            Args:
+                store: The store that sent the event.
+                data: The new data stored.
+                modified_timestamp: When the data was modified.
+            """
+            super().__init__()
+            self.store = store
+            self.data = data
+            self.modified = modified_timestamp
+
+        @property
+        def control(self) -> Store:
+            """The store that contains the data."""
+            return self.store
+
     def __init__(
         self,
         data: Any = None,
@@ -65,3 +88,4 @@ class Store(Widget):
     def watch_data(self, _: JsonType) -> None:
         """Monitor the data in order to update the modified timestamp."""
         self.modified_timestamp = time.time()
+        self.post_message(self.Updated(self, self.data, self.modified_timestamp))
