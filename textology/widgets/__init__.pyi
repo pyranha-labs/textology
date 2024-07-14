@@ -23,6 +23,7 @@ from ._list_view import ListView as ListView
 from ._location import Location as Location
 from ._modal_dialog import ModalDialog as ModalDialog
 from ._multi_select import MultiSelect as MultiSelect
+from ._page_container import PageContainer as PageContainer
 from ._popup_text import PopupText as PopupText
 from ._store import Store as Store
 from ._text import Text as Text
@@ -34,7 +35,6 @@ from ._textual._containers import Grid as Grid
 from ._textual._containers import Horizontal as Horizontal
 from ._textual._containers import HorizontalScroll as HorizontalScroll
 from ._textual._containers import Middle as Middle
-from ._textual._containers import PageContainer as PageContainer
 from ._textual._containers import ScrollableContainer as ScrollableContainer
 from ._textual._containers import Vertical as Vertical
 from ._textual._containers import VerticalScroll as VerticalScroll

@@ -20,9 +20,11 @@ from textual.screen import Screen
 from textual.widget import Widget
 
 from .observers import Modified
+from .observers import NoUpdate
 from .observers import ObserverManager
 from .observers import Select
 from .observers import Update
+from .observers import no_update
 from .pages import _GLOBAL_PAGE_MAP
 from .pages import Page
 from .pages import register_page
@@ -191,6 +193,7 @@ class ExtendedApp(WidgetApp, ObserverManager):
         child: Callable | Widget | None = None,
         use_pages: bool = False,
         pages: list[Page | ModuleType | str | Callable] | None = None,
+        cache_pages: bool = False,
         driver_class: type[Driver] | None = None,
         css_path: CSSPathType | None = None,
         watch_css: bool = False,
@@ -209,6 +212,9 @@ class ExtendedApp(WidgetApp, ObserverManager):
                 Force enabled if "pages" are provided. Enabling without "pages" allows registering pages later.
             pages: Initial pages to load into multi-page applications.
                 Refer to "register_page()" for options.
+            cache_pages: Whether to cache pages when the content is switched, instead of rebuilding.
+                Pages are lazily loaded on first request. When the active page is updated,
+                other pages will only be hidden, instead of removed.
             driver_class: Driver class or `None` to auto-detect.
                 This will be used by some Textual tools.
             css_path: Path to CSS or `None` to use the `CSS_PATH` class variable.
@@ -243,6 +249,7 @@ class ExtendedApp(WidgetApp, ObserverManager):
         self._location: Location | None = None
         self._page_registry: dict[str, Page] = {}
         self._use_pages = use_pages or bool(pages)
+        self._cache_pages = cache_pages
 
         self.enable_pages()
         if pages:
@@ -261,6 +268,11 @@ class ExtendedApp(WidgetApp, ObserverManager):
         if component_property == "children":
             # Children is a special property on widgets, it cannot be directly applied. Manually swap children.
             component.remove_children()
+            if value:
+                if not isinstance(value, list):
+                    value = [value]
+                component.mount_all(value)
+        elif component_property == "new_children":
             if value:
                 if not isinstance(value, list):
                     value = [value]
@@ -312,6 +324,8 @@ class ExtendedApp(WidgetApp, ObserverManager):
             Modified(location.id, "pathname"),
             Select(location.id, "search"),
             Update(page_container.id, "children"),
+            Update(page_container.id, "new_children"),
+            Update(page_container.id, "page"),
         )(self._page_router)
         self.location.endpoint_not_found = Endpoint([], "", self._page_not_found)
         for page in _GLOBAL_PAGE_MAP.values():
@@ -392,7 +406,9 @@ class ExtendedApp(WidgetApp, ObserverManager):
         """Provide the combined page registry in use by this multi-page application."""
         return self._page_registry.copy()
 
-    def _page_router(self, pathname: str, search: str) -> list[Widget]:
+    async def _page_router(
+        self, pathname: str, search: str
+    ) -> tuple[Widget | NoUpdate, Widget | NoUpdate, str | NoUpdate]:
         """Load the appropriate page based on the URL path and search options."""
         self.logger.debug(f"Routing page content for: {pathname}")
 
@@ -400,6 +416,10 @@ class ExtendedApp(WidgetApp, ObserverManager):
         request = Request(pathname if not search else f"{pathname}?{search}")
         path = request.url.path
         endpoint = self.location.endpoint(path, "GET")
+
+        pager = self.query_one(PageContainer)
+        if self._use_pages and self._cache_pages and pager.is_cached(path):
+            return no_update, no_update, path
 
         # Create kwargs for the layout function based off of:
         #   - App if requested, to avoid circular imports if needed.
@@ -415,7 +435,14 @@ class ExtendedApp(WidgetApp, ObserverManager):
             kwargs.update(**endpoint.route.match_groups(path))
         kwargs.update(request.query)
 
-        return endpoint.handler(**kwargs)
+        page_content = endpoint.handler(**kwargs)
+        if self._cache_pages:
+            await pager.add_page(path, page_content)
+        return (
+            no_update if self._use_pages and self._cache_pages else page_content,
+            no_update if not self._use_pages or not self._cache_pages else page_content,
+            path,
+        )
 
     def _register_reactive_observers(self, widget: Widget) -> None:
         """Enable observers for a newly added widget and its reactive attributes if it has an ID."""

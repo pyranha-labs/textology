@@ -87,6 +87,58 @@ async def test_extended_app(compare_snapshots: Callable) -> None:
 
 
 @pytest.mark.asyncio
+async def test_extended_app_page_cache(compare_snapshots: Callable) -> None:
+    """Validate page cached on extended application behavior."""
+    app = apps.ExtendedApp(
+        widgets.Horizontal(
+            widgets.Container(
+                widgets.Label(
+                    "Side bar",
+                )
+            ),
+            widgets.Container(
+                widgets.Location(id="url"),
+                widgets.PageContainer(id="content"),
+            ),
+        ),
+        use_pages=True,
+        cache_pages=True,
+    )
+
+    def layout_page1() -> widgets.Widget:
+        return widgets.Container(
+            widgets.Label("Page 1"),
+            widgets.TextInput(id="input1", placeholder="Page 1 Input"),
+        )
+
+    def layout_page2() -> widgets.Widget:
+        return widgets.Container(
+            widgets.Label("Page 2"),
+            widgets.TextInput(id="input2", placeholder="Page 2 Input"),
+        )
+
+    app.register_page(layout_page1, path="/page1")
+    app.register_page(layout_page2, path="/page2")
+
+    async with app.run_test() as pilot:
+        app.location.pathname = "/page1"
+        await asyncio.sleep(0.5)
+        app.set_focus(app.query_one("#input1"))
+        await pilot.press("t", "1")
+        assert await compare_snapshots(pilot, test_suffix="page1")
+
+        app.location.pathname = "/page2"
+        await asyncio.sleep(0.5)
+        app.set_focus(app.query_one("#input2"))
+        await pilot.press("t", "2")
+        assert await compare_snapshots(pilot, test_suffix="page2")
+
+        app.location.pathname = "/page1"
+        await asyncio.sleep(0.5)
+        assert await compare_snapshots(pilot, test_suffix="page1_cached")
+
+
+@pytest.mark.asyncio
 async def test_snapshot_with_app(compare_snapshots: Callable) -> None:
     """Validate that snapshot fixture/test works with instantiated app."""
     assert await compare_snapshots(basic_app.BasicApp(), Path(SNAPSHOT_DIR, "test_basic_app.svg"))

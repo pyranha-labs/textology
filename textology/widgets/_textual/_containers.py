@@ -31,13 +31,6 @@ class Middle(WidgetFactory(containers.Middle)):
     """An extended container which aligns children on the Y axis."""
 
 
-class PageContainer(Container):
-    """Container used to display page contents, and signal to multi-page applications which ID to use in callbacks.
-
-    If not used in a multi-page app, it is functionally the same as a Container.
-    """
-
-
 class ScrollableContainer(WidgetFactory(containers.ScrollableContainer)):
     """An extended scrollable container with vertical layout, and auto scrollbars on both axis."""
 
