@@ -32,6 +32,7 @@ if typing.TYPE_CHECKING:  # pragma: no cover. Exclude from coverage to allow laz
     from ._location import Location
     from ._modal_dialog import ModalDialog
     from ._multi_select import MultiSelect
+    from ._page_container import PageContainer
     from ._popup_text import PopupText
     from ._store import Store
     from ._text import Text
@@ -43,7 +44,6 @@ if typing.TYPE_CHECKING:  # pragma: no cover. Exclude from coverage to allow laz
     from ._textual._containers import Horizontal
     from ._textual._containers import HorizontalScroll
     from ._textual._containers import Middle
-    from ._textual._containers import PageContainer
     from ._textual._containers import ScrollableContainer
     from ._textual._containers import Vertical
     from ._textual._containers import VerticalScroll
@@ -113,7 +113,7 @@ _module_map = {
     "ModalDialog": "._modal_dialog",
     "MultiSelect": "._multi_select",
     "OptionList": "._textual._option_list",
-    "PageContainer": "._textual._containers",
+    "PageContainer": "._page_container",
     "PopupText": "._popup_text",
     "Pretty": "._textual._pretty",
     "ProgressBar": "._textual._progress_bar",
