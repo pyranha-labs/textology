@@ -49,11 +49,12 @@ class DashCompatApp(ExtendedApp):
         - URL history for navigating via ".back()", ".forward()", etc.
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         layout: Callable | Widget | None = None,
         use_pages: bool = False,
         pages: list[Page | ModuleType | str | Callable] | None = None,
+        cache_pages: bool = False,
         driver_class: type[Driver] | None = None,
         css_path: CSSPathType | None = None,
         watch_css: bool = False,
@@ -74,6 +75,9 @@ class DashCompatApp(ExtendedApp):
                 Force enabled if "pages" are provided. Enabling without "pages" allows registering pages later.
             pages: Initial pages to load into multi-page applications.
                 Refer to "register_page()" for options.
+            cache_pages: Whether to cache pages when the content is switched, instead of rebuilding.
+                Pages are lazily loaded on first request. When the active page is updated,
+                other pages will only be hidden, instead of removed.
             driver_class: Driver class or `None` to auto-detect.
                 This will be used by some Textual tools.
             css_path: Path to CSS or `None` to use the `CSS_PATH` class variable.
@@ -92,6 +96,7 @@ class DashCompatApp(ExtendedApp):
             child=layout,
             use_pages=use_pages,
             pages=pages,
+            cache_pages=cache_pages,
             driver_class=driver_class,
             css_path=css_path,
             watch_css=watch_css,
@@ -136,6 +141,7 @@ class DashCompatApp(ExtendedApp):
         order: int = 0,
         redirect_from: str | list[str] | None = None,
         layout: Callable | None = None,
+        cache: bool = False,
     ) -> None:
         """Set up a URL path to provide a layout in a multi-page application.
 
@@ -160,6 +166,7 @@ class DashCompatApp(ExtendedApp):
             order: The relative order to sort pages in the "page_registry", such as ordering in navigation menus.
             redirect_from: Paths that should redirect to this page's path. e.g. "/v1/home"
             layout: Function to call to generate the widget(s) used in the page's layout.
+            cache: Whether to pre-cache this page's layout before the first time it is requested.
         """
         super().register_page(
             page=module,
@@ -168,6 +175,7 @@ class DashCompatApp(ExtendedApp):
             order=order,
             redirect_from=redirect_from,
             layout=layout,
+            cache=cache,
         )
 
 
