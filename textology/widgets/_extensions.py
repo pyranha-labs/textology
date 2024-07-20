@@ -282,6 +282,25 @@ class WidgetExtension(TextualWidget):
             if _register_reactive_observers:
                 _register_reactive_observers(self)
 
+    def remove_callback(self, callback: Callback) -> None:
+        """Remove a callback from the widget.
+
+        Can only be used to remove "dynamic" callbacks added via instantiation, or `add_callback()`.
+
+        Args:
+            callback: Previously added callback to remove.
+        """
+        for key, callbacks in list(self._permanent_callbacks.items()):
+            if callback in callbacks:
+                callbacks.remove(callback)
+            if not callbacks:
+                self._permanent_callbacks.pop(key)
+        for key, callbacks in list(self._temporary_callbacks.items()):
+            if callback in callbacks:
+                callbacks.remove(callback)
+            if not callbacks:
+                self._temporary_callbacks.pop(key)
+
     async def _replace(
         self,
         widgets: list[TextualWidget],

@@ -300,6 +300,16 @@ async def test_temporary_callbacks() -> None:
             "permanent": 3,
         }
 
+        # Add and remove callback.
+        clicker.add_callback(on_button_pressed=(_temporary_click, False))
+        clicker.remove_callback(_temporary_click)
+        await asyncio.sleep(0.25)
+        await pilot.click("#clicker")
+        assert store == {
+            "temporary": 6,
+            "permanent": 4,
+        }
+
 
 @pytest.mark.asyncio
 async def test_widgets_render(compare_snapshots: Callable) -> None:
