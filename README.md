@@ -126,14 +126,34 @@ from textual.widgets import Button
 from textology.widgets import Button
 ```
 
-- Instance callback extension (avoid global watchers, name/ID checks in the event watchers, and event chaining):
-```python
-from textology.widgets import Button
+- Instance callback extension (avoid global watchers and event chaining, repeat/temporary application, single/multiple)
+  ```python
+  from textology.widgets import Button
+  
+  button = Button(
+      callbacks={"on_button_pressed": lambda event: print("Don't press my buttons...")},
+  )
+  ```
+  - <details>
+    <summary>Callbacks can also be single fire (repeat false)</summary>
+  
+    ```python
+    from textology.widgets import Button
+    
+    button = Button(
+        callbacks={("on_button_pressed", False): lambda event: print("Don't press my buttons...")},
+    )
+    ```
+  - <details>
+    <summary>Callbacks can also be added after instantiation</summary>
+  
+    ```python
+    from textology.widgets import Button
 
-button = Button(
-    callbacks={"on_button_pressed": lambda event: print("Don't press my buttons...")},
-)
-```
+    button = Button()
+    button.add_callback(on_button_pressed=lambda event: print("Don't press my buttons..."))
+    ```
+
 
 - Instance style extension (set styles directly at instantiation based on logic):
 ```python

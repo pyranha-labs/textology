@@ -74,6 +74,8 @@ Functionality to expand the use cases of existing widgets.
 - [x] Base widget extensions
     * [x] Support per-instance message disables
     * [x] Support per-instance "on_*" message callbacks
+    * [x] Support per-instance, single use (remove on trigger), "on_*" message callbacks
+    * [x] Support multiple per-instance "on_*" message callbacks
     * [x] Support per-instance styles
     * [x] Button with reactive "clicks" attributes
     * [x] ListItem with metadata objects

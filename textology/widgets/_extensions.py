@@ -1,5 +1,6 @@
 """Custom textual Widgets extensions."""
 
+import asyncio
 import time
 from inspect import isawaitable
 from typing import Any
@@ -94,8 +95,8 @@ class WidgetExtension(TextualWidget):
                 By default, callbacks are permanent. A tuple with "false" can be used to make them fire once.
                 A widget may have both permanent callbacks, and single fire callbacks, at the same time.
         """
-        self._permanent_callbacks = {}
-        self._temporary_callbacks = {}
+        self._permanent_callbacks: dict[str, list[Callback]] = {}
+        self._temporary_callbacks: dict[str, list[Callback]] = {}
 
         if styles:
             self.__extend_widget_styles__(styles)
@@ -111,21 +112,26 @@ class WidgetExtension(TextualWidget):
 
     def __extend_widget_messaging_callbacks__(
         self,
-        callbacks: dict[str, Callback],
+        callbacks: dict[str, Callback | list[Callback]],
     ) -> None:
         """Validate and set up message callbacks."""
-        for key, callback in callbacks.items():
-            if not key.startswith("on_"):
-                raise ValueError(
-                    'Callbacks must start with "on_" and end with the name of the event type in camel_case'
-                )
-            permanent = True
-            if isinstance(callback, tuple):
-                callback, permanent = callback
-            if permanent:
-                self._permanent_callbacks[key] = callback
-            else:
-                self._temporary_callbacks[key] = callback
+        for key, _callbacks in callbacks.items():
+            if not isinstance(_callbacks, list):
+                _callbacks = [_callbacks]
+            for callback in _callbacks:
+                if not key.startswith("on_"):
+                    raise ValueError(
+                        'Callbacks must start with "on_" and end with the name of the event type in camel_case'
+                    )
+                permanent = True
+                if isinstance(callback, tuple):
+                    callback, permanent = callback
+                if permanent:
+                    existing = self._permanent_callbacks.setdefault(key, [])
+                else:
+                    existing = self._temporary_callbacks.setdefault(key, [])
+                if callback not in existing:
+                    existing.append(callback)
 
     def __extend_widget_styles__(self, styles: dict) -> None:
         """Apply inline/local styles for the instance."""
@@ -140,7 +146,7 @@ class WidgetExtension(TextualWidget):
         """Focus the previous widget when the action is called."""
         self.app.action_focus_previous()
 
-    def add_callback(self, **callbacks: Callback) -> None:
+    def add_callback(self, **callbacks: Callback | list[Callback]) -> None:
         """Add one or more callbacks to the widget.
 
         Args:
@@ -193,31 +199,43 @@ class WidgetExtension(TextualWidget):
         for child in self.walk_all_children():
             child.disable_messages(*messages)
 
+    @staticmethod
+    async def _handle_callbacks(
+        message: Message,
+        callback_map: dict[str, Callback | list[Callback]],
+        remove: bool = False,
+    ) -> bool:
+        """Route message through a specific callback map."""
+        propagate = True
+        handler_name = message.handler_name
+        if handler_name in callback_map:
+            callbacks = callback_map.pop(handler_name) if remove else callback_map.get(handler_name)
+            results = []
+            async_results = []
+            for callback in callbacks:
+                result = callback(message)
+                if isawaitable(result):
+                    async_results.append(result)
+                else:
+                    results.append(result)
+            if async_results:
+                results.extend(await asyncio.gather(*async_results))
+            propagate = any(results)
+        return propagate
+
     async def _handle_permanent_callback(self, message: Message) -> bool:
         """Route message to a local callback if available, or recommend sending to native widget message handler.
 
         If callback manually returns a truthy value, the message will also be handled by native widget message handler.
         """
-        propagate = True
-        handler_name = message.handler_name
-        if handler_name in self._permanent_callbacks:
-            propagate = self._permanent_callbacks[handler_name](message)
-            if isawaitable(propagate):
-                propagate = await propagate
-        return propagate
+        return await self._handle_callbacks(message, self._permanent_callbacks)
 
     async def _handle_temporary_callback(self, message: Message) -> bool:
         """Route message to a single fire callback if available, or recommend sending to native widget message handler.
 
         If callback manually returns a truthy value, the message will also be handled by native widget message handler.
         """
-        propagate = True
-        handler_name = message.handler_name
-        if handler_name in self._temporary_callbacks:
-            propagate = self._temporary_callbacks.pop(handler_name)(message)
-            if isawaitable(propagate):
-                propagate = await propagate
-        return propagate
+        return await self._handle_callbacks(message, self._temporary_callbacks, remove=True)
 
     async def intercept_message(self, message: Message) -> Message | None:
         """Intercept a message for this widget before processing.
