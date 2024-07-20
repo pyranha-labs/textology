@@ -228,6 +228,9 @@ async def test_temporary_callbacks() -> None:
     def _temporary_click(_: widgets.Button.Pressed) -> None:
         store["temporary"] += 1
 
+    def _temporary_click2(_: widgets.Button.Pressed) -> None:
+        store["temporary"] *= 2
+
     app = apps.WidgetApp(
         child=widgets.Button(
             "Clicker",
@@ -261,7 +264,7 @@ async def test_temporary_callbacks() -> None:
             "permanent": 1,
         }
 
-        # Add another temporary clicker after usage and repeat
+        # Add another temporary clicker after usage and repeat.
         clicker.add_callback(on_button_pressed=(_temporary_click, False))
         await asyncio.sleep(0.25)
         await pilot.click("#clicker")
@@ -274,6 +277,27 @@ async def test_temporary_callbacks() -> None:
         assert store == {
             "temporary": 2,
             "permanent": 2,
+        }
+
+        # Add 2 temporary clickers (and attempt 1 repeat) as a list.
+        clicker.add_callback(
+            on_button_pressed=[
+                (_temporary_click, False),
+                (_temporary_click, False),  # Dropped as duplicate.
+                (_temporary_click2, False),
+            ]
+        )
+        await asyncio.sleep(0.25)
+        await pilot.click("#clicker")
+        assert store == {
+            "temporary": 6,
+            "permanent": 2,
+        }
+        await asyncio.sleep(0.25)
+        await pilot.click("#clicker")
+        assert store == {
+            "temporary": 6,  # +1 then x2.
+            "permanent": 3,
         }
 
 
