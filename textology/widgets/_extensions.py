@@ -21,6 +21,7 @@ from textual.widgets import Static as TextualStatic
 from textual.widgets._toggle_button import ToggleButton as TextualToggleButton
 
 Callback = Callable | Coroutine | tuple[Callable | Coroutine, bool]
+Callbacks = dict[str, Callback | list[Callback]]
 
 
 class Clickable(TextualWidget):
@@ -81,7 +82,7 @@ class WidgetExtension(TextualWidget):
         self,
         styles: dict[str, Any] | None = None,
         disabled_messages: Iterable[type[events.Message]] | None = None,
-        callbacks: dict[str, Callback] | None = None,
+        callbacks: Callbacks | None = None,
     ) -> None:
         """Set up the widget's extensions.
 
@@ -112,7 +113,7 @@ class WidgetExtension(TextualWidget):
 
     def __extend_widget_messaging_callbacks__(
         self,
-        callbacks: dict[str, Callback | list[Callback]],
+        callbacks: Callbacks,
     ) -> None:
         """Validate and set up message callbacks."""
         for key, _callbacks in callbacks.items():
@@ -202,7 +203,7 @@ class WidgetExtension(TextualWidget):
     @staticmethod
     async def _handle_callbacks(
         message: Message,
-        callback_map: dict[str, Callback | list[Callback]],
+        callback_map: Callbacks,
         remove: bool = False,
     ) -> bool:
         """Route message through a specific callback map."""
@@ -339,7 +340,7 @@ class Static(TextualStatic, WidgetExtension):
         disabled: bool = False,
         styles: dict[str, Any] | None = None,
         disabled_messages: Iterable[type[events.Message]] | None = None,
-        callbacks: dict[str, Callback] | None = None,
+        callbacks: Callbacks | None = None,
     ) -> None:
         """Initialize a Static widget with extension arguments.
 
@@ -392,7 +393,7 @@ class ToggleButton(TextualToggleButton, WidgetExtension):
         disabled: bool = False,
         styles: dict[str, Any] | None = None,
         disabled_messages: Iterable[type[events.Message]] | None = None,
-        callbacks: dict[str, Callback] | None = None,
+        callbacks: Callbacks | None = None,
     ) -> None:
         """Initialize the toggle.
 
@@ -440,7 +441,7 @@ class Widget(WidgetExtension):
         disabled: bool = False,
         styles: dict[str, Any] | None = None,
         disabled_messages: Iterable[type[events.Message]] | None = None,
-        callbacks: dict[str, Callback] | None = None,
+        callbacks: Callbacks | None = None,
     ) -> None:
         """Initialize a Widget with support for extension arguments.
 
@@ -497,7 +498,7 @@ def StaticFactory(cls: type[Static]) -> type[Static]:  # pylint: disable=invalid
             disabled: bool = False,
             styles: dict[str, Any] | None = None,
             disabled_messages: Iterable[type[events.Message]] | None = None,
-            callbacks: dict[str, Callback] | None = None,
+            callbacks: Callbacks | None = None,
         ) -> None:
             """Initialize a Static widget with extension arguments.
 
@@ -560,7 +561,7 @@ def ToggleButtonFactory(cls: type[TextualToggleButton]) -> type[ToggleButton]:  
             disabled: bool = False,
             styles: dict[str, Any] | None = None,
             disabled_messages: Iterable[type[events.Message]] | None = None,
-            callbacks: dict[str, Callback] | None = None,
+            callbacks: Callbacks | None = None,
         ) -> None:
             """Initialize the toggle.
 
@@ -618,7 +619,7 @@ def WidgetFactory(cls: type[TextualWidget]) -> type[Widget]:  # pylint: disable=
             disabled: bool = False,
             styles: dict[str, Any] | None = None,
             disabled_messages: Iterable[type[events.Message]] | None = None,
-            callbacks: dict[str, Callback] | None = None,
+            callbacks: Callbacks | None = None,
         ) -> None:
             """Initialize a Widget with support for extension arguments.
 

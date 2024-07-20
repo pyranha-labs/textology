@@ -8,7 +8,7 @@ from textual import events
 from textual import widgets
 from textual.widgets._tree import TreeDataType
 
-from .._extensions import Callback
+from .._extensions import Callbacks
 from .._extensions import WidgetExtension
 
 
@@ -26,7 +26,7 @@ class Tree(widgets.Tree, WidgetExtension):  # pylint: disable=too-many-ancestors
         disabled: bool = False,
         styles: dict[str, Any] | None = None,
         disabled_messages: Iterable[type[events.Message]] | None = None,
-        callbacks: dict[str, Callback] | None = None,
+        callbacks: Callbacks | None = None,
     ) -> None:
         """Initialize a Tree.
 

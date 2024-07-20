@@ -8,7 +8,7 @@ from textual.events import Message
 from textual.events import Mount
 from textual.reactive import reactive
 
-from . import Callback
+from . import Callbacks
 from . import Container
 from . import Widget
 
@@ -31,7 +31,7 @@ class PageContainer(Container):
         disabled: bool = False,
         styles: dict[str, Any] | None = None,
         disabled_messages: Iterable[type[Message]] | None = None,
-        callbacks: dict[str, Callback] | None = None,
+        callbacks: Callbacks | None = None,
     ) -> None:
         """Initialize the paged container with initial children and additional tracking.
 

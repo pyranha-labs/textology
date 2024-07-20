@@ -26,7 +26,7 @@ from textual.widgets.select import InvalidSelectValueError
 from textual.widgets.selection_list import Selection
 from textual.widgets.selection_list import SelectionType
 
-from ._extensions import Callback
+from ._extensions import Callbacks
 from ._textual._containers import Vertical
 
 if TYPE_CHECKING:
@@ -185,7 +185,7 @@ class MultiSelect(Generic[SelectType], Vertical, can_focus=True):  # pylint: dis
         disabled: bool = False,
         styles: dict[str, Any] | None = None,
         disabled_messages: Iterable[type[events.Message]] | None = None,
-        callbacks: dict[str, Callback] | None = None,
+        callbacks: Callbacks | None = None,
     ) -> None:
         """Initialize the MultiSelect control.
 

@@ -7,7 +7,7 @@ from textual import events
 from textual import widgets
 from typing_extensions import Literal
 
-from .._extensions import Callback
+from .._extensions import Callbacks
 from .._extensions import WidgetExtension
 
 
@@ -32,7 +32,7 @@ class DataTable(widgets.DataTable, WidgetExtension):  # pylint: disable=too-many
         disabled: bool = False,
         styles: dict[str, Any] | None = None,
         disabled_messages: Iterable[type[events.Message]] | None = None,
-        callbacks: dict[str, Callback] | None = None,
+        callbacks: Callbacks | None = None,
     ) -> None:
         """Initialize the data table widget.
 

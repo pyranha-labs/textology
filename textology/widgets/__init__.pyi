@@ -10,6 +10,7 @@ from textology.textual_utils import textual_version as textual_version
 
 from ._button import Button as Button
 from ._extensions import Callback as Callback
+from ._extensions import Callbacks as Callbacks
 from ._extensions import Clickable as Clickable
 from ._extensions import Static as Static
 from ._extensions import Widget as Widget

@@ -7,7 +7,7 @@ from textual import events
 from textual import widgets
 from textual.widgets._option_list import NewOptionListContent
 
-from .._extensions import Callback
+from .._extensions import Callbacks
 from .._extensions import WidgetExtension
 
 
@@ -23,7 +23,7 @@ class OptionList(widgets.OptionList, WidgetExtension):
         disabled: bool = False,
         styles: dict[str, Any] | None = None,
         disabled_messages: Iterable[type[events.Message]] | None = None,
-        callbacks: dict[str, Callback] | None = None,
+        callbacks: Callbacks | None = None,
     ) -> None:
         """Initialize the option list.
 

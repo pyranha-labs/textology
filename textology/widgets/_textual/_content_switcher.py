@@ -7,7 +7,7 @@ from textual import events
 from textual import widgets
 from textual.widget import Widget
 
-from .._extensions import Callback
+from .._extensions import Callbacks
 from .._extensions import WidgetExtension
 
 
@@ -29,7 +29,7 @@ class ContentSwitcher(widgets.ContentSwitcher, WidgetExtension):
         initial: str | None = None,
         styles: dict[str, Any] | None = None,
         disabled_messages: Iterable[type[events.Message]] | None = None,
-        callbacks: dict[str, Callback] | None = None,
+        callbacks: Callbacks | None = None,
     ) -> None:
         """Initialize the content switching widget.
 

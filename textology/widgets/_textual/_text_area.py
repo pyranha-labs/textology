@@ -8,7 +8,7 @@ from textual import events
 from textual import widgets
 from typing_extensions import Literal
 
-from .._extensions import Callback
+from .._extensions import Callbacks
 from .._extensions import WidgetExtension
 
 
@@ -33,7 +33,7 @@ class TextArea(widgets.TextArea, WidgetExtension):
         tooltip: RenderableType | None = None,
         styles: dict[str, Any] | None = None,
         disabled_messages: Iterable[type[events.Message]] | None = None,
-        callbacks: dict[str, Callback] | None = None,
+        callbacks: Callbacks | None = None,
     ) -> None:
         """Initialize the text area widget.
 

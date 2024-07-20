@@ -8,7 +8,7 @@ from textual import events
 from textual import widgets
 from textual.widget import Widget
 
-from .._extensions import Callback
+from .._extensions import Callbacks
 from .._extensions import WidgetExtension
 
 
@@ -25,7 +25,7 @@ class TabbedContent(widgets.TabbedContent, WidgetExtension):
         disabled: bool = False,
         styles: dict[str, Any] | None = None,
         disabled_messages: Iterable[type[events.Message]] | None = None,
-        callbacks: dict[str, Callback] | None = None,
+        callbacks: Callbacks | None = None,
     ) -> None:
         """Initialize a TabbedContent widgets.
 
@@ -68,7 +68,7 @@ class TabPane(widgets.TabPane, WidgetExtension):
         disabled: bool = False,
         styles: dict[str, Any] | None = None,
         disabled_messages: Iterable[type[events.Message]] | None = None,
-        callbacks: dict[str, Callback] | None = None,
+        callbacks: Callbacks | None = None,
     ) -> None:
         """Initialize a TabPane.
 
