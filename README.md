@@ -131,7 +131,7 @@ from textology.widgets import Button
   from textology.widgets import Button
   
   button = Button(
-      callbacks={"on_button_pressed": lambda event: print("Don't press my buttons...")},
+      callbacks={Button.Pressed: lambda event: print("Don't press my buttons...")},
   )
   ```
   - <details>
@@ -141,7 +141,17 @@ from textology.widgets import Button
     from textology.widgets import Button
     
     button = Button(
-        callbacks={("on_button_pressed", False): lambda event: print("Don't press my buttons...")},
+        callbacks={(Button.Pressed, False): lambda event: print("Don't press my buttons...")},
+    )
+    ```
+  - <details>
+    <summary>Callbacks can also be added via the handler name</summary>
+  
+    ```python
+    from textology.widgets import Button
+    
+    button = Button(
+        callbacks={"on_button_pressed": lambda event: print("Don't press my buttons...")},
     )
     ```
   - <details>
@@ -194,13 +204,13 @@ around routes, callbacks, and standard Textual applications can be found in [Exa
   app = WidgetApp(
       Container(
           Button("Ping", callbacks={
-              "on_button_pressed": lambda event: app.query_one('#label').update("Ping")
+              Button.Pressed: lambda event: app.query_one('#label').update("Ping")
           }),
           Button("Pong", callbacks={
-              "on_button_pressed": lambda event: app.query_one('#label').update("Pong")
+              Button.Pressed: lambda event: app.query_one('#label').update("Pong")
           }),
           Button("Sing-a-long", callbacks={
-              "on_button_pressed": lambda event: app.query_one('#label').update("Sing-a-long")
+              Button.Pressed: lambda event: app.query_one('#label').update("Sing-a-long")
           }),
           Label(id="label")
       )
