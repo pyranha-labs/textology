@@ -8,6 +8,7 @@ from inspect import isawaitable
 from types import ModuleType
 from typing import Any
 from typing import Callable
+from typing import Literal
 
 from textual import events
 from textual._path import _make_path_object_relative  # pylint: disable=protected-access
@@ -18,6 +19,7 @@ from textual.css.query import NoMatches
 from textual.driver import Driver
 from textual.screen import Screen
 from textual.widget import Widget
+from typing_extensions import override
 
 from .observers import Modified
 from .observers import NoUpdate
@@ -392,6 +394,15 @@ class ExtendedApp(WidgetApp, ObserverManager):
                             )
                         )
 
+    @override
+    async def _on_update_error(self, error: BaseException) -> bool:
+        # Add special handling for "user errors", to display a message to them while only stopping the active
+        # operation, instead of the entire application.
+        if isinstance(error, UserNotification):
+            error.notify(self)
+            return True
+        return await super()._on_update_error(error)
+
     @property
     def page_container(self) -> PageContainer | None:
         """Find the application's primary page container widget for routing content."""
@@ -537,3 +548,47 @@ class ExtendedApp(WidgetApp, ObserverManager):
             A decorator that will register a function as capable of accepting requests to a specific path/method combo.
         """
         return self.location.route(path, methods=methods)
+
+
+class UserNotification(Exception):
+    """Stop an operation, and display a notification to the user.
+
+    When used outside an extended app, this exception will be handled like a standard exception.
+    When raised within an extended app, it will be caught and displayed as a notification.
+
+    Functionally the same as `app.notify()` + return, but allows quickly stopping an operation by raising.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        title: str = "",
+        severity: Literal["information", "warning", "error"] = "warning",
+        timeout: float | None = None,
+    ) -> None:
+        """Initialize the notification for display.
+
+        Args:
+            message: The message for the notification.
+            title: The title for the notification.
+            severity: The severity of the notification.
+            timeout: The timeout (in seconds) for the notification, or None for default.
+        """
+        self.message = message
+        self.title = title
+        self.severity = severity
+        self.timeout = timeout
+
+    def notify(self, app: App) -> None:
+        """Display the notification.
+
+        Args:
+            app: The application to attach the notification to.
+        """
+        app.notify(
+            self.message,
+            title=self.title,
+            severity=self.severity,
+            timeout=self.timeout,
+        )
