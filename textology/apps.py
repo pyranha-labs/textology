@@ -247,6 +247,7 @@ class ExtendedApp(WidgetApp, ObserverManager):
 
         self._observer_message_handler_map = {}
         self._location: Location | None = None
+        self._page_container: PageContainer | None = None
         self._page_registry: dict[str, Page] = {}
         self._use_pages = use_pages or bool(pages)
         self._cache_pages = cache_pages
@@ -309,12 +310,8 @@ class ExtendedApp(WidgetApp, ObserverManager):
         if not location.id:
             raise ValueError("Location widget must have an id if pages are enabled")
 
-        page_container = None
-        for node in walk_all_children(self.child):
-            if isinstance(node, PageContainer):
-                page_container = node
-                break
-        if page_container is None:
+        page_container = self.page_container
+        if not page_container:
             raise ValueError("Layout must contain a PageContainer widget if pages are enabled")
         if not page_container.id:
             raise ValueError("PageContainer widget must have an id if pages are enabled")
@@ -350,7 +347,9 @@ class ExtendedApp(WidgetApp, ObserverManager):
     def location(self) -> Location | None:
         """Find the application's primary Location widget for routing addresses."""
         if self._location is None:
-            self._update_location()
+            for node in walk_all_children(self.child):
+                if isinstance(node, Location):
+                    self._location = node
         return self._location
 
     async def _on_message(self, message: events.Message) -> None:
@@ -393,6 +392,15 @@ class ExtendedApp(WidgetApp, ObserverManager):
                             )
                         )
 
+    @property
+    def page_container(self) -> PageContainer | None:
+        """Find the application's primary page container widget for routing content."""
+        if self._page_container is None:
+            for node in walk_all_children(self.child):
+                if isinstance(node, PageContainer):
+                    self._page_container = node
+        return self._page_container
+
     def _page_not_found(
         self,
         request: Request,
@@ -407,7 +415,9 @@ class ExtendedApp(WidgetApp, ObserverManager):
         return self._page_registry.copy()
 
     async def _page_router(
-        self, pathname: str, search: str
+        self,
+        pathname: str,
+        search: str,
     ) -> tuple[Widget | NoUpdate, Widget | NoUpdate, str | NoUpdate]:
         """Load the appropriate page based on the URL path and search options."""
         self.logger.debug(f"Routing page content for: {pathname}")
@@ -467,6 +477,7 @@ class ExtendedApp(WidgetApp, ObserverManager):
         order: int = 0,
         redirect_from: str | list[str] | None = None,
         layout: Callable | None = None,
+        cache: bool = False,
     ) -> None:
         """Register a URL path to a layout in this multi-page application.
 
@@ -485,6 +496,7 @@ class ExtendedApp(WidgetApp, ObserverManager):
             order: The relative order to sort pages in the "page_registry", such as ordering in navigation menus.
             redirect_from: Paths that should redirect to this page's path. e.g. "/v1/home"
             layout: Function to call to generate the widget(s) used in the page's layout.
+            cache: Whether to pre-cache this page's layout before the first time it is requested.
         """
         if not self._use_pages:
             raise ValueError("Pages are not enabled on this application")
@@ -502,6 +514,13 @@ class ExtendedApp(WidgetApp, ObserverManager):
             self.location.endpoint_not_found = Endpoint([], "", page.layout)
         else:
             self.route(page.path)(page.layout)
+        if cache and self._cache_pages:
+            endpoint = self.location.endpoint(path, "GET")
+            kwargs = {}
+            if "app" in endpoint.handler_vars:
+                kwargs["app"] = self
+            page_content = endpoint.handler(**kwargs)
+            self.page_container.add_page(path, page_content, show_first=False)
 
     def reload(self) -> None:
         """Reload the most recent URL in the history."""
@@ -518,10 +537,3 @@ class ExtendedApp(WidgetApp, ObserverManager):
             A decorator that will register a function as capable of accepting requests to a specific path/method combo.
         """
         return self.location.route(path, methods=methods)
-
-    def _update_location(self) -> None:
-        """Walk the layout tree to allow finding the application's Location widget at any point in the lifecycle."""
-        for node in walk_all_children(self.child):
-            if isinstance(node, Location):
-                self._location = node
-                return
