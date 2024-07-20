@@ -21,7 +21,7 @@ from textual.widgets import Static as TextualStatic
 from textual.widgets._toggle_button import ToggleButton as TextualToggleButton
 
 Callback = Callable | Coroutine | tuple[Callable | Coroutine, bool]
-Callbacks = dict[str, Callback | list[Callback]]
+Callbacks = dict[str | type[Message], Callback | list[Callback]]
 
 
 class Clickable(TextualWidget):
@@ -119,10 +119,12 @@ class WidgetExtension(TextualWidget):
         for key, _callbacks in callbacks.items():
             if not isinstance(_callbacks, list):
                 _callbacks = [_callbacks]
+            if not isinstance(key, str):
+                key = key.handler_name
             for callback in _callbacks:
                 if not key.startswith("on_"):
                     raise ValueError(
-                        'Callbacks must start with "on_" and end with the name of the event type in camel_case'
+                        'Callback keys must start with "on_" and end with the name of the event type in camel_case'
                     )
                 permanent = True
                 if isinstance(callback, tuple):
@@ -282,24 +284,32 @@ class WidgetExtension(TextualWidget):
             if _register_reactive_observers:
                 _register_reactive_observers(self)
 
-    def remove_callback(self, callback: Callback) -> None:
+    def remove_callback(self, callback: Callback | type[Message] | str) -> None:
         """Remove a callback from the widget.
 
         Can only be used to remove "dynamic" callbacks added via instantiation, or `add_callback()`.
 
         Args:
-            callback: Previously added callback to remove.
+            callback: Previously added callback, or handler name/type, to remove.
         """
-        for key, callbacks in list(self._permanent_callbacks.items()):
-            if callback in callbacks:
-                callbacks.remove(callback)
-            if not callbacks:
-                self._permanent_callbacks.pop(key)
-        for key, callbacks in list(self._temporary_callbacks.items()):
-            if callback in callbacks:
-                callbacks.remove(callback)
-            if not callbacks:
-                self._temporary_callbacks.pop(key)
+        if isinstance(callback, type) and issubclass(callback, Message):
+            callback = callback.handler_name
+        if isinstance(callback, str):
+            if callback in self._permanent_callbacks:
+                self._permanent_callbacks.pop(callback)
+            if callback in self._temporary_callbacks:
+                self._temporary_callbacks.pop(callback)
+        else:
+            for key, callbacks in list(self._permanent_callbacks.items()):
+                if callback in callbacks:
+                    callbacks.remove(callback)
+                if not callbacks:
+                    self._permanent_callbacks.pop(key)
+            for key, callbacks in list(self._temporary_callbacks.items()):
+                if callback in callbacks:
+                    callbacks.remove(callback)
+                if not callbacks:
+                    self._temporary_callbacks.pop(key)
 
     async def _replace(
         self,

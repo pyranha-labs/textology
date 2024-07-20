@@ -27,7 +27,7 @@ class SimpleApp(App):
                 id="main-menu",
                 styles={"width": 24},
                 callbacks={
-                    "on_list_view_highlighted": self.on_main_menu_highlighted,
+                    ListView.Highlighted: self.on_main_menu_highlighted,
                 },
             ),
             Container(

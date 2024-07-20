@@ -185,7 +185,7 @@ async def test_modal_dialog(compare_snapshots: Callable) -> None:
                 "Show Dialog",
                 id="dialog-btn",
                 callbacks={
-                    "on_button_pressed": _show_dialog,
+                    widgets.Button.Pressed: _show_dialog,
                 },
             ),
         )
@@ -215,7 +215,7 @@ async def test_modal_dialog(compare_snapshots: Callable) -> None:
 
 
 @pytest.mark.asyncio
-async def test_temporary_callbacks() -> None:
+async def test_non_decorator_callbacks() -> None:
     """Validate basic permanent and temporary callback functionality."""
     store = {
         "temporary": 0,
@@ -236,7 +236,7 @@ async def test_temporary_callbacks() -> None:
             "Clicker",
             id="clicker",
             callbacks={
-                "on_button_pressed": _permanent_click,
+                widgets.Button.Pressed: _permanent_click,  # Test initial add via type.
             },
         )
     )
@@ -303,6 +303,27 @@ async def test_temporary_callbacks() -> None:
         # Add and remove callback.
         clicker.add_callback(on_button_pressed=(_temporary_click, False))
         clicker.remove_callback(_temporary_click)
+        await asyncio.sleep(0.25)
+        await pilot.click("#clicker")
+        assert store == {
+            "temporary": 6,
+            "permanent": 4,
+        }
+
+        # Remove all callbacks via name.
+        clicker.add_callback(on_button_pressed=(_temporary_click, False))
+        clicker.remove_callback("on_button_pressed")
+        await asyncio.sleep(0.25)
+        await pilot.click("#clicker")
+        assert store == {
+            "temporary": 6,
+            "permanent": 4,
+        }
+
+        # Add both back to remove again, via type.
+        clicker.add_callback(on_button_pressed=_permanent_click)
+        clicker.add_callback(on_button_pressed=(_temporary_click, False))
+        clicker.remove_callback(widgets.Button.Pressed)
         await asyncio.sleep(0.25)
         await pilot.click("#clicker")
         assert store == {
