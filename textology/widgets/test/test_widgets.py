@@ -8,6 +8,7 @@ import pytest
 from typing_extensions import override
 
 from textology import apps
+from textology import observers
 from textology import widgets
 
 
@@ -227,7 +228,20 @@ async def test_non_decorator_callbacks() -> None:
         store["exceptions"] += 1
 
     def _exception_click(_: widgets.Button.Pressed) -> None:
+        # Caught exception at local level.
         raise ValueError()
+
+    def _exception_click2(_: widgets.Button.Pressed) -> None:
+        # Caught exception at app level.
+        raise IndexError()
+
+    def _exception_click3(_: widgets.Button.Pressed) -> None:
+        # Fatal exception.
+        raise AttributeError()
+
+    def _app_exception_handler(_: IndexError) -> None:
+        store.setdefault("app_exceptions", 0)
+        store["app_exceptions"] += 1
 
     def _permanent_click(_: widgets.Button.Pressed) -> None:
         store["permanent"] += 1
@@ -238,7 +252,7 @@ async def test_non_decorator_callbacks() -> None:
     def _temporary_click2(_: widgets.Button.Pressed) -> None:
         store["temporary"] *= 2
 
-    app = apps.WidgetApp(
+    app = apps.ExtendedApp(
         child=widgets.Button(
             "Clicker",
             id="clicker",
@@ -248,107 +262,125 @@ async def test_non_decorator_callbacks() -> None:
             },
         )
     )
+    app.when(observers.Raised(IndexError))(_app_exception_handler)
 
-    async with app.run_test() as pilot:
-        clicker = app.query_one("#clicker")
-        clicker.add_callback(widgets.Button.Pressed, _temporary_click, repeat=False)
+    with pytest.raises(AttributeError):  # Verify the final fatal error is not caught by any callbacks.
+        async with app.run_test() as pilot:
+            clicker = app.query_one("#clicker")
+            clicker.add_callback(widgets.Button.Pressed, _temporary_click, repeat=False)
 
-        # Ensure no callbacks have been triggered.
-        assert store == {
-            "temporary": 0,
-            "permanent": 0,
-        }
+            # Ensure no callbacks have been triggered.
+            assert store == {
+                "temporary": 0,
+                "permanent": 0,
+            }
 
-        # Click twice to ensure temporary is called once, and permanent once.
-        await pilot.click("#clicker")
-        assert store == {
-            "temporary": 1,
-            "permanent": 0,
-        }
-        await asyncio.sleep(0.25)
-        await pilot.click("#clicker")
-        assert store == {
-            "temporary": 1,
-            "permanent": 1,
-        }
+            # Click twice to ensure temporary is called once, and permanent once.
+            await pilot.click("#clicker")
+            assert store == {
+                "temporary": 1,
+                "permanent": 0,
+            }
+            await asyncio.sleep(0.25)
+            await pilot.click("#clicker")
+            assert store == {
+                "temporary": 1,
+                "permanent": 1,
+            }
 
-        # Add another temporary clicker after usage and repeat.
-        clicker.add_callback(widgets.Button.Pressed, _temporary_click, repeat=False)
-        await asyncio.sleep(0.25)
-        await pilot.click("#clicker")
-        assert store == {
-            "temporary": 2,
-            "permanent": 1,
-        }
-        await asyncio.sleep(0.25)
-        await pilot.click("#clicker")
-        assert store == {
-            "temporary": 2,
-            "permanent": 2,
-        }
+            # Add another temporary clicker after usage and repeat.
+            clicker.add_callback(widgets.Button.Pressed, _temporary_click, repeat=False)
+            await asyncio.sleep(0.25)
+            await pilot.click("#clicker")
+            assert store == {
+                "temporary": 2,
+                "permanent": 1,
+            }
+            await asyncio.sleep(0.25)
+            await pilot.click("#clicker")
+            assert store == {
+                "temporary": 2,
+                "permanent": 2,
+            }
 
-        # Add 2 temporary clickers (and attempt 1 repeat) as a list.
-        clicker.add_callback(
-            "on_button_pressed",
-            [
-                (_temporary_click, False),
-                (_temporary_click, False),  # Dropped as duplicate.
-                (_temporary_click2, False),
-            ],
-        )
-        await asyncio.sleep(0.25)
-        await pilot.click("#clicker")
-        assert store == {
-            "temporary": 6,
-            "permanent": 2,
-        }
-        await asyncio.sleep(0.25)
-        await pilot.click("#clicker")
-        assert store == {
-            "temporary": 6,  # +1 then x2.
-            "permanent": 3,
-        }
+            # Add 2 temporary clickers (and attempt 1 repeat) as a list.
+            clicker.add_callback(
+                "on_button_pressed",
+                [
+                    (_temporary_click, False),
+                    (_temporary_click, False),  # Dropped as duplicate.
+                    (_temporary_click2, False),
+                ],
+            )
+            await asyncio.sleep(0.25)
+            await pilot.click("#clicker")
+            assert store == {
+                "temporary": 6,
+                "permanent": 2,
+            }
+            await asyncio.sleep(0.25)
+            await pilot.click("#clicker")
+            assert store == {
+                "temporary": 6,  # +1 then x2.
+                "permanent": 3,
+            }
 
-        # Add and remove callback.
-        clicker.add_callback(widgets.Button.Pressed, _temporary_click, repeat=False)
-        clicker.remove_callback(_temporary_click)
-        await asyncio.sleep(0.25)
-        await pilot.click("#clicker")
-        assert store == {
-            "temporary": 6,
-            "permanent": 4,
-        }
+            # Add and remove callback.
+            clicker.add_callback(widgets.Button.Pressed, _temporary_click, repeat=False)
+            clicker.remove_callback(_temporary_click)
+            await asyncio.sleep(0.25)
+            await pilot.click("#clicker")
+            assert store == {
+                "temporary": 6,
+                "permanent": 4,
+            }
 
-        # Add/remove all callbacks via name.
-        clicker.add_callback("on_button_pressed", _temporary_click, repeat=False)
-        clicker.remove_callback("on_button_pressed")
-        await asyncio.sleep(0.25)
-        await pilot.click("#clicker")
-        assert store == {
-            "temporary": 6,
-            "permanent": 4,
-        }
+            # Add/remove all callbacks via name.
+            clicker.add_callback("on_button_pressed", _temporary_click, repeat=False)
+            clicker.remove_callback("on_button_pressed")
+            await asyncio.sleep(0.25)
+            await pilot.click("#clicker")
+            assert store == {
+                "temporary": 6,
+                "permanent": 4,
+            }
 
-        # Add both back to remove again, via type.
-        clicker.add_callback(widgets.Button.Pressed, _permanent_click)
-        clicker.add_callback(widgets.Button.Pressed, _temporary_click, repeat=False)
-        clicker.remove_callback(widgets.Button.Pressed)
-        await asyncio.sleep(0.25)
-        await pilot.click("#clicker")
-        assert store == {
-            "temporary": 6,
-            "permanent": 4,
-        }
+            # Add both back to remove again, via type.
+            clicker.add_callback(widgets.Button.Pressed, _permanent_click)
+            clicker.add_callback(widgets.Button.Pressed, _temporary_click, repeat=False)
+            clicker.remove_callback(widgets.Button.Pressed)
+            await asyncio.sleep(0.25)
+            await pilot.click("#clicker")
+            assert store == {
+                "temporary": 6,
+                "permanent": 4,
+            }
 
-        # Raise an exception and ensure it is captured.
-        clicker.add_callback(widgets.Button.Pressed, _exception_click, repeat=False)
-        await asyncio.sleep(0.25)
-        await pilot.click("#clicker")
-        assert store == {
-            "temporary": 6,
-            "permanent": 4,
-            "exceptions": 1,
-        }
+            # Raise an exception and ensure it is captured at the local callback level.
+            clicker.add_callback(widgets.Button.Pressed, _exception_click, repeat=False)
+            await asyncio.sleep(0.25)
+            await pilot.click("#clicker")
+            assert store == {
+                "temporary": 6,
+                "permanent": 4,
+                "exceptions": 1,
+            }
+
+            # Raise an exception and ensure it is captured at the app level.
+            clicker.add_callback(widgets.Button.Pressed, _exception_click2, repeat=False)
+            await asyncio.sleep(0.25)
+            await pilot.click("#clicker")
+            assert store == {
+                "temporary": 6,
+                "permanent": 4,
+                "exceptions": 1,
+                "app_exceptions": 1,
+            }
+
+            # Raise the fatal error to ensure no exception callbacks catch it.
+            clicker.add_callback(widgets.Button.Pressed, _exception_click3, repeat=False)
+            await asyncio.sleep(0.25)
+            await pilot.click("#clicker")
 
 
 @pytest.mark.asyncio

@@ -6,7 +6,6 @@ from typing import Callable
 
 import pytest
 from textual.app import ComposeResult
-from textual.widget import Widget
 
 from textology import apps
 from textology import observers
