@@ -222,6 +222,13 @@ async def test_non_decorator_callbacks() -> None:
         "permanent": 0,
     }
 
+    def _exception_handler(_: ValueError) -> None:
+        store.setdefault("exceptions", 0)
+        store["exceptions"] += 1
+
+    def _exception_click(_: widgets.Button.Pressed) -> None:
+        raise ValueError()
+
     def _permanent_click(_: widgets.Button.Pressed) -> None:
         store["permanent"] += 1
 
@@ -237,13 +244,14 @@ async def test_non_decorator_callbacks() -> None:
             id="clicker",
             callbacks={
                 widgets.Button.Pressed: _permanent_click,  # Test initial add via type.
+                ValueError: _exception_handler,  # Test initial add via type.
             },
         )
     )
 
     async with app.run_test() as pilot:
         clicker = app.query_one("#clicker")
-        clicker.add_callback(on_button_pressed=(_temporary_click, False))
+        clicker.add_callback(widgets.Button.Pressed, _temporary_click, repeat=False)
 
         # Ensure no callbacks have been triggered.
         assert store == {
@@ -265,7 +273,7 @@ async def test_non_decorator_callbacks() -> None:
         }
 
         # Add another temporary clicker after usage and repeat.
-        clicker.add_callback(on_button_pressed=(_temporary_click, False))
+        clicker.add_callback(widgets.Button.Pressed, _temporary_click, repeat=False)
         await asyncio.sleep(0.25)
         await pilot.click("#clicker")
         assert store == {
@@ -281,11 +289,12 @@ async def test_non_decorator_callbacks() -> None:
 
         # Add 2 temporary clickers (and attempt 1 repeat) as a list.
         clicker.add_callback(
-            on_button_pressed=[
+            "on_button_pressed",
+            [
                 (_temporary_click, False),
                 (_temporary_click, False),  # Dropped as duplicate.
                 (_temporary_click2, False),
-            ]
+            ],
         )
         await asyncio.sleep(0.25)
         await pilot.click("#clicker")
@@ -301,7 +310,7 @@ async def test_non_decorator_callbacks() -> None:
         }
 
         # Add and remove callback.
-        clicker.add_callback(on_button_pressed=(_temporary_click, False))
+        clicker.add_callback(widgets.Button.Pressed, _temporary_click, repeat=False)
         clicker.remove_callback(_temporary_click)
         await asyncio.sleep(0.25)
         await pilot.click("#clicker")
@@ -310,8 +319,8 @@ async def test_non_decorator_callbacks() -> None:
             "permanent": 4,
         }
 
-        # Remove all callbacks via name.
-        clicker.add_callback(on_button_pressed=(_temporary_click, False))
+        # Add/remove all callbacks via name.
+        clicker.add_callback("on_button_pressed", _temporary_click, repeat=False)
         clicker.remove_callback("on_button_pressed")
         await asyncio.sleep(0.25)
         await pilot.click("#clicker")
@@ -321,14 +330,24 @@ async def test_non_decorator_callbacks() -> None:
         }
 
         # Add both back to remove again, via type.
-        clicker.add_callback(on_button_pressed=_permanent_click)
-        clicker.add_callback(on_button_pressed=(_temporary_click, False))
+        clicker.add_callback(widgets.Button.Pressed, _permanent_click)
+        clicker.add_callback(widgets.Button.Pressed, _temporary_click, repeat=False)
         clicker.remove_callback(widgets.Button.Pressed)
         await asyncio.sleep(0.25)
         await pilot.click("#clicker")
         assert store == {
             "temporary": 6,
             "permanent": 4,
+        }
+
+        # Raise an exception and ensure it is captured.
+        clicker.add_callback(widgets.Button.Pressed, _exception_click, repeat=False)
+        await asyncio.sleep(0.25)
+        await pilot.click("#clicker")
+        assert store == {
+            "temporary": 6,
+            "permanent": 4,
+            "exceptions": 1,
         }
 
 
