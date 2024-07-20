@@ -247,14 +247,23 @@ class WidgetExtension(TextualWidget):
                 results.extend(result for result in async_results if not isinstance(result, Exception))
                 exceptions.extend(result for result in async_results if isinstance(result, Exception))
             for exception in exceptions:
-                if await self._handle_exception_callback(exception, self._temporary_callbacks):
-                    if await self._handle_exception_callback(exception, self._permanent_callbacks):
-                        raise exception
+                await self._handle_exception_callback(exception)
             propagate = not exceptions and any(bool(result) for result in results)
         return propagate
 
+    async def _handle_exception_callback(self, exception: Exception) -> None:
+        """Route exception to a local callback if available, app handler if not available, or raise if no handlers."""
+        if await self._handle_exception_callbacks(exception, self._temporary_callbacks):
+            if await self._handle_exception_callbacks(exception, self._permanent_callbacks):
+                # Route to extended app logic if available, otherwise treat as regular Textual app and bubble up.
+                if app_handler := getattr(self.app, "_on_update_error", None):
+                    if not await app_handler(exception):
+                        raise exception
+                else:
+                    raise exception
+
     @staticmethod
-    async def _handle_exception_callback(
+    async def _handle_exception_callbacks(
         exception: Exception,
         callback_map: Callbacks,
         remove: bool = False,
@@ -331,7 +340,7 @@ class WidgetExtension(TextualWidget):
             if _register_reactive_observers:
                 _register_reactive_observers(self)
 
-    def remove_callback(self, callback: Callback | type[Message] | str) -> None:
+    def remove_callback(self, callback: Callback | type[Message, Exception] | str) -> None:
         """Remove a callback from the widget.
 
         Can only be used to remove "dynamic" callbacks added via instantiation, or `add_callback()`.
