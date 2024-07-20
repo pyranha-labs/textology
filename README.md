@@ -161,7 +161,16 @@ from textology.widgets import Button
     from textology.widgets import Button
 
     button = Button()
-    button.add_callback(on_button_pressed=lambda event: print("Don't press my buttons..."))
+    button.add_callback(Button.Pressed, lambda event: print("Don't press my buttons..."))
+    ```
+  - <details>
+    <summary>Callbacks can also be added for exceptions</summary>
+  
+    ```python
+    from textology.widgets import Button
+
+    button = Button()
+    button.add_callback(ValueError, lambda exception: print("This error had exceptional value..."))
     ```
 
 

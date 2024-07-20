@@ -21,7 +21,7 @@ from textual.widgets import Static as TextualStatic
 from textual.widgets._toggle_button import ToggleButton as TextualToggleButton
 
 Callback = Callable | Coroutine | tuple[Callable | Coroutine, bool]
-Callbacks = dict[str | type[Message], Callback | list[Callback]]
+Callbacks = dict[str | type[Message | Exception], Callback | list[Callback]]
 
 
 class Clickable(TextualWidget):
@@ -96,8 +96,8 @@ class WidgetExtension(TextualWidget):
                 By default, callbacks are permanent. A tuple with "false" can be used to make them fire once.
                 A widget may have both permanent callbacks, and single fire callbacks, at the same time.
         """
-        self._permanent_callbacks: dict[str, list[Callback]] = {}
-        self._temporary_callbacks: dict[str, list[Callback]] = {}
+        self._permanent_callbacks: dict[str | type[Exception], list[Callback]] = {}
+        self._temporary_callbacks: dict[str | type[Exception], list[Callback]] = {}
 
         if styles:
             self.__extend_widget_styles__(styles)
@@ -119,13 +119,15 @@ class WidgetExtension(TextualWidget):
         for key, _callbacks in callbacks.items():
             if not isinstance(_callbacks, list):
                 _callbacks = [_callbacks]
-            if not isinstance(key, str):
-                key = key.handler_name
-            for callback in _callbacks:
+            if isinstance(key, type):
+                if not issubclass(key, Exception):
+                    key = key.handler_name
+            else:
                 if not key.startswith("on_"):
                     raise ValueError(
                         'Callback keys must start with "on_" and end with the name of the event type in camel_case'
                     )
+            for callback in _callbacks:
                 permanent = True
                 if isinstance(callback, tuple):
                     callback, permanent = callback
@@ -149,18 +151,32 @@ class WidgetExtension(TextualWidget):
         """Focus the previous widget when the action is called."""
         self.app.action_focus_previous()
 
-    def add_callback(self, **callbacks: Callback | list[Callback]) -> None:
+    def add_callback(
+        self,
+        on: str | type[Message, Exception],
+        callback: Callback | list[Callback],
+        *,
+        repeat: bool = True,
+    ) -> None:
         """Add one or more callbacks to the widget.
 
+        Callbacks behave the same as "on_*" functions declared at class level.
+        Return "True" in callbacks to send the messages to the default widget handler.
+        Callbacks repeat by default. A tuple with "false" can be used to make them fire once,
+        or "repeat" can be set to "false". A widget may have both permanent callbacks,
+        and single fire callbacks, at the same time.
+
         Args:
-            callbacks: Callbacks to send messages to instead of sending to default handler.
-                Callbacks behave the same as "on_*" functions declared at class level.
-                Return "True" in callbacks to send the messages to the default widget handler.
-                By default, callbacks are permanent. A tuple with "false" can be used to make them fire once.
-                A widget may have both permanent callbacks, and single fire callbacks, at the same time.
+            on: Event, as handler name or Message/Exception type, to trigger the callback.
+            callback: Callback to send matching triggers to instead of sending to default handler.
+            repeat: Whether the callback is repeatable (permanent), or single use (removed after trigger).
         """
-        if callbacks:
-            self.__extend_widget_messaging_callbacks__(callbacks)
+        if not isinstance(callback, list):
+            callback = [callback]
+        for index, _callback in enumerate(callback):
+            if not isinstance(_callback, tuple):
+                callback[index] = (_callback, repeat)
+        self.__extend_widget_messaging_callbacks__({on: callback})
 
     def after(
         self,
@@ -202,8 +218,8 @@ class WidgetExtension(TextualWidget):
         for child in self.walk_all_children():
             child.disable_messages(*messages)
 
-    @staticmethod
     async def _handle_callbacks(
+        self,
         message: Message,
         callback_map: Callbacks,
         remove: bool = False,
@@ -214,16 +230,47 @@ class WidgetExtension(TextualWidget):
         if handler_name in callback_map:
             callbacks = callback_map.pop(handler_name) if remove else callback_map.get(handler_name)
             results = []
-            async_results = []
+            exceptions = []
+            pending = []
             for callback in callbacks:
-                result = callback(message)
+                try:
+                    result = callback(message)
+                except Exception as error:  # pylint: disable=broad-exception-caught
+                    exceptions.append(error)
+                    continue
                 if isawaitable(result):
-                    async_results.append(result)
+                    pending.append(result)
                 else:
                     results.append(result)
-            if async_results:
-                results.extend(await asyncio.gather(*async_results))
-            propagate = any(results)
+            if pending:
+                async_results = await asyncio.gather(*pending, return_exceptions=True)
+                results.extend(result for result in async_results if not isinstance(result, Exception))
+                exceptions.extend(result for result in async_results if isinstance(result, Exception))
+            for exception in exceptions:
+                if await self._handle_exception_callback(exception, self._temporary_callbacks):
+                    if await self._handle_exception_callback(exception, self._permanent_callbacks):
+                        raise exception
+            propagate = not exceptions and any(bool(result) for result in results)
+        return propagate
+
+    @staticmethod
+    async def _handle_exception_callback(
+        exception: Exception,
+        callback_map: Callbacks,
+        remove: bool = False,
+    ) -> bool:
+        """Route exception through a specific callback map."""
+        handler = type(exception)
+        propagate = handler not in callback_map
+        if not propagate:
+            # Handle exception callbacks serially, instead of batched, to prevent circular exception chains.
+            # Compared to event callbacks, exceptions during exception callbacks are considered fatal.
+            callbacks = callback_map.pop(handler) if remove else callback_map.get(handler)
+            for callback in callbacks:
+                result = callback(exception)
+                if isawaitable(result):
+                    result = await result
+                propagate = propagate or bool(result)
         return propagate
 
     async def _handle_permanent_callback(self, message: Message) -> bool:

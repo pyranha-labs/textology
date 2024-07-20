@@ -123,7 +123,7 @@ mixin-class-rgx = ".*[Mm]ixin|.*Extension"
 # The "id" and "type" variables are attributes on some Textual widgets, and should be allowed in subclasses
 # to maintain parity.
 allowed-redefined-builtins = ["id", "type"]
-good-names = ["id"]
+good-names = ["id", "on"]
 
 [tool.pytest.ini_options]
 norecursedirs = [".*", "venv"]
