@@ -12,7 +12,7 @@ from textual.widgets import ListItem
 from textual.widgets import ListView as TextualListView
 from typing_extensions import override
 
-from ._extensions import Callback
+from ._extensions import Callbacks
 from ._extensions import WidgetExtension
 from ._list_item_header import ListItemHeader
 
@@ -39,7 +39,7 @@ class ListView(TextualListView, WidgetExtension):
         auto_highlight: bool = True,
         styles: dict[str, Any] | None = None,
         disabled_messages: Iterable[type[events.Message]] | None = None,
-        callbacks: dict[str, Callback] | None = None,
+        callbacks: Callbacks | None = None,
     ) -> None:
         """Initialize a ListView with extension arguments.
 

@@ -15,7 +15,7 @@ from textual.binding import BindingType
 from textual.reactive import reactive
 from textual.widget import Widget
 
-from ._extensions import Callback
+from ._extensions import Callbacks
 from ._extensions import WidgetExtension
 from ._extensions import walk_all_children
 from ._list_item import ListItem
@@ -93,7 +93,7 @@ class HorizontalMenus(containers.HorizontalScroll, WidgetExtension):
         menu_creator: Callable[[int, list[ListItem]], Widget] | None = None,
         styles: dict[str, Any] | None = None,
         disabled_messages: Iterable[type[events.Message]] | None = None,
-        callbacks: dict[str, Callback] | None = None,
+        callbacks: Callbacks | None = None,
     ) -> None:
         """Initialize horizontal menus.
 

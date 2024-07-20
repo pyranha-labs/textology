@@ -11,7 +11,7 @@ from textual.types import InputValidationOn
 from textual.validation import Validator
 from typing_extensions import Literal
 
-from .._extensions import Callback
+from .._extensions import Callbacks
 from .._extensions import WidgetExtension
 
 InputType = Literal["integer", "number", "text"]
@@ -43,7 +43,7 @@ class TextInput(widgets.Input, WidgetExtension):
         disabled: bool = False,
         styles: dict[str, Any] | None = None,
         disabled_messages: Iterable[type[events.Message]] | None = None,
-        callbacks: dict[str, Callback] | None = None,
+        callbacks: Callbacks | None = None,
     ) -> None:
         """Initialize the text input widget.
 

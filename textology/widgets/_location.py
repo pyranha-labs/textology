@@ -16,7 +16,7 @@ from textology.router import Endpoint
 from textology.router import Request
 from textology.router import Router
 
-from ._extensions import Callback
+from ._extensions import Callbacks
 from ._extensions import Widget
 
 
@@ -89,7 +89,7 @@ class Location(Widget, Router):
         enable_url_events: bool = False,
         enable_history_events: bool = False,
         disabled_messages: Iterable[type[events.Message]] | None = None,
-        callbacks: dict[str, Callback] | None = None,
+        callbacks: Callbacks | None = None,
     ) -> None:
         """Initialize the location, routing, and history.
 

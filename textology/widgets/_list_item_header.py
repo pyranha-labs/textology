@@ -6,7 +6,7 @@ from typing import Iterable
 from textual import events
 from textual.widget import Widget
 
-from ._extensions import Callback
+from ._extensions import Callbacks
 from ._list_item import ListItem
 
 
@@ -35,7 +35,7 @@ class ListItemHeader(ListItem):
         data: Any = None,
         styles: dict[str, Any] | None = None,
         disabled_messages: Iterable[type[events.Message]] | None = None,
-        callbacks: dict[str, Callback] | None = None,
+        callbacks: Callbacks | None = None,
     ) -> None:
         """Initialize a ListItemHeader with extension arguments.
 

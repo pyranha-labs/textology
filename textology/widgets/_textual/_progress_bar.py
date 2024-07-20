@@ -6,7 +6,7 @@ from typing import Iterable
 from textual import events
 from textual import widgets
 
-from .._extensions import Callback
+from .._extensions import Callbacks
 from .._extensions import WidgetExtension
 
 
@@ -26,7 +26,7 @@ class ProgressBar(widgets.ProgressBar, WidgetExtension):
         disabled: bool = False,
         styles: dict[str, Any] | None = None,
         disabled_messages: Iterable[type[events.Message]] | None = None,
-        callbacks: dict[str, Callback] | None = None,
+        callbacks: Callbacks | None = None,
     ) -> None:
         """Initialize a Progress Bar widget.
 

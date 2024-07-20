@@ -8,7 +8,7 @@ from textual import events
 from textual import widgets
 from textual.widget import Widget
 
-from .._extensions import Callback
+from .._extensions import Callbacks
 from .._extensions import WidgetExtension
 
 
@@ -24,7 +24,7 @@ class LoadingIndicator(widgets.LoadingIndicator, WidgetExtension):
         disabled: bool = False,
         styles: dict[str, Any] | None = None,
         disabled_messages: Iterable[type[events.Message]] | None = None,
-        callbacks: dict[str, Callback] | None = None,
+        callbacks: Callbacks | None = None,
     ) -> None:
         """Initialize LoadingIndicator with support for extension arguments.
 

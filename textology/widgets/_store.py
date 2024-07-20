@@ -10,7 +10,7 @@ from typing import TypeVar
 from textual import events
 from textual.reactive import reactive
 
-from ._extensions import Callback
+from ._extensions import Callbacks
 from ._extensions import Widget
 
 JsonType = TypeVar("JsonType", dict, list, bool, float, int, str, None)  # Custom type. pylint: disable=invalid-name
@@ -63,7 +63,7 @@ class Store(Widget):
         data: Any = None,
         id: str | None = None,
         disabled_messages: Iterable[type[events.Message]] | None = None,
-        callbacks: dict[str, Callback] | None = None,
+        callbacks: Callbacks | None = None,
     ) -> None:
         """Initialize the data store.
 

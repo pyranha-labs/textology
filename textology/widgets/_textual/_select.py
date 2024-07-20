@@ -8,7 +8,7 @@ from textual import widgets
 from textual.widgets._select import NoSelection
 from textual.widgets._select import SelectType
 
-from .._extensions import Callback
+from .._extensions import Callbacks
 from .._extensions import WidgetExtension
 
 
@@ -28,7 +28,7 @@ class Select(widgets.Select, WidgetExtension):
         disabled: bool = False,
         styles: dict[str, Any] | None = None,
         disabled_messages: Iterable[type[events.Message]] | None = None,
-        callbacks: dict[str, Callback] | None = None,
+        callbacks: Callbacks | None = None,
     ) -> None:
         """Initialize the Select control.
 

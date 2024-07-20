@@ -5,7 +5,7 @@ from typing import Iterable
 
 from textual import events
 
-from ._extensions import Callback
+from ._extensions import Callbacks
 from ._list_item import ListItem
 
 
@@ -22,7 +22,7 @@ class ListItemMeta:
         data: Any = None,
         styles: dict[str, Any] | None = None,
         disabled_messages: Iterable[type[events.Message]] | None = None,
-        callbacks: dict[str, Callback] | None = None,
+        callbacks: Callbacks | None = None,
     ) -> None:
         """Initialize metadata object to allow creating list items on demand.
 

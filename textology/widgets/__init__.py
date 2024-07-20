@@ -19,6 +19,7 @@ from ._extensions import Widget
 if typing.TYPE_CHECKING:  # pragma: no cover. Exclude from coverage to allow lazy imports without import errors.
     from ._button import Button
     from ._extensions import Callback
+    from ._extensions import Callbacks
     from ._extensions import Clickable
     from ._extensions import Static
     from ._extensions import ToggleButton
@@ -84,6 +85,7 @@ _module_cache: dict[str, type[Widget]] = {
 _module_map = {
     "Button": "._button",
     "Callback": "._extensions",
+    "Callbacks": "._extensions",
     "Center": "._textual._containers",
     "Checkbox": "._textual._checkbox",
     "Clickable": "._extensions",
