@@ -8,9 +8,9 @@ import itertools
 import logging
 import traceback
 import weakref
+from asyncio import iscoroutine
 from collections import defaultdict
 from functools import lru_cache
-from inspect import isawaitable
 from typing import Any
 from typing import Callable
 from typing import Coroutine
@@ -113,7 +113,7 @@ class Observer:
             if ref:
                 func = func.__get__(ref)  # Required to access the method. pylint: disable=unnecessary-dunder-call
         results = func(*args, **kwargs)  # Invoke original callback.
-        results = await results if isawaitable(results) else results
+        results = await results if iscoroutine(results) else results
 
         if isinstance(results, NoUpdate) or not self.updates:
             return None
@@ -261,7 +261,7 @@ class ObserverManager:
 
             try:
                 updates = observer.callback(*args) if not observer.external else self.send_callback(observer.id, *args)
-                updates = await updates if isawaitable(updates) else updates
+                updates = await updates if iscoroutine(updates) else updates
             except PreventUpdate:
                 updates = None
             except BaseException as error:  # pylint: disable=broad-exception-caught
@@ -457,7 +457,7 @@ class ObserverManager:
                         *args,
                     )
                 )
-                updates = await updates if isawaitable(updates) else updates
+                updates = await updates if iscoroutine(updates) else updates
 
                 if not updates:
                     if not update_components:
@@ -554,7 +554,7 @@ class ObservedObject:
             observer.value = value
             if old_value != value and observer.callback:
                 result = observer.callback(old_value, value)
-                if isawaitable(result):
+                if iscoroutine(result):
                     loop = asyncio.get_event_loop()
                     loop.create_task(result)
         else:
