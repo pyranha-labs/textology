@@ -238,7 +238,7 @@ class WidgetExtension(TextualWidget):
                 except Exception as error:  # pylint: disable=broad-exception-caught
                     exceptions.append(error)
                     continue
-                if isawaitable(result):
+                if asyncio.iscoroutine(result):
                     pending.append(result)
                 else:
                     results.append(result)
@@ -277,7 +277,7 @@ class WidgetExtension(TextualWidget):
             callbacks = callback_map.pop(handler) if remove else callback_map.get(handler)
             for callback in callbacks:
                 result = callback(exception)
-                if isawaitable(result):
+                if asyncio.iscoroutine(result):
                     result = await result
                 propagate = propagate or bool(result)
         return propagate

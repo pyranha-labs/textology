@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import logging
+from asyncio import iscoroutine
 from collections import defaultdict
-from inspect import isawaitable
 from types import ModuleType
 from typing import Any
 from typing import Callable
@@ -365,7 +365,7 @@ class ExtendedApp(WidgetApp, ObserverManager):
                 if callbacks:
                     for callback in callbacks:
                         result = callback(None, message)
-                        if isawaitable(result):
+                        if iscoroutine(result):
                             await result
         await super()._on_message(message)
 
