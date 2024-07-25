@@ -257,7 +257,7 @@ class ExtendedApp(WidgetApp, ObserverManager):
         self.enable_pages()
         if pages:
             for page in pages:
-                self.register_page(page)
+                self.register_page(page, cache=self._cache_pages)
 
     def apply_update(
         self,
@@ -328,7 +328,7 @@ class ExtendedApp(WidgetApp, ObserverManager):
         )(self._page_router)
         self.location.endpoint_not_found = Endpoint([], "", self._page_not_found)
         for page in _GLOBAL_PAGE_MAP.values():
-            self.register_page(page)
+            self.register_page(page, cache=self._cache_pages)
 
     def forward(self) -> int:
         """Go forward one URL in the history.
@@ -520,6 +520,7 @@ class ExtendedApp(WidgetApp, ObserverManager):
             layout=layout,
             page_map=self._page_registry,
         )
+        path = path or page.path
         if page.path in ("/404", "/not_found", "/not_found_404"):
             # This is a special page that is not directly routed; it is used on every invalid path request.
             self.location.endpoint_not_found = Endpoint([], "", page.layout)
