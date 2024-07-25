@@ -3,10 +3,11 @@
 from typing import Any
 from typing import Iterable
 
-from textual.await_complete import AwaitComplete
 from textual.events import Message
 from textual.events import Mount
 from textual.reactive import reactive
+
+from textology.awaitables import AwaitCompleteOrNoop
 
 from . import Callbacks
 from . import Container
@@ -64,7 +65,7 @@ class PageContainer(Container):
             callbacks=callbacks,
         )
 
-    def add_page(self, page: str, content: Widget, show_first: bool = True) -> AwaitComplete:
+    def add_page(self, page: str, content: Widget, show_first: bool = True) -> AwaitCompleteOrNoop:
         """Add a page to the cache.
 
         Args:
@@ -94,9 +95,9 @@ class PageContainer(Container):
                         await old_page.remove()
                     await self.mount(content)
 
-            await_complete = AwaitComplete(_mount())
+            await_complete = AwaitCompleteOrNoop(_mount())
         else:
-            await_complete = AwaitComplete()
+            await_complete = AwaitCompleteOrNoop()
             self._pending_mount.append(content)
 
         self.call_next(await_complete)
