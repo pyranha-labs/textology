@@ -1,1 +1,1 @@
-textual>=0.70.0
+textual>=0.74.0
