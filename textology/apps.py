@@ -295,6 +295,11 @@ class ExtendedApp(WidgetApp, ObserverManager):
         return self.location.back()
 
     @property
+    def current_page(self) -> str:
+        """Currently loaded page based on location."""
+        return self.location.pathname
+
+    @property
     def document(self) -> Screen | None:
         """Provide the base screen of the application, representing the main visible "document" in the window."""
         screens = list(self.screen_stack)
@@ -549,6 +554,23 @@ class ExtendedApp(WidgetApp, ObserverManager):
             A decorator that will register a function as capable of accepting requests to a specific path/method combo.
         """
         return self.location.route(path, methods=methods)
+
+    def select_page(self, page: str) -> None:
+        """Validate and select a page from the registry.
+
+        Args:
+            page: Path, with or without arguments, pointing to a page.
+                e.g. "/page1?resource_type=1#resource-1"
+
+        Raises:
+            ValueError if the requested page is not registered.
+        """
+        request = Request(page)
+        endpoint = self.location.endpoint(request.url.path, request.method)
+        if not endpoint.route.path:
+            raise ValueError(f"Page {page} not found in the registry")
+        if self.current_page != page:
+            self.location.url = page
 
 
 class UserNotification(Exception):

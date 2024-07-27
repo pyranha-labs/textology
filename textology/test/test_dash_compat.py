@@ -77,9 +77,9 @@ async def test_button_n_clicks() -> None:
         assert store2.data == "Update me!"
 
         await pilot.click(widgets.Button)
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.25)
         await pilot.click(widgets.Button)
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.25)
         await pilot.click(widgets.Button)
         assert button.n_clicks == 3
         assert store1.data == "Attribute callback triggered 3 times"
