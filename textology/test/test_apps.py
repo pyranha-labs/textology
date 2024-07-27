@@ -35,9 +35,9 @@ async def test_button_n_clicks() -> None:
         assert store.data == "Update me!"
 
         await pilot.click(widgets.Button)
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.25)
         await pilot.click(widgets.Button)
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.25)
         await pilot.click(widgets.Button)
         assert button.n_clicks == 3
         assert store.data == "Button clicked 3 times"
@@ -121,19 +121,19 @@ async def test_extended_app_page_cache(compare_snapshots: Callable) -> None:
 
     async with app.run_test() as pilot:
         app.location.pathname = "/page1"
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.25)
         app.set_focus(app.query_one("#input1"))
         await pilot.press("t", "1")
         assert await compare_snapshots(pilot, test_suffix="page1")
 
         app.location.pathname = "/page2"
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.25)
         app.set_focus(app.query_one("#input2"))
         await pilot.press("t", "2")
         assert await compare_snapshots(pilot, test_suffix="page2")
 
         app.location.pathname = "/page1"
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.25)
         assert await compare_snapshots(pilot, test_suffix="page1_cached")
 
 
@@ -224,7 +224,7 @@ async def test_callback_registration_per_scope(compare_snapshots: Callable) -> N
         await pilot.click("#btn2")
         await pilot.click("#btn3")
         await pilot.click("#btn4")
-        await asyncio.sleep(1)  # Sleep for a second after button click to guarantee "active" effect was removed.
+        await asyncio.sleep(0.25)
         assert await compare_snapshots(pilot)
 
 
@@ -271,10 +271,24 @@ async def test_multi_page_app(compare_snapshots: Callable) -> None:
     async with app.run_test() as pilot:
         await pilot.click("#btn1")
         result1 = await compare_snapshots(pilot, test_suffix="page1")
-        await asyncio.sleep(1)  # Sleep for a second after button click to guarantee "active" effect was removed.
+        await asyncio.sleep(0.25)
         await pilot.click("#btn2")
         result2 = await compare_snapshots(pilot, test_suffix="page2")
-        assert all([result1, result2])
+
+        # Test selections and tracking without using buttons.
+        assert app.current_page == "/page2/1"
+        with pytest.raises(ValueError):
+            app.select_page("/bad_page")
+        app.select_page("/page1?clicks=123")
+        await asyncio.sleep(0.25)
+        assert app.current_page == "/page1"
+        result3 = await compare_snapshots(pilot, test_suffix="select_page1")
+        app.select_page("/page2/123")
+        await asyncio.sleep(0.25)
+        assert app.current_page == "/page2/123"
+        result4 = await compare_snapshots(pilot, test_suffix="select_page2")
+
+        assert all([result1, result2, result3, result4])
 
 
 @pytest.mark.asyncio
