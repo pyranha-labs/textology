@@ -18,6 +18,7 @@ from ._extensions import Widget
 # Lazily load widgets to decrease startup time and allow multi version support.
 if typing.TYPE_CHECKING:  # pragma: no cover. Exclude from coverage to allow lazy imports without import errors.
     from ._button import Button
+    from ._button import SelectButton
     from ._extensions import Callback
     from ._extensions import Callbacks
     from ._extensions import Clickable
@@ -125,6 +126,7 @@ _module_map = {
     "Rule": "._textual._rule",
     "ScrollableContainer": "._textual._containers",
     "Select": "._textual._select",
+    "SelectButton": "._button",
     "SelectionList": "._textual._selection_list",
     "Sparkline": "._textual._sparkline",
     "Static": "._extensions",
