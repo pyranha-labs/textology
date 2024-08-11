@@ -384,6 +384,28 @@ async def test_non_decorator_callbacks() -> None:
 
 
 @pytest.mark.asyncio
+async def test_select_button() -> None:
+    """Validate basic SelectButton functionality to select/deselect."""
+    app = apps.WidgetApp(
+        child=widgets.Container(
+            widgets.SelectButton("Button 1", id="button-1"),
+            widgets.SelectButton("Button 2", selected=True, id="button-2"),
+        )
+    )
+
+    async with app.run_test() as pilot:
+        btn1 = app.query_one("#button-1", widgets.SelectButton)
+        btn2 = app.query_one("#button-2", widgets.SelectButton)
+        assert not btn1.selected
+        assert btn2.selected
+        await pilot.click("#button-1")
+        await pilot.click("#button-2")
+        await asyncio.sleep(0.25)
+        assert btn1.selected
+        assert not btn2.selected
+
+
+@pytest.mark.asyncio
 async def test_widgets_render(compare_snapshots: Callable) -> None:
     """Validate basic widget initialization and render."""
 
@@ -459,6 +481,8 @@ async def test_widgets_render(compare_snapshots: Callable) -> None:
                     widgets.Label("ContentSwitcher Label 2", id="content-switcher-2"),
                     initial="content-switcher-2",
                 )
+                yield widgets.SelectButton("Selected")
+                yield widgets.SelectButton("Deselected", selected=True)
 
         def on_mount(self) -> None:
             table = self.query_one(widgets.DataTable)
