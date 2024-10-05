@@ -18,7 +18,7 @@ class ModalDialog(ModalScreen):
     """Basic modal screen to show a provided widget and add basic navigation."""
 
     BINDINGS: ClassVar[list[BindingType]] = [
-        Binding("escape", "dismiss()", show=False),
+        Binding("escape", "dismiss(None)", show=False),
     ]
     DEFAULT_CSS = """
     ModalDialog {
