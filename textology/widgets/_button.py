@@ -167,3 +167,4 @@ class SelectButton(Button):
     def watch_selected(self, selected: bool) -> None:
         """Monitor selected state to toggle indicator and trigger selection events."""
         self.post_message(self.Selected(self, selected))
+        self.refresh()
