@@ -1,14 +1,17 @@
-"""Optionally awaitable objects returned by async methods."""
+"""Utilities for working with awaitable objects returned by async methods."""
 
 from __future__ import annotations
 
-from asyncio import gather
+import asyncio
 from typing import Any
 from typing import Awaitable
+from typing import Callable
 from typing import Generator
 
 import rich.repr
 from textual.message_pump import MessagePump
+
+Runnable = Awaitable | Callable[[], Awaitable | Any] | None
 
 
 @rich.repr.auto(angular=True)
@@ -66,3 +69,33 @@ class AwaitCompleteOrNoop:
         if not self._future:
             return None
         return self._future.exception() if self.is_done else None
+
+
+def gather(*aws: Runnable, return_exceptions: bool = True) -> asyncio.Future:
+    """Return a future aggregating results from the given functions/coroutines/futures.
+
+    Args:
+        aws: Awaitables, or functions to wrap in awaitables, to run concurrently.
+        return_exceptions: Whether to raise exceptions, or return as results.
+
+    Returns:
+        A future aggregating all the results from the given functions/coroutines/futures.
+    """
+    results = []
+    for awaitable in aws:
+        if asyncio.iscoroutinefunction(awaitable):
+            results.append(awaitable())
+        elif asyncio.iscoroutine(awaitable):
+            results.append(awaitable)
+        else:
+            results.append(_make_awaitable(awaitable)())
+    return asyncio.gather(*results, return_exceptions=return_exceptions)
+
+
+def _make_awaitable(func: Callable) -> Any:
+    """Create an awaitable function from a non-async function."""
+
+    async def _awaitable() -> Any:
+        return func()
+
+    return _awaitable
