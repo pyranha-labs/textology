@@ -96,6 +96,36 @@ async def test_horizontal_menu_with_listview(compare_snapshots: Callable) -> Non
 
 
 @pytest.mark.asyncio
+async def test_lazy_tree(compare_snapshots: Callable) -> None:
+    """Validate basic LazyTree functionality to load items as expanded."""
+    data = [
+        {
+            "name": "parent1",
+            "value": 123,
+        },
+        {
+            "name": "parent2",
+            "value1": {
+                "name": "child1",
+            },
+            "value2": [
+                {"name": "child2"},
+            ],
+        },
+    ]
+    app = apps.WidgetApp(child=widgets.LazyTree("Root", data))
+    async with app.run_test() as pilot:
+        assert all(
+            [
+                await compare_snapshots(pilot, test_suffix="on_open"),
+                await compare_snapshots(pilot, press=["space"], test_suffix="open_root"),
+                await compare_snapshots(pilot, press=["down", "space"], test_suffix="open_first_child"),
+                await compare_snapshots(pilot, press=["space", "down", "space"], test_suffix="open_second_child"),
+            ]
+        )
+
+
+@pytest.mark.asyncio
 async def test_list_items(compare_snapshots: Callable) -> None:
     """Validate all ListItem types and combinations render correctly."""
     app = apps.WidgetApp(

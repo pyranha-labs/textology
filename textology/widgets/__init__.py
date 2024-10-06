@@ -79,6 +79,7 @@ if typing.TYPE_CHECKING:  # pragma: no cover. Exclude from coverage to allow laz
     from ._textual._text_input import TextInput
     from ._textual._tooltip import Tooltip
     from ._textual._tree import Tree
+    from ._tree import LazyTree
 
 _module_cache: dict[str, type[Widget]] = {
     "Widget": Widget,
@@ -102,6 +103,7 @@ _module_map = {
     "Horizontal": "._textual._containers",
     "HorizontalMenus": "._horizontal_menus",
     "HorizontalScroll": "._textual._containers",
+    "LazyTree": "._tree",
     "Label": "._textual._label",
     "ListItem": "._list_item",
     "ListItemHeader": "._list_item_header",
