@@ -59,33 +59,25 @@ class LazyTree(Tree):  # pylint: disable=too-many-ancestors
             callbacks=callbacks,
         )
         self._highlighter = ReprHighlighter()
-        self._expanded = {}
+        self._initialized = {}
 
-    def _add_nodes(self, node: TreeNode, name: str | None, data: Any) -> list[TreeNode]:
-        """Add all sub-nodes in a collapsed state."""
-        new_nodes = []
-        if isinstance(data, dict):
-            for key, value in data.items():
-                label, allow_expand = self._get_node_config(key, value)
-                new_node = node.add(label, value, allow_expand=allow_expand)
-                new_nodes.append(new_node)
-        elif isinstance(data, list):
-            for index, value in enumerate(data):
-                label, allow_expand = self._get_node_config(str(index), value)
-                new_node = node.add(label, value, allow_expand=allow_expand)
-                new_nodes.append(new_node)
-        else:
-            label, allow_expand = self._get_node_config(name, data)
-            node.allow_expand = allow_expand
-            node.set_label(label)
-        return new_nodes
-
-    def _expand_node(self, node: TreeNode) -> None:
-        """Expand the contents of a single node if it has not been expanded previously."""
-        if self._expanded.get(id(node)):
-            return
-        self._expanded[id(node)] = True
-        self._add_nodes(node, None, node.data)
+    def _initialize_node(self, node: TreeNode | None = None, recursive: bool = False) -> None:
+        """Add contents for a node."""
+        node = node or self.cursor_node
+        if not self._initialized.get(id(node)) and node.allow_expand:
+            data = node.data
+            if isinstance(data, dict):
+                for key, value in data.items():
+                    label, allow_expand = self._get_node_config(key, value)
+                    node.add(label, value, allow_expand=allow_expand)
+            elif isinstance(data, list):
+                for index, value in enumerate(data):
+                    label, allow_expand = self._get_node_config(str(index), value)
+                    node.add(label, value, allow_expand=allow_expand)
+            self._initialized[id(node)] = True
+        if recursive:
+            for child in node.children:
+                self._initialize_node(child, recursive=True)
 
     def _get_node_config(self, name: str, value: Any) -> tuple[Text, bool]:
         """Provide the configuration for a new node, such as the label and whether it can be expanded."""
@@ -105,4 +97,45 @@ class LazyTree(Tree):  # pylint: disable=too-many-ancestors
 
     async def _on_tree_node_expanded(self, event: widgets.Tree.NodeExpanded) -> None:
         """Lazily add the contents of the node after it is expanded."""
-        self._expand_node(event.node)
+        self._initialize_node(event.node)
+
+    def collapse_all(
+        self,
+        node: TreeNode | None = None,
+    ) -> None:
+        """Collapse a node and all the nodes below it.
+
+        Args:
+            node: The node to collapse. Defaults to selected node.
+        """
+        node = node or self.cursor_node
+        if node:
+            disabled = Tree.NodeCollapsed in self._disabled_messages
+            if not disabled:
+                self.disable_messages(Tree.NodeCollapsed)
+            with self.app.batch_update():
+                node.collapse_all()
+            if not disabled:
+                self.enable_messages(Tree.NodeCollapsed)
+
+    def expand_all(
+        self,
+        node: TreeNode | None = None,
+    ) -> None:
+        """Expand a node and all the nodes below it.
+
+        Lazy expansion is bypassed, immediately populating the entire branch.
+
+        Args:
+            node: The node to collapse. Defaults to selected node.
+        """
+        node = node or self.cursor_node
+        if node:
+            self._initialize_node(node, recursive=True)
+            disabled = Tree.NodeExpanded in self._disabled_messages
+            if not disabled:
+                self.disable_messages(Tree.NodeExpanded)
+            with self.app.batch_update():
+                node.expand_all()
+            if not disabled:
+                self.enable_messages(Tree.NodeExpanded)

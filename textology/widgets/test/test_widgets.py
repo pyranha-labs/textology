@@ -123,6 +123,26 @@ async def test_lazy_tree(compare_snapshots: Callable) -> None:
                 await compare_snapshots(pilot, press=["space", "down", "space"], test_suffix="open_second_child"),
             ]
         )
+    app = apps.WidgetApp(child=widgets.LazyTree("Root", data))
+    async with app.run_test() as pilot:
+        assert all(
+            [
+                await compare_snapshots(
+                    pilot,
+                    run=[
+                        lambda: app.query_one(widgets.LazyTree).expand_all(),
+                    ],
+                    test_suffix="expand_all",
+                ),
+                await compare_snapshots(
+                    pilot,
+                    run=[
+                        lambda: app.query_one(widgets.LazyTree).collapse_all(),
+                    ],
+                    test_suffix="collapse_all",
+                ),
+            ]
+        )
 
 
 @pytest.mark.asyncio
