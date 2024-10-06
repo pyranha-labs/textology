@@ -70,3 +70,4 @@ from ._textual._text_area import TextArea as TextArea
 from ._textual._text_input import TextInput as TextInput
 from ._textual._tooltip import Tooltip as Tooltip
 from ._textual._tree import Tree as Tree
+from ._tree import LazyTree as LazyTree

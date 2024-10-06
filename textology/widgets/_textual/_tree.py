@@ -6,7 +6,7 @@ from typing import Iterable
 from rich.text import TextType
 from textual import events
 from textual import widgets
-from textual.widgets._tree import TreeDataType
+from textual.widgets.tree import TreeDataType
 
 from .._extensions import Callbacks
 from .._extensions import WidgetExtension
