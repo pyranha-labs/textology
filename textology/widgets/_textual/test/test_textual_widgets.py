@@ -1,16 +1,15 @@
 """Unit tests for textual widgets module."""
 
-from typing import Callable
-
 import pytest
 from textual import containers
 
 from textology import apps
 from textology import widgets
+from textology.pytest_utils import CompareSnapshotsFixture
 
 
 @pytest.mark.asyncio
-async def test_containers(compare_snapshots: Callable) -> None:
+async def test_containers(compare_snapshots: CompareSnapshotsFixture) -> None:
     """Validate all extended container types render correctly, similar to native containers."""
     app = apps.WidgetApp(
         widgets.Container(
@@ -47,4 +46,4 @@ async def test_containers(compare_snapshots: Callable) -> None:
     )
 
     async with app.run_test() as pilot:
-        await compare_snapshots(pilot)
+        assert await compare_snapshots(pilot)

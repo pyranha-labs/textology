@@ -11,8 +11,8 @@ from datetime import datetime
 from os import PathLike
 from pathlib import Path
 from types import ModuleType
-from typing import Callable
 from typing import Iterable
+from typing import Protocol
 
 import pytest
 import pytest_asyncio
@@ -31,6 +31,46 @@ OPT_SNAP_TEMPLATE = "--txtology-snap-template"
 OPT_SNAP_UPDATE = "--txtology-snap-update"
 
 TXTOLOGY_SNAPSHOTS = pytest.StashKey[list]()
+
+
+class CompareSnapshotsFixture(Protocol):
+    """Pytest fixture to automate user actions, snapshot/screenshot the application, and compare the results."""
+
+    async def __call__(
+        self,
+        app_or_pilot_or_module: App | Pilot | ModuleType | None = None,
+        compare_to: str | PathLike | None = None,
+        test_suffix: str | None = None,
+        press: Iterable[str] = (),
+        click: list[type[Widget] | str | None] = (),
+        run: awaitables.Runnable | list[awaitables.Runnable] | None = None,
+        snap_title: str = None,
+        wait_for_animation: bool = True,
+        compare_results: bool = False,
+    ) -> bool:
+        """Fixture to automate user actions, snapshot/screenshot the application, and compare the results.
+
+        See "compare_snapshots()" for more information.
+
+        Args:
+            app_or_pilot_or_module: Application, application test pilot, or module containing either.
+            compare_to: Path to a saved snapshot.
+                Defaults to: <directory of test file>/snapshots/<name of test>.py
+            test_suffix: Optional suffix to add to the snapshot image name after the name of the test.
+                Mutually exclusive with "compare_to" full path being provided.
+            press: Key presses to run before waiting for animations to complete.
+            click: Selectors to specify widgets that should be used as the reference for the click offset.
+            run: One or more optional functions or futures to execute before taking the snapshot.
+            snap_title: The title of the exported screenshot or None to use app title.
+            wait_for_animation: Whether to wait for animations to complete before returning.
+            compare_results: Compare all snapshots that have been generated with this session's fixture.
+
+        Returns:
+            True if the saved snapshot matches the new snapshot, false otherwise.
+
+        Raises:
+            AssertionError: If "compare_results" is used and one or more snapshots do not match saved values.
+        """
 
 
 @dataclass
@@ -107,7 +147,7 @@ async def compare_snapshots(  # pylint: disable=too-many-arguments
     run: awaitables.Runnable | list[awaitables.Runnable] | None = None,
     snap_title: str = None,
     wait_for_animation: bool = True,
-) -> bool:
+) -> tuple[bool, Path]:
     """Automate user actions, snapshot/screenshot the application, and compare the results.
 
     Compare a saved snapshot/screenshot of an application with a screenshot of the active application.
@@ -128,7 +168,7 @@ async def compare_snapshots(  # pylint: disable=too-many-arguments
         wait_for_animation: Whether to wait for animations to complete before returning.
 
     Returns:
-        True if the currently saved snapshot matches the newly generated snapshot, false otherwise.
+        True if the saved snapshot matches the new snapshot (false otherwise), and the final path to the snapshot.
     """
     if compare_to and test_suffix:
         raise ValueError("Cannot provide both a full compare_to path and test_suffix in snapshot tests")
@@ -169,25 +209,13 @@ async def compare_snapshots(  # pylint: disable=too-many-arguments
                 expected_path=str(compare_to),
             )
         )
-    return result
+    return result, compare_to
 
 
 @pytest_asyncio.fixture(name="compare_snapshots")
 async def compare_snapshots_fixture(
     request: FixtureRequest,
-) -> Callable[
-    [
-        App | Pilot | ModuleType,
-        str | PathLike | None,
-        str | None,
-        Iterable[str],
-        list[type[Widget] | str | None],
-        awaitables.Runnable | list[awaitables.Runnable] | None,
-        str,
-        bool,
-    ],
-    bool,
-]:
+) -> CompareSnapshotsFixture:
     """Pytest fixture to automate user actions, snapshot/screenshot the application, and compare the results.
 
     See "compare_snapshots()" for more information. This is an alias to provide more direct access via pytest
@@ -200,9 +228,10 @@ async def compare_snapshots_fixture(
         Generated fixture to allow reuse multiple times in the same test.
     """
     test_suffixes = []
+    test_results = []
 
     async def _compare_snapshots(
-        app_or_pilot_or_module: App | Pilot | ModuleType,
+        app_or_pilot_or_module: App | Pilot | ModuleType | None = None,
         compare_to: str | PathLike | None = None,
         test_suffix: str | None = None,
         press: Iterable[str] = (),
@@ -210,64 +239,66 @@ async def compare_snapshots_fixture(
         run: awaitables.Runnable | list[awaitables.Runnable] | None = None,
         snap_title: str = None,
         wait_for_animation: bool = True,
+        compare_results: bool = False,
     ) -> bool:
         """Generated fixture to automate user actions, snapshot/screenshot the application, and compare the results.
 
-        See "compare_snapshots()" for more information. This is an alias to provide more direct access via pytest
-        without the need to import the utilities manually, or pass along other pytest fixtures.
-
-        Args:
-            app_or_pilot_or_module: Application, application test pilot, or module containing either.
-            compare_to: Path to a saved snapshot.
-                Defaults to: <directory of test file>/snapshots/<name of test>.py
-            test_suffix: Optional suffix to add to the snapshot image name after the name of the test.
-                Mutually exclusive with "compare_to" full path being provided.
-            press: Key presses to run before waiting for animations to complete.
-            click: Selectors to specify widgets that should be used as the reference for the click offset.
-            run: One or more optional functions or futures to execute before taking the snapshot.
-            snap_title: The title of the exported screenshot or None to use app title.
-            wait_for_animation: Whether to wait for animations to complete before returning.
-
-        Returns:
-            True if the currently saved snapshot matches the newly generated snapshot, false otherwise.
+        See "compare_snapshots()" or "CompareSnapshotsFixture" for more information. This is an alias to provide
+        direct access via pytest without the need to import the utilities manually, or pass along other pytest fixtures.
         """
-        if isinstance(app_or_pilot_or_module, ModuleType):
-            for var_name in dir(app_or_pilot_or_module):
-                var = getattr(app_or_pilot_or_module, var_name)
-                if isinstance(var, (App, Pilot)):
-                    app_or_pilot_or_module = var
-                    break
-
         nonlocal test_suffixes
-        if not compare_to and not test_suffix and len(test_suffixes) > 0 and None in test_suffixes:
-            # Create an auto-incremented suffix to ensure a unique file is created when multiple snapshots are taken.
-            test_suffix = f"snap_{len(test_suffixes) + 1}"
-        test_suffixes.append(test_suffix)
+        nonlocal test_results
+        if app_or_pilot_or_module is not None:
+            if isinstance(app_or_pilot_or_module, ModuleType):
+                for var_name in dir(app_or_pilot_or_module):
+                    var = getattr(app_or_pilot_or_module, var_name)
+                    if isinstance(var, (App, Pilot)):
+                        app_or_pilot_or_module = var
+                        break
 
-        if not isinstance(app_or_pilot_or_module, Pilot):
-            async with app_or_pilot_or_module.run_test() as pilot:
-                return await compare_snapshots(
-                    request,
-                    pilot,
-                    compare_to=compare_to,
-                    test_suffix=test_suffix,
-                    press=press,
-                    click=click,
-                    run=run,
-                    snap_title=snap_title,
-                    wait_for_animation=wait_for_animation,
+            if not compare_to and not test_suffix and len(test_suffixes) > 0 and None in test_suffixes:
+                # Create an auto-incremented suffix to ensure a unique file is created when multiple snapshots are taken.
+                test_suffix = f"snap_{len(test_suffixes) + 1}"
+            test_suffixes.append(test_suffix)
+
+            if not isinstance(app_or_pilot_or_module, Pilot):
+                async with app_or_pilot_or_module.run_test() as pilot:
+                    test_results.append(
+                        await compare_snapshots(
+                            request,
+                            pilot,
+                            compare_to=compare_to,
+                            test_suffix=test_suffix,
+                            press=press,
+                            click=click,
+                            run=run,
+                            snap_title=snap_title,
+                            wait_for_animation=wait_for_animation,
+                        )
+                    )
+            else:
+                test_results.append(
+                    await compare_snapshots(
+                        request,
+                        app_or_pilot_or_module,
+                        compare_to=compare_to,
+                        test_suffix=test_suffix,
+                        press=press,
+                        click=click,
+                        run=run,
+                        snap_title=snap_title,
+                        wait_for_animation=wait_for_animation,
+                    )
                 )
-        return await compare_snapshots(
-            request,
-            app_or_pilot_or_module,
-            compare_to=compare_to,
-            test_suffix=test_suffix,
-            press=press,
-            click=click,
-            run=run,
-            snap_title=snap_title,
-            wait_for_animation=wait_for_animation,
-        )
+        if compare_results:
+            mismatched = [
+                f"Snapshot {index}: {path.name}" for index, (matched, path) in enumerate(test_results) if not matched
+            ]
+            count = len(mismatched)
+            assert not count, (
+                f"{count} snapshot(s) did not match expected results. Mismatched snapshots:\n" + "\n".join(mismatched)
+            )
+        return test_results[-1][0]
 
     yield _compare_snapshots
 
