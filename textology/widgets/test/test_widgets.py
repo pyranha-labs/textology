@@ -2,7 +2,6 @@
 
 import asyncio
 from textwrap import dedent
-from typing import Callable
 
 import pytest
 from typing_extensions import override
@@ -10,10 +9,11 @@ from typing_extensions import override
 from textology import apps
 from textology import observers
 from textology import widgets
+from textology.pytest_utils import CompareSnapshotsFixture
 
 
 @pytest.mark.asyncio
-async def test_horizontal_menu(compare_snapshots: Callable) -> None:
+async def test_horizontal_menu(compare_snapshots: CompareSnapshotsFixture) -> None:
     """Validate basic HorizontalMenus functionality to show/hide dynamic menus."""
     app = apps.WidgetApp(
         child=widgets.HorizontalMenus(
@@ -52,17 +52,14 @@ async def test_horizontal_menu(compare_snapshots: Callable) -> None:
     )
 
     async with app.run_test() as pilot:
-        assert all(
-            [
-                await compare_snapshots(pilot, test_suffix="page1"),
-                await compare_snapshots(pilot, press=["down"], test_suffix="page2"),
-                await compare_snapshots(pilot, press=["down", "right", "down"], test_suffix="page3"),
-            ]
-        )
+        await compare_snapshots(pilot, test_suffix="page1")
+        await compare_snapshots(pilot, press=["down"], test_suffix="page2")
+        await compare_snapshots(pilot, press=["down", "right", "down"], test_suffix="page3")
+        await compare_snapshots(compare_results=True)
 
 
 @pytest.mark.asyncio
-async def test_horizontal_menu_with_listview(compare_snapshots: Callable) -> None:
+async def test_horizontal_menu_with_listview(compare_snapshots: CompareSnapshotsFixture) -> None:
     """Validate basic HorizontalMenus functionality when a pre-populated Listview is provided, instead of ListItems."""
     app = apps.WidgetApp(
         child=widgets.HorizontalMenus(
@@ -88,15 +85,12 @@ async def test_horizontal_menu_with_listview(compare_snapshots: Callable) -> Non
     )
 
     async with app.run_test() as pilot:
-        assert all(
-            [
-                await compare_snapshots(pilot, press=["right", "down"]),
-            ]
-        )
+        await compare_snapshots(pilot, press=["right", "down"])
+        await compare_snapshots(compare_results=True)
 
 
 @pytest.mark.asyncio
-async def test_lazy_tree(compare_snapshots: Callable) -> None:
+async def test_lazy_tree(compare_snapshots: CompareSnapshotsFixture) -> None:
     """Validate basic LazyTree functionality to load items as expanded."""
     data = [
         {
@@ -115,38 +109,32 @@ async def test_lazy_tree(compare_snapshots: Callable) -> None:
     ]
     app = apps.WidgetApp(child=widgets.LazyTree("Root", data))
     async with app.run_test() as pilot:
-        assert all(
-            [
-                await compare_snapshots(pilot, test_suffix="on_open"),
-                await compare_snapshots(pilot, press=["space"], test_suffix="open_root"),
-                await compare_snapshots(pilot, press=["down", "space"], test_suffix="open_first_child"),
-                await compare_snapshots(pilot, press=["space", "down", "space"], test_suffix="open_second_child"),
-            ]
-        )
+        await compare_snapshots(pilot, test_suffix="on_open")
+        await compare_snapshots(pilot, press=["space"], test_suffix="open_root")
+        await compare_snapshots(pilot, press=["down", "space"], test_suffix="open_first_child")
+        await compare_snapshots(pilot, press=["space", "down", "space"], test_suffix="open_second_child")
+        await compare_snapshots(compare_results=True)
     app = apps.WidgetApp(child=widgets.LazyTree("Root", data))
     async with app.run_test() as pilot:
-        assert all(
-            [
-                await compare_snapshots(
-                    pilot,
-                    run=[
-                        lambda: app.query_one(widgets.LazyTree).expand_all(),
-                    ],
-                    test_suffix="expand_all",
-                ),
-                await compare_snapshots(
-                    pilot,
-                    run=[
-                        lambda: app.query_one(widgets.LazyTree).collapse_all(),
-                    ],
-                    test_suffix="collapse_all",
-                ),
-            ]
+        await compare_snapshots(
+            pilot,
+            run=[
+                lambda: app.query_one(widgets.LazyTree).expand_all(),
+            ],
+            test_suffix="expand_all",
         )
+        await compare_snapshots(
+            pilot,
+            run=[
+                lambda: app.query_one(widgets.LazyTree).collapse_all(),
+            ],
+            test_suffix="collapse_all",
+        )
+        await compare_snapshots(compare_results=True)
 
 
 @pytest.mark.asyncio
-async def test_list_items(compare_snapshots: Callable) -> None:
+async def test_list_items(compare_snapshots: CompareSnapshotsFixture) -> None:
     """Validate all ListItem types and combinations render correctly."""
     app = apps.WidgetApp(
         child=widgets.Container(
@@ -162,15 +150,12 @@ async def test_list_items(compare_snapshots: Callable) -> None:
     )
 
     async with app.run_test() as pilot:
-        assert all(
-            [
-                await compare_snapshots(pilot),
-            ]
-        )
+        await compare_snapshots(pilot)
+        await compare_snapshots(compare_results=True)
 
 
 @pytest.mark.asyncio
-async def test_multi_select(compare_snapshots: Callable) -> None:
+async def test_multi_select(compare_snapshots: CompareSnapshotsFixture) -> None:
     """Validate basic MultiSelect functionality with allow_blank true and false combinations."""
     app = apps.WidgetApp(
         child=widgets.Vertical(
@@ -194,33 +179,29 @@ async def test_multi_select(compare_snapshots: Callable) -> None:
     )
 
     async with app.run_test() as pilot:
-        assert all(
-            [
-                await compare_snapshots(
-                    pilot,
-                    test_suffix="idle",
-                ),
-                await compare_snapshots(
-                    pilot,
-                    press=["space", "down", "space", "down", "enter"],
-                    test_suffix="with_multiple_selected",
-                ),
-                await compare_snapshots(
-                    pilot,
-                    press=["space", "up", "space", "escape"],
-                    test_suffix="after_deselect_all",
-                ),
-                await compare_snapshots(
-                    pilot,
-                    press=["tab", "space", "down", "space"],
-                    test_suffix="after_blocked_deselect",
-                ),
-            ]
+        await compare_snapshots(
+            pilot,
+            test_suffix="idle",
+        )
+        await compare_snapshots(
+            pilot,
+            press=["space", "down", "space", "down", "enter"],
+            test_suffix="with_multiple_selected",
+        )
+        await compare_snapshots(
+            pilot,
+            press=["space", "up", "space", "escape"],
+            test_suffix="after_deselect_all",
+        )
+        await compare_snapshots(
+            pilot,
+            press=["tab", "space", "down", "space"],
+            test_suffix="after_blocked_deselect",
         )
 
 
 @pytest.mark.asyncio
-async def test_modal_dialog(compare_snapshots: Callable) -> None:
+async def test_modal_dialog(compare_snapshots: CompareSnapshotsFixture) -> None:
     """Validate basic MultiSelect functionality with allow_blank true and false combinations."""
 
     def _show_dialog(_: widgets.Button.Pressed) -> None:
@@ -243,26 +224,22 @@ async def test_modal_dialog(compare_snapshots: Callable) -> None:
     )
 
     async with app.run_test() as pilot:
-        snapshots = [
-            await compare_snapshots(
-                pilot,
-                test_suffix="idle",
-            ),
-            await compare_snapshots(
-                pilot,
-                click=["#dialog-btn"],
-                test_suffix="after_show",
-            ),
-        ]
-        await asyncio.sleep(0.25)
-        snapshots.append(
-            await compare_snapshots(
-                pilot,
-                press=["escape"],
-                test_suffix="after_dismiss",
-            )
+        await compare_snapshots(
+            pilot,
+            test_suffix="idle",
         )
-        assert all(snapshots)
+        await compare_snapshots(
+            pilot,
+            click=["#dialog-btn"],
+            test_suffix="after_show",
+        )
+        await asyncio.sleep(0.25)
+        await compare_snapshots(
+            pilot,
+            press=["escape"],
+            test_suffix="after_dismiss",
+        )
+        await compare_snapshots(compare_results=True)
 
 
 @pytest.mark.asyncio
@@ -456,7 +433,7 @@ async def test_select_button() -> None:
 
 
 @pytest.mark.asyncio
-async def test_widgets_render(compare_snapshots: Callable) -> None:
+async def test_widgets_render(compare_snapshots: CompareSnapshotsFixture) -> None:
     """Validate basic widget initialization and render."""
 
     class Widgets(apps.App):
@@ -540,4 +517,5 @@ async def test_widgets_render(compare_snapshots: Callable) -> None:
             table.add_rows([[1, 2]])
 
     async with Widgets().run_test(size=(80, 80)) as pilot:
-        assert await compare_snapshots(pilot)
+        await compare_snapshots(pilot)
+        await compare_snapshots(compare_results=True)

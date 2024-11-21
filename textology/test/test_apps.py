@@ -2,7 +2,6 @@
 
 import asyncio
 from pathlib import Path
-from typing import Callable
 
 import pytest
 from textual.app import ComposeResult
@@ -10,6 +9,7 @@ from textual.app import ComposeResult
 from textology import apps
 from textology import observers
 from textology import widgets
+from textology.pytest_utils import CompareSnapshotsFixture
 from textology.test import basic_app
 from textology.test import basic_themed_app
 
@@ -44,7 +44,7 @@ async def test_button_n_clicks() -> None:
 
 
 @pytest.mark.asyncio
-async def test_extended_app(compare_snapshots: Callable) -> None:
+async def test_extended_app(compare_snapshots: CompareSnapshotsFixture) -> None:
     """Validate generic extended application behavior."""
     async with apps.ExtendedApp().run_test() as pilot:
         # Validate the application adds the default content container.
@@ -86,7 +86,7 @@ async def test_extended_app(compare_snapshots: Callable) -> None:
 
 
 @pytest.mark.asyncio
-async def test_extended_app_page_cache(compare_snapshots: Callable) -> None:
+async def test_extended_app_page_cache(compare_snapshots: CompareSnapshotsFixture) -> None:
     """Validate page cached on extended application behavior."""
     app = apps.ExtendedApp(
         widgets.Horizontal(
@@ -138,26 +138,26 @@ async def test_extended_app_page_cache(compare_snapshots: Callable) -> None:
 
 
 @pytest.mark.asyncio
-async def test_snapshot_with_app(compare_snapshots: Callable) -> None:
+async def test_snapshot_with_app(compare_snapshots: CompareSnapshotsFixture) -> None:
     """Validate that snapshot fixture/test works with instantiated app."""
     assert await compare_snapshots(basic_app.BasicApp(), Path(SNAPSHOT_DIR, "test_basic_app.svg"))
 
 
 @pytest.mark.asyncio
-async def test_snapshot_with_module(compare_snapshots: Callable) -> None:
+async def test_snapshot_with_module(compare_snapshots: CompareSnapshotsFixture) -> None:
     """Validate that snapshot fixture/test works with module containing an app."""
     assert await compare_snapshots(basic_app, Path(SNAPSHOT_DIR, "test_basic_app.svg"))
 
 
 @pytest.mark.asyncio
-async def test_snapshot_with_pilot(compare_snapshots: Callable) -> None:
+async def test_snapshot_with_pilot(compare_snapshots: CompareSnapshotsFixture) -> None:
     """Validate that snapshot fixture/test works with instantiated pilot."""
     async with basic_app.BasicApp().run_test() as pilot:
         assert await compare_snapshots(pilot, Path(SNAPSHOT_DIR, "test_basic_app.svg"))
 
 
 @pytest.mark.asyncio
-async def test_callback_registration_per_scope(compare_snapshots: Callable) -> None:
+async def test_callback_registration_per_scope(compare_snapshots: CompareSnapshotsFixture) -> None:
     """Validate that observer/callback registration works at all scopes."""
 
     class DisplayWidget(widgets.Widget):
@@ -229,7 +229,7 @@ async def test_callback_registration_per_scope(compare_snapshots: Callable) -> N
 
 
 @pytest.mark.asyncio
-async def test_multi_page_app(compare_snapshots: Callable) -> None:
+async def test_multi_page_app(compare_snapshots: CompareSnapshotsFixture) -> None:
     """Validate that multi-page application routes successfully between pages on URL changes."""
 
     def layout_page1(clicks: int | None = None) -> widgets.Label:
@@ -270,10 +270,10 @@ async def test_multi_page_app(compare_snapshots: Callable) -> None:
 
     async with app.run_test() as pilot:
         await pilot.click("#btn1")
-        result1 = await compare_snapshots(pilot, test_suffix="page1")
+        await compare_snapshots(pilot, test_suffix="page1")
         await asyncio.sleep(0.25)
         await pilot.click("#btn2")
-        result2 = await compare_snapshots(pilot, test_suffix="page2")
+        await compare_snapshots(pilot, test_suffix="page2")
 
         # Test selections and tracking without using buttons.
         assert app.current_page == "/page2/1"
@@ -282,17 +282,16 @@ async def test_multi_page_app(compare_snapshots: Callable) -> None:
         app.select_page("/page1?clicks=123")
         await asyncio.sleep(0.25)
         assert app.current_page == "/page1"
-        result3 = await compare_snapshots(pilot, test_suffix="select_page1")
+        await compare_snapshots(pilot, test_suffix="select_page1")
         app.select_page("/page2/123")
         await asyncio.sleep(0.25)
         assert app.current_page == "/page2/123"
-        result4 = await compare_snapshots(pilot, test_suffix="select_page2")
-
-        assert all([result1, result2, result3, result4])
+        await compare_snapshots(pilot, test_suffix="select_page2")
+        await compare_snapshots(compare_results=True)
 
 
 @pytest.mark.asyncio
-async def test_themed_app(compare_snapshots: Callable) -> None:
+async def test_themed_app(compare_snapshots: CompareSnapshotsFixture) -> None:
     """Test basic behavior of CSS themed apps."""
     async with basic_themed_app.BasicThemedApp(
         css_path="basic_themed_app-white_border.css",
@@ -305,27 +304,26 @@ async def test_themed_app(compare_snapshots: Callable) -> None:
         assert await compare_snapshots(pilot, test_suffix="manual_css_theme")
 
     async with basic_themed_app.BasicThemedApp().run_test() as pilot:
-        snapshots = [await compare_snapshots(pilot, test_suffix="no_theme")]
+        await compare_snapshots(pilot, test_suffix="no_theme")
 
         pilot.app.apply_theme("green")
-        snapshots.append(await compare_snapshots(pilot, test_suffix="green"))
+        await compare_snapshots(pilot, test_suffix="green")
 
         pilot.app.apply_theme("white")
-        snapshots.append(await compare_snapshots(pilot, test_suffix="white"))
+        await compare_snapshots(pilot, test_suffix="white")
 
         pilot.app.apply_theme(["green", "white"])
-        snapshots.append(await compare_snapshots(pilot, test_suffix="green_white"))
+        await compare_snapshots(pilot, test_suffix="green_white")
 
         # Test 1 final reset back to no theme.
         pilot.app.apply_theme(None)
-        snapshots.append(await compare_snapshots(pilot, test_suffix="no_theme"))
+        await compare_snapshots(pilot, test_suffix="no_theme")
 
-        mismatched = [str(index) for index, matched in enumerate(snapshots) if not matched]
-        assert not mismatched, f'{len(mismatched)} snapshot(s) did not match expected results. Mismatched snapshots: {", ".join(mismatched)}'
+        await compare_snapshots(compare_results=True)
 
 
 @pytest.mark.asyncio
-async def test_widget_app(compare_snapshots: Callable) -> None:
+async def test_widget_app(compare_snapshots: CompareSnapshotsFixture) -> None:
     """Validate generic widget application behavior."""
     async with apps.WidgetApp().run_test() as pilot:
         # Validate the application adds the default content container.
