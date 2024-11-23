@@ -123,7 +123,7 @@ class MultiSelect(Generic[SelectType], Vertical, can_focus=True):  # pylint: dis
             height: auto;
             max-height: 12;
             overlay: screen;
-            constrain: y;
+            constrain: none inside;
         }
 
         &:focus > SelectCurrent {

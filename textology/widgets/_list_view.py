@@ -7,7 +7,6 @@ from typing import Iterable
 
 from textual import events
 from textual.reactive import reactive
-from textual.widget import Widget
 from textual.widgets import ListItem
 from textual.widgets import ListView as TextualListView
 from typing_extensions import override
@@ -107,12 +106,19 @@ class ListView(TextualListView, WidgetExtension):
 
         Overrides ListView watch_index to allow support detecting header items that should be skip highlighting.
         """
+        if new_index is not None:
+            selected_widget = self._nodes[new_index]
+            if selected_widget.region:
+                self.scroll_to_widget(self._nodes[new_index], animate=False)
+            else:
+                # Call after refresh to permit a refresh operation
+                self.call_after_refresh(self.scroll_to_widget, selected_widget, animate=False)
+
         if self._is_valid_index(old_index):
             old_child = self._nodes[old_index]
             old_child.highlighted = False
 
-        new_child: Widget | None
-        if self._is_valid_index(new_index):
+        if new_index is not None and self._is_valid_index(new_index) and not self._nodes[new_index].disabled:
             new_child = self._nodes[new_index]
             if isinstance(new_child, ListItemHeader):
                 if new_index == 0:
@@ -124,8 +130,6 @@ class ListView(TextualListView, WidgetExtension):
                     self.index = new_index + 1 if new_index > old_index else new_index - 1
                 return
             new_child.highlighted = True
+            self.post_message(self.Highlighted(self, new_child))
         else:
-            new_child = None
-
-        self._scroll_highlighted_region()
-        self.post_message(self.Highlighted(self, new_child))
+            self.post_message(self.Highlighted(self, None))

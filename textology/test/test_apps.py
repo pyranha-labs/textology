@@ -8,6 +8,7 @@ from textual.app import ComposeResult
 
 from textology import apps
 from textology import observers
+from textology import pages
 from textology import widgets
 from textology.pytest_utils import CompareSnapshotsFixture
 from textology.test import basic_app
@@ -88,6 +89,19 @@ async def test_extended_app(compare_snapshots: CompareSnapshotsFixture) -> None:
 @pytest.mark.asyncio
 async def test_extended_app_page_cache(compare_snapshots: CompareSnapshotsFixture) -> None:
     """Validate page cached on extended application behavior."""
+
+    def layout_page1() -> widgets.Widget:
+        return widgets.Container(
+            widgets.Label("Page 1"),
+            widgets.TextInput(id="input1", placeholder="Page 1 Input"),
+        )
+
+    def layout_page2() -> widgets.Widget:
+        return widgets.Container(
+            widgets.Label("Page 2"),
+            widgets.TextInput(id="input2", placeholder="Page 2 Input"),
+        )
+
     app = apps.ExtendedApp(
         widgets.Horizontal(
             widgets.Container(
@@ -102,22 +116,11 @@ async def test_extended_app_page_cache(compare_snapshots: CompareSnapshotsFixtur
         ),
         use_pages=True,
         cache_pages=True,
+        pages=[
+            pages.Page(layout_page1, path="/page1"),
+            pages.Page(layout_page2, path="/page2"),
+        ],
     )
-
-    def layout_page1() -> widgets.Widget:
-        return widgets.Container(
-            widgets.Label("Page 1"),
-            widgets.TextInput(id="input1", placeholder="Page 1 Input"),
-        )
-
-    def layout_page2() -> widgets.Widget:
-        return widgets.Container(
-            widgets.Label("Page 2"),
-            widgets.TextInput(id="input2", placeholder="Page 2 Input"),
-        )
-
-    app.register_page(layout_page1, path="/page1")
-    app.register_page(layout_page2, path="/page2")
 
     async with app.run_test() as pilot:
         app.location.pathname = "/page1"

@@ -160,7 +160,6 @@ class HorizontalMenus(containers.HorizontalScroll, WidgetExtension):
     def _add_menu(self, items: list[ListItem]) -> AwaitComplete:
         """Create and add a menu to the list of available menus."""
         new_menu = self.menu_creator(len(self.menus), items)
-        mount = None
         if new_menu is not None:
             list_view = None
             if isinstance(new_menu, ListView):
