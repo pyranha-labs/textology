@@ -6,6 +6,7 @@ from typing import Iterable
 from textual.events import Message
 from textual.events import Mount
 from textual.reactive import reactive
+from textual.types import NoActiveAppError
 
 from textology.awaitables import AwaitCompleteOrNoop
 
@@ -77,11 +78,25 @@ class PageContainer(Container):
             Optionally awaitable event that completes after new page is mounted.
             If called before the widget is mounted, this is a noop, and Page is mounted after widget mounts.
         """
-        with self.app.batch_update():
+        old_page = None
+
+        def _replace() -> None:
+            """Replace the old page if necessary, and update the UI."""
+            nonlocal old_page
             content.display = False
-            old_page = None
             if page in self._page_cache:
                 old_page = self._page_cache.pop(page)
+
+        try:
+            app = self.app
+        except NoActiveAppError:
+            app = None
+        if app:
+            with self.app.batch_update():
+                _replace()
+        else:
+            _replace()
+
         self._page_cache[page] = content
         if show_first and not self.page:
             self.page = page
