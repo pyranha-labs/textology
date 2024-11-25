@@ -84,6 +84,7 @@ Examples for Textology extensions, such as callback based applications, are incl
 - Enhanced testing support
   - Parallel tests via python-xdist
   - Custom testing arguments, such as updating snapshots on failures
+  - Ability to quickly view results, expectations, and differences, via HTML reports
 
 
 ## Compatibility

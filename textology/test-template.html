@@ -34,6 +34,10 @@
             height: 100%;
         }
 
+        .no-display {
+            display: none;
+        }
+
         .result-card {
             width: 100%;
             margin-bottom: 12px;
@@ -226,6 +230,17 @@
             padding-top: 0 !important;
             padding-bottom: 0 !important;
         }
+        .mdc-drawer__subtitle {
+            margin-left: 12px;
+        }
+        .no-pointer {
+            pointer-events: none;
+        }
+        .mdc-drawer__content .mdc-form-field {
+            margin: 0;
+            padding: 0;
+            padding-left: 4px;
+        }
     </style>
 </head>
 
@@ -236,15 +251,72 @@
 <div id="root" class="fill-height">
     <aside class="mdc-drawer mdc-drawer--modal">
         <div class="mdc-drawer__header">
-            <h3 class="mdc-drawer__title">Snapshot Tests</h3>
+            <h3 class="mdc-drawer__title">Snapshot Test Results</h3>
         </div>
         <div class="mdc-drawer__content">
+            <hr class="mdc-deprecated-list-divider">
+            <h3 class="mdc-drawer__subtitle">Options</h3>
+            <nav class="mdc-list">
+                <div class="mdc-form-field mdc-deprecated-list-item" onclick="toggleCheckbox(resultsToggle)">
+                    <span class="mdc-deprecated-list-item__ripple"></span>
+                    <div id="menu-checkbox-results" class="mdc-checkbox">
+                        <input id="checkbox-results" class="mdc-checkbox__native-control no-pointer" type="checkbox" checked="checked"/>
+                        <div class="mdc-checkbox__background">
+                            <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+                                <path class="mdc-checkbox__checkmark-path" fill="none"
+                                      d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
+                            </svg>
+                            <div class="mdc-checkbox__mixedmark"></div>
+                        </div>
+                        <div class="mdc-checkbox__ripple"></div>
+                    </div>
+                    <label for="checkbox-results" class="no-pointer">Show Results</label>
+                </div>
+                <div class="mdc-form-field mdc-deprecated-list-item" onclick="toggleCheckbox(expectedToggle)">
+                    <span class="mdc-deprecated-list-item__ripple"></span>
+                    <div id="menu-checkbox-expected" class="mdc-checkbox">
+                        <input id="checkbox-expected" class="mdc-checkbox__native-control no-pointer" type="checkbox" checked="checked"/>
+                        <div class="mdc-checkbox__background">
+                            <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+                                <path class="mdc-checkbox__checkmark-path" fill="none"
+                                      d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
+                            </svg>
+                            <div class="mdc-checkbox__mixedmark"></div>
+                        </div>
+                        <div class="mdc-checkbox__ripple"></div>
+                    </div>
+                    <label for="checkbox-expected" class="no-pointer">Show Expected</label>
+                </div>
+                <div class="mdc-form-field mdc-deprecated-list-item" onclick="toggleCheckbox(diffsToggle)">
+                    <span class="mdc-deprecated-list-item__ripple"></span>
+                    <div id="menu-checkbox-diffs" class="mdc-checkbox">
+                        <input id="checkbox-diffs" class="mdc-checkbox__native-control no-pointer" type="checkbox"/>
+                        <div class="mdc-checkbox__background">
+                            <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+                                <path class="mdc-checkbox__checkmark-path" fill="none"
+                                      d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
+                            </svg>
+                            <div class="mdc-checkbox__mixedmark"></div>
+                        </div>
+                        <div class="mdc-checkbox__ripple"></div>
+                    </div>
+                    <label for="checkbox-diffs" class="no-pointer">Show Diffs</label>
+                </div>
+            </nav>
+
+            <hr class="mdc-deprecated-list-divider">
+            <h3 class="mdc-drawer__subtitle">Tests</h3>
             <nav id="test-nav-links" class="mdc-list">
                 <a class="mdc-deprecated-list-item" role="menuitem" onclick="navMDCTopAppBar()">
                     <span class="mdc-deprecated-list-item__ripple"></span>
                     <span class="mdc-deprecated-list-item__text">Link to test1</span>
                 </a>
             </nav>
+            <hr class="mdc-deprecated-list-divider">
+            <a class="mdc-deprecated-list-item" role="menuitem" onclick="openDialog('help');navMDCTopAppBar()">
+                <span class="mdc-deprecated-list-item__ripple"></span>
+                <span class="mdc-deprecated-list-item__text">Help</span>
+            </a>
         </div>
     </aside>
 
@@ -268,8 +340,8 @@
         </header>
 
         <div class="mdc-drawer-app-content mdc-top-app-bar--fixed-adjust fill-height">
-            <main class="main-content flex-column" id="main-content">
-                <div id="results" class="content">
+            <main id="main-content" class="main-content flex-column">
+                <div id="results" class="content results-content results-content--active">
                     <div id="result-template" class="mdc-card mdc-elevation--z2 result-card">
                         <div id="test-card-{{ elementIndex }}" class="card-title">
                             <h6 class="mdc-typography--headline6">{{ name }}:{{ filename }}</h6>
@@ -279,16 +351,27 @@
                         </div>
 
                         <div style="display: flex; width: 100%">
-                            <h6 class="test-img-header mdc-typography--subtitle1">Result</h6>
-                            <h6 class="test-img-header mdc-typography--subtitle1">Expected</h6>
+                            <h6 id="subtitle-results" class="test-img-header mdc-typography--subtitle1">Result</h6>
+                            <h6 id="subtitle-expected" class="test-img-header mdc-typography--subtitle1">Expected</h6>
+                            <h6 id="subtitle-diffs" class="test-img-header mdc-typography--subtitle1 no-display">Diff</h6>
                         </div>
 
                         <div style="display: flex">
-                            <div class="test-img-wrapper">
+                            <div class="test-img-wrapper results-img-results">
                                 {{ result }}
                             </div>
-                            <div class="test-img-wrapper">
+                            <div class="test-img-wrapper results-img-expected">
                                 {{ expected }}
+                            </div>
+                            <div class="test-img-wrapper results-img-diffs no-display">
+                                <div class="overlay-container">
+                                    <div class="test-img-diff">
+                                        {{ expected_diff }}
+                                    </div>
+                                </div>
+                                <div>
+                                    {{ result }}
+                                </div>
                             </div>
                         </div>
 
@@ -364,7 +447,7 @@
                                     </button>
                                 </div>
 
-                                <div class="mdc-tab-bar" role="tablist" style="width: min-content; margin: auto;">
+                                <div id="test-details-tab-bar" class="mdc-tab-bar" role="tablist" style="width: min-content; margin: auto;">
                                   <div class="mdc-tab-scroller">
                                     <div class="mdc-tab-scroller__scroll-area">
                                       <div class="mdc-tab-scroller__scroll-content">
@@ -551,18 +634,16 @@
     // Refer to the following for MDC modules in JS.
     // https://material-components.github.io/material-components-web-catalog/
     // https://github.com/material-components/material-components-web/blob/master/packages/material-components-web/index.ts
-    const topAppBar = new mdc.topAppBar.MDCTopAppBar.attachTo(document.getElementById("app-bar"));
-    const drawer = new mdc.drawer.MDCDrawer.attachTo(document.querySelector(".mdc-drawer"));
-    const snackbar = new mdc.snackbar.MDCSnackbar(document.querySelector(".mdc-snackbar"));
-    const detailsTabBar = new mdc.tabBar.MDCTabBar(document.querySelector(".mdc-tab-bar"));
 
+    const topAppBar = new mdc.topAppBar.MDCTopAppBar.attachTo(document.getElementById("app-bar"));
     topAppBar.setScrollTarget(document.getElementById("main-content"));
     topAppBar.listen("MDCTopAppBar:nav", navMDCTopAppBar);
 
-    snackbar.listen("MDCSnackbar:closed", closedMDCSnackbar);
+    const snackbar = new mdc.snackbar.MDCSnackbar(document.querySelector(".mdc-snackbar"));
     snackbar.listen("MDCSnackbar:opening", openingMDCSnackbar);
+    snackbar.listen("MDCSnackbar:closed", closedMDCSnackbar);
 
-    detailsTabBar.listen("MDCTabBar:activated", activatedMDCTabBar);
+    const drawer = new mdc.drawer.MDCDrawer.attachTo(document.querySelector(".mdc-drawer"));
 
     const menus = {};
     const dialogs = {};
@@ -585,17 +666,6 @@
         for (const el of document.querySelectorAll(".mdc-dialog")) {
             dialogs[el.id] = new mdc.dialog.MDCDialog(el);
         }
-    }
-
-    /**
-     * Action to perform on "activated" event from MDCTabBar.
-     *
-     * @param {object} event Event metadata from tab being activated.
-     * @param {object} event.detail.index Which tab was activated.
-     */
-    function activatedMDCTabBar(event) {
-      document.querySelector(".test-details-content--active").classList.remove("test-details-content--active");
-      document.querySelectorAll(".test-details-content")[event.detail.index].classList.add("test-details-content--active");
     }
 
     /**
@@ -665,12 +735,29 @@
             snackbar.open();
         }
     }
+
+    /**
+     * Toggle an MDCCheckbox.
+     *
+     * @param {object} checkbox Initialized MDCCheckbox element.
+     */
+    function toggleCheckbox(checkbox) {
+        checkbox.checked = !checkbox.checked;
+        checkbox.root.dispatchEvent(new Event("change"));
+    }
 </script>
 
 <script type="application/javascript">
     /**
      * General objects and actions.
      */
+
+    const resultsToggle = new mdc.checkbox.MDCCheckbox(document.querySelector("#menu-checkbox-results"));
+    const expectedToggle = new mdc.checkbox.MDCCheckbox(document.querySelector("#menu-checkbox-expected"));
+    const diffsToggle = new mdc.checkbox.MDCCheckbox(document.querySelector("#menu-checkbox-diffs"));
+
+    const detailsTabBar = new mdc.tabBar.MDCTabBar(document.querySelector("#test-details-tab-bar"));
+    detailsTabBar.listen("MDCTabBar:activated", selectDetailsTab);
 
     let testResult = "DUMMIES";
     const testDummies = {
@@ -744,6 +831,10 @@
     if (testResult === "DUMMIES") {
         testResult = testDummies;
     }
+
+    resultsToggle.listen("change", () => toggleImgType(resultsToggle, "results"));
+    expectedToggle.listen("change", () => toggleImgType(expectedToggle, "expected"));
+    diffsToggle.listen("change", () => toggleImgType(diffsToggle, "diffs"));
 
     /**
      * Save text to the clipboard and display summary message to user.
@@ -915,13 +1006,6 @@
                     <span class="mdc-deprecated-list-item__text">${test.name}</span>
                 </a>`;
         }
-        links += `
-            <hr class="mdc-deprecated-list-divider">
-            <a class="mdc-deprecated-list-item" role="menuitem"
-                onclick="openDialog('help');navMDCTopAppBar()">
-                <span class="mdc-deprecated-list-item__ripple"></span>
-                <span class="mdc-deprecated-list-item__text">Help</span>
-            </a>`;
         document.getElementById("test-nav-links").innerHTML = links;
     }
 
@@ -1095,6 +1179,40 @@
     function showTestDetailsDialog(index) {
         loadTestDetails(index);
         openDialog("test-details");
+    }
+
+    /**
+     * Toggle between views in the details dialog on "activated" events from the tab bar.
+     *
+     * @param {object} event Event metadata from tab being activated.
+     * @param {object} event.detail.index Which tab was activated.
+     */
+    function selectDetailsTab(event) {
+        document.querySelector(".test-details-content--active").classList.remove("test-details-content--active");
+        document.querySelectorAll(".test-details-content")[event.detail.index].classList.add("test-details-content--active");
+    }
+
+    /**
+     * Toggle visible image type in the main content window depending on "checked" status from the app menu.
+     *
+     * @param {object} checkbox MDCCheckbox element that was checked.
+     * @param {string} type Type of images to hide/show. e.g., "results", "expected", "diffs".
+     */
+    function toggleImgType(checkbox, type) {
+        for (const el of document.querySelectorAll(`#subtitle-${type}`)) {
+            if (checkbox.checked) {
+                el.classList.remove("no-display");
+            } else {
+                el.classList.add("no-display");
+            }
+        }
+        for (const el of document.querySelectorAll(`.results-img-${type}`)) {
+            if (checkbox.checked) {
+                el.classList.remove("no-display");
+            } else {
+                el.classList.add("no-display");
+            }
+        }
     }
 
     loadTests(testResult);
