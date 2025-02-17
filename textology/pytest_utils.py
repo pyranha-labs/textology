@@ -480,14 +480,7 @@ def _write_snapshot_failure(item: pytest.Item, snapshot: SnapshotFailure, cursor
     path, line_index, name = item.reportinfo()
     app = snapshot.pilot.app
     cursor.execute(
-        "INSERT INTO snapshot_failures VALUES ("
-        ":path,"
-        ":name,"
-        ":line,"
-        ":result,"
-        ":expected,"
-        ":expectedPath,"
-        ":app)",
+        "INSERT INTO snapshot_failures VALUES (:path,:name,:line,:result,:expected,:expectedPath,:app)",
         {
             "path": str(path),
             "name": name,

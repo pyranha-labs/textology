@@ -72,12 +72,6 @@ fail_under = 85
 [tool.coverage.run]
 branch = true
 
-[tool.pydocstyle]
-convention = "google"
-match-dir = '^(?!\.|venv).*'
-# PEP257 "D204 1 blank line after class docstring" is inconsistent depending on pydocstyle version. Add for consistency.
-add-select = "D204"
-
 [tool.pylint]
 # Pylint requires a full list of disables, or a full list of includes, and cannot be partially overridden.
 # The following list starts with the pylint defaults, followed by project specifics.
