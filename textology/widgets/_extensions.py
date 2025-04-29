@@ -407,17 +407,22 @@ class WidgetExtension(TextualWidget):
     def replace(
         self,
         widgets: list[TextualWidget],
+        on_error: Callable | None = None,
     ) -> AwaitComplete:
         """Simultaneously swap all the children in the widget.
 
+        Replace operation is sent to background async message queue to prevent blocking UI.
+        To handle exceptions during replacement, provide `on_error` callback, or use `_replace` with await.
+
         Args:
             widgets: The widget(s) to mount.
+            on_error: Callback to send errors to instead of raising.
 
         Returns:
             An awaitable object that waits for widgets to be mounted.
         """
         await_complete = AwaitComplete(self._replace(widgets))
-        self.call_next(await_complete)
+        self.call_next_or_capture(await_complete, on_error=on_error)
         return await_complete
 
     def walk_all_children(self) -> Generator[TextualWidget, None, None]:
