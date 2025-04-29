@@ -17,6 +17,7 @@ from textual.app import ComposeResult
 from textual.app import CSSPathType
 from textual.css.query import NoMatches
 from textual.driver import Driver
+from textual.message_pump import Callback
 from textual.screen import Screen
 from textual.widget import Widget
 from typing_extensions import override
@@ -157,6 +158,34 @@ class WidgetApp(App):
             self.refresh_css()
             self.refresh(layout=True)
             self._refresh_screen_themes()
+
+    def call_next_or_capture(
+        self,
+        callback: Callback,
+        *args: Any,
+        on_error: Callable | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Schedule a callback to run immediately after processing the current message, with optional error handling.
+
+        Args:
+            callback: Callable to run after current event.
+            args: Positional arguments to pass to the callable.
+            on_error: Optional callback to send errors to instead of raising.
+            kwargs: Keyword arguments to pass to the callable.
+        """
+
+        async def _call_and_capture() -> None:
+            """Schedule the callback and capture errors."""
+            try:
+                await callback(*args, **kwargs)
+            except Exception as error:  # pylint: disable=broad-exception-caught
+                if on_error:
+                    on_error(error)
+                else:
+                    raise
+
+        self.call_next(_call_and_capture)
 
     @property
     def css_theme(self) -> list[str] | None:

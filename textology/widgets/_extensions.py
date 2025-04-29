@@ -206,6 +206,34 @@ class WidgetExtension(TextualWidget):
 
         return self.post_message(events.Callback(callback=awaiter))
 
+    def call_next_or_capture(
+        self,
+        callback: Callback,
+        *args: Any,
+        on_error: Callable | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Schedule a callback to run immediately after processing the current message, with optional error handling.
+
+        Args:
+            callback: Callable to run after current event.
+            args: Positional arguments to pass to the callable.
+            on_error: Callback to send errors to instead of raising.
+            kwargs: Keyword arguments to pass to the callable.
+        """
+
+        async def _call_and_capture() -> None:
+            """Schedule the callback and capture errors."""
+            try:
+                await callback(*args, **kwargs)
+            except Exception as error:  # pylint: disable=broad-exception-caught
+                if on_error:
+                    on_error(error)
+                else:
+                    raise
+
+        self.call_next(_call_and_capture)
+
     def disable_child_messages(
         self,
         *messages: type[events.Message],
