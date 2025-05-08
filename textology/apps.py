@@ -16,6 +16,7 @@ from textual.app import App
 from textual.app import ComposeResult
 from textual.app import CSSPathType
 from textual.css.query import NoMatches
+from textual.css.query import QueryType
 from textual.driver import Driver
 from textual.message_pump import Callback
 from textual.screen import Screen
@@ -207,6 +208,31 @@ class WidgetApp(App):
             screen._refresh_layout(self.size)  # pylint: disable=protected-access
             self.stylesheet.update(self.screen)
             self.screen.refresh(layout=True)
+
+    def safe_query_one(
+        self,
+        selector: str | type[QueryType],
+        expect_type: type[QueryType] | None = None,
+    ) -> QueryType | Widget | None:
+        """Get a widget from this app's children that matches a selector or widget type.
+
+        Matches `textual.app.App.query_one` behavior, except `textual.css.query.NoMatches` are discarded.
+
+        Args:
+            selector: A selector or widget type.
+            expect_type: Require the object be of the supplied type, or None for any type.
+
+        Returns:
+            A widget matching the selector if found, or None otherwise.
+
+        Raises:
+            WrongType if the wrong type was found.
+        """
+        try:
+            result = super().query_one(selector, expect_type=expect_type)
+        except NoMatches:
+            result = None
+        return result
 
 
 class ExtendedApp(WidgetApp, ObserverManager):
