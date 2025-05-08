@@ -14,6 +14,8 @@ from rich.console import RenderableType
 from rich.text import TextType
 from textual import events
 from textual.await_complete import AwaitComplete
+from textual.css.query import NoMatches
+from textual.css.query import QueryType
 from textual.message import Message
 from textual.reactive import reactive
 from textual.widget import Widget as TextualWidget
@@ -424,6 +426,31 @@ class WidgetExtension(TextualWidget):
         await_complete = AwaitComplete(self._replace(widgets))
         self.call_next_or_capture(await_complete, on_error=on_error)
         return await_complete
+
+    def safe_query_one(
+        self,
+        selector: str | type[QueryType],
+        expect_type: type[QueryType] | None = None,
+    ) -> QueryType | TextualWidget | None:
+        """Get a widget from this widget's children that matches a selector or widget type.
+
+        Matches `textual.widget.Widget.query_one` behavior, except `textual.css.query.NoMatches` are discarded.
+
+        Args:
+            selector: A selector or widget type.
+            expect_type: Require the object be of the supplied type, or None for any type.
+
+        Returns:
+            A widget matching the selector if found, or None otherwise.
+
+        Raises:
+            WrongType if the wrong type was found.
+        """
+        try:
+            result = super().query_one(selector, expect_type=expect_type)
+        except NoMatches:
+            result = None
+        return result
 
     def walk_all_children(self) -> Generator[TextualWidget, None, None]:
         """Walk the subtree rooted at this node, and return every descendant encountered.
