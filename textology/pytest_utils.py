@@ -8,6 +8,7 @@ import sqlite3
 import time
 from dataclasses import dataclass
 from datetime import datetime
+from datetime import timezone
 from os import PathLike
 from pathlib import Path
 from types import ModuleType
@@ -409,7 +410,7 @@ def pytest_sessionfinish(
 
     if failures:
         final_result = {
-            "timestamp": str(datetime.utcnow()),
+            "timestamp": datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f"),
             "exitstatus": exitstatus,
             "environment": {
                 "cpus": os.cpu_count(),
