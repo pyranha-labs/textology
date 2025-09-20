@@ -461,8 +461,7 @@ class WidgetExtension(TextualWidget):
         Yields:
             Every child, pending or standard, starting from the top down, and pending before standard.
         """
-        for child in walk_all_children(self):
-            yield child
+        yield from walk_all_children(self)
 
 
 class Static(TextualStatic, WidgetExtension):
@@ -804,7 +803,5 @@ def walk_all_children(widget: TextualWidget) -> Generator[TextualWidget, None, N
     """
     for pending_child in getattr(widget, "_pending_children", []):
         yield pending_child
-        for nested_child in walk_all_children(pending_child):
-            yield nested_child
-    for child in widget.walk_children():
-        yield child
+        yield from walk_all_children(pending_child)
+    yield from widget.walk_children()

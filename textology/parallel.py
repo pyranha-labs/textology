@@ -317,5 +317,4 @@ def parallelize(
         mp_context=mp_context,
     ) as pool:
         pool.submit(funcs, func_args=func_args, func_kwargs=func_kwargs)
-        for result in pool.as_completed(ordered=ordered, with_index=with_index, exit_on_error=exit_on_error):
-            yield result
+        yield from pool.as_completed(ordered=ordered, with_index=with_index, exit_on_error=exit_on_error)

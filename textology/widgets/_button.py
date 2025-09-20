@@ -102,7 +102,7 @@ class SelectButton(Button):
             """The button that was selected/deselected."""
             return self.button
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         label: TextType | None = None,
         *,

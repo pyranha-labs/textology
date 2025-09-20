@@ -35,7 +35,7 @@ Changelog = "https://github.com/pyranha-labs/textology/releases"
 Issues = "https://github.com/pyranha-labs/textology/issues"
 
 [build-system]
-requires = ["setuptools >= 61.0"]
+requires = ["setuptools >= 80.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
@@ -94,6 +94,8 @@ disable = [
     "duplicate-code",
     # R0903 too-few-public-methods, custom classes are allowed to have low amount of public functions.
     "too-few-public-methods",
+    # R0917 too-many-positional-arguments, duplicate of too-many-arguments.
+    "too-many-positional-arguments",
 ]
 
 [tool.pylint.MASTER]
@@ -120,6 +122,7 @@ allowed-redefined-builtins = ["id", "type"]
 good-names = ["id", "on"]
 
 [tool.pytest.ini_options]
+addopts = "-n auto"
 norecursedirs = [".*", "venv"]
 filterwarnings = [
     # Promote all warnings to errors to ensure performance, forwards compatibility, and code quality.

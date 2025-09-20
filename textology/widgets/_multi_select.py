@@ -170,7 +170,7 @@ class MultiSelect(Generic[SelectType], Vertical, can_focus=True):  # pylint: dis
             """The MultiSelect that sent the message."""
             return self.select
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         options: Iterable[
             Selection[SelectionType] | tuple[TextType, SelectionType] | tuple[TextType, SelectionType, bool]
