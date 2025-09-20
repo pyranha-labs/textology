@@ -18,7 +18,7 @@ setup:
 venv:
 	$(PYTHON_BIN) -m venv $(PROJECT_ROOT).venv && \
 	ln -sfnv $(PROJECT_ROOT).venv/bin/activate $(PROJECT_ROOT)activate && \
-	source $(PROJECT_ROOT)activate && \
+	. $(PROJECT_ROOT)activate && \
 	pip install -r requirements-full_dev.txt -r requirements-dev.txt -r requirements.txt && \
 	echo $(PROJECT_ROOT) > $(PROJECT_ROOT).venv/lib/$(PYTHON_BIN)/site-packages/$(NAME).pth
 
@@ -71,7 +71,7 @@ qa: format lint typing security
 # Run basic unit tests.
 .PHONY: test
 test:
-	@pytest -n auto $(PROJECT_ROOT) --cov && echo "🏆 Tests good to go!" || \
+	@pytest $(PROJECT_ROOT) --cov && echo "🏆 Tests good to go!" || \
 		(echo "💔 Please resolve all test failures to ensure stability and quality."; exit 1)
 
 

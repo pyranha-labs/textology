@@ -26,7 +26,7 @@ class Text(RichText):
         "_overflow_char",
     ]
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         text: str = "",
         style: str | Style = "",
