@@ -27,13 +27,14 @@ reference the recipes in the file directly for any manual steps. For more inform
 To make code or documentation contributions you will need to set up the project locally. You can follow these steps:
 
 1. Clone your fork with `git clone <path to fork>` and enter the project directory.
-1. Run `make setup` to set up git configurations, such as hooks and upstream.
-1. Run `make venv` to create a local development environment, and install all dependencies.
-1. Activate the development environment with `source activate`.
-    - Alternatively, you can use `source .venv/bin/activate` to activate the environment.
-1. Run `make test qa` to ensure environment was set up correctly.
+1. Run `make setup` to set up git configurations (such as hooks and upstream) and python environment.
+    - `make clean-venv` `make venv` will run automatically to create a fresh virtual environment.
+    - `make qa` and `make test` will run automatically to ensure environment was set up correctly.
+    - If any recipes, they can be rerun manually without repeating `make setup`.
+1. Activate the development environment with `. activate`.
+   - Alternatively, you can use `. .venv/bin/activate` to activate the environment.
 
-The environment can now be deactivated at anytime with `deactivate`, or reactivated with `source activate`.
+The environment can now be deactivated at anytime with `deactivate`, or reactivated with `. activate`.
 
 ## Open a Pull Request
 

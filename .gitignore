@@ -62,3 +62,4 @@ cython_debug/
 
 # Local development helpers
 activate
+python.mk
