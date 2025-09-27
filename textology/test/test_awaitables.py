@@ -67,7 +67,6 @@ def test_await_complete_or_noop_thread() -> None:
 
 
 @pytest.mark.parametrize_test_case("test_case", TEST_CASES["gather"])
-@pytest.mark.asyncio
-async def test_gather(test_case: dict, async_function_tester: Callable) -> None:
+def test_gather(test_case: dict, function_tester: Callable) -> None:
     """Test that gather returns the expected results."""
-    await async_function_tester(test_case, awaitables.gather)
+    function_tester(test_case, awaitables.gather)
