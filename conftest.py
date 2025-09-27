@@ -14,7 +14,7 @@ pytest_plugins = ("textology.pytest_utils",)
 
 
 @pytest.fixture
-def function_tester() -> Callable[[dict, Callable, Callable, bool], None]:
+def function_tester() -> Callable[[dict, Callable, Callable | None, bool, pytest.MonkeyPatch | None], None]:
     """Create a reusable fixture to run a basic test case against a function."""
 
     def function_tester(
