@@ -257,21 +257,6 @@
             <hr class="mdc-deprecated-list-divider">
             <h3 class="mdc-drawer__subtitle">Options</h3>
             <nav class="mdc-list">
-                <div class="mdc-form-field mdc-deprecated-list-item" onclick="toggleCheckbox(resultsToggle)">
-                    <span class="mdc-deprecated-list-item__ripple"></span>
-                    <div id="menu-checkbox-results" class="mdc-checkbox">
-                        <input id="checkbox-results" class="mdc-checkbox__native-control no-pointer" type="checkbox" checked="checked"/>
-                        <div class="mdc-checkbox__background">
-                            <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
-                                <path class="mdc-checkbox__checkmark-path" fill="none"
-                                      d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
-                            </svg>
-                            <div class="mdc-checkbox__mixedmark"></div>
-                        </div>
-                        <div class="mdc-checkbox__ripple"></div>
-                    </div>
-                    <label for="checkbox-results" class="no-pointer">Show Results</label>
-                </div>
                 <div class="mdc-form-field mdc-deprecated-list-item" onclick="toggleCheckbox(expectedToggle)">
                     <span class="mdc-deprecated-list-item__ripple"></span>
                     <div id="menu-checkbox-expected" class="mdc-checkbox">
@@ -286,6 +271,21 @@
                         <div class="mdc-checkbox__ripple"></div>
                     </div>
                     <label for="checkbox-expected" class="no-pointer">Show Expected</label>
+                </div>
+                <div class="mdc-form-field mdc-deprecated-list-item" onclick="toggleCheckbox(resultsToggle)">
+                    <span class="mdc-deprecated-list-item__ripple"></span>
+                    <div id="menu-checkbox-results" class="mdc-checkbox">
+                        <input id="checkbox-results" class="mdc-checkbox__native-control no-pointer" type="checkbox" checked="checked"/>
+                        <div class="mdc-checkbox__background">
+                            <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+                                <path class="mdc-checkbox__checkmark-path" fill="none"
+                                      d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
+                            </svg>
+                            <div class="mdc-checkbox__mixedmark"></div>
+                        </div>
+                        <div class="mdc-checkbox__ripple"></div>
+                    </div>
+                    <label for="checkbox-results" class="no-pointer">Show Results</label>
                 </div>
                 <div class="mdc-form-field mdc-deprecated-list-item" onclick="toggleCheckbox(diffsToggle)">
                     <span class="mdc-deprecated-list-item__ripple"></span>
@@ -351,17 +351,17 @@
                         </div>
 
                         <div style="display: flex; width: 100%">
-                            <h6 id="subtitle-results" class="test-img-header mdc-typography--subtitle1">Result</h6>
                             <h6 id="subtitle-expected" class="test-img-header mdc-typography--subtitle1">Expected</h6>
+                            <h6 id="subtitle-results" class="test-img-header mdc-typography--subtitle1">Result</h6>
                             <h6 id="subtitle-diffs" class="test-img-header mdc-typography--subtitle1 no-display">Diff</h6>
                         </div>
 
                         <div style="display: flex">
-                            <div class="test-img-wrapper results-img-results">
-                                {{ result }}
-                            </div>
                             <div class="test-img-wrapper results-img-expected">
                                 {{ expected }}
+                            </div>
+                            <div class="test-img-wrapper results-img-results">
+                                {{ result }}
                             </div>
                             <div class="test-img-wrapper results-img-diffs no-display">
                                 <div class="overlay-container">
@@ -479,15 +479,6 @@
 
                             <div class="mdc-dialog__content mdc-typography--body2">
                                 <div class="test-details-content test-details-content--active">
-                                    <h6 class="mdc-typography--headline6 test-info-img-header">Result</h6>
-                                    <div id="test-details-result-subtitle"
-                                         class="test-info-subtitle">
-                                        {{ path }}:{{ line }}
-                                    </div>
-                                    <div id="test-details-result-image">
-                                        {{ result }}
-                                    </div>
-
                                     <h6 class="mdc-typography--headline6 test-info-img-header">Expected</h6>
                                     <div id="test-details-expected-subtitle"
                                          class="test-info-subtitle">
@@ -495,6 +486,15 @@
                                     </div>
                                     <div id="test-details-expected-image">
                                         {{ expected }}
+                                    </div>
+
+                                    <h6 class="mdc-typography--headline6 test-info-img-header">Result</h6>
+                                    <div id="test-details-result-subtitle"
+                                         class="test-info-subtitle">
+                                        {{ path }}:{{ line }}
+                                    </div>
+                                    <div id="test-details-result-image">
+                                        {{ result }}
                                     </div>
 
                                     <h6 class="mdc-typography--headline6 test-info-img-header">Difference</h6>
