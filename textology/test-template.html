@@ -90,6 +90,11 @@
             margin: auto;
         }
 
+        #test-details-values-menu-btn {
+            padding: 0;
+            width: auto;
+        }
+
         .test-details-content {
             display: none;
         }
@@ -118,6 +123,10 @@
             padding-top: 0 !important;
             padding-bottom: 0 !important;
             height: 42px !important;
+        }
+
+        .table-anchor {
+            position: static;
         }
 
         #help .mdc-dialog__header {
@@ -220,6 +229,15 @@
             height: 16px;
             min-width: 16px;
             padding: 0 0 0 4px;
+
+            i {
+                margin-right: 0 !important;
+            }
+        }
+
+        .copy-btn-column {
+            padding-left: 10px;
+            padding-right: 0;
         }
 
         .no-margin {
@@ -659,7 +677,6 @@
         for (const el of document.querySelectorAll(".mdc-deprecated-list-item")) {
             new mdc.ripple.MDCRipple(el);
         }
-
         for (const el of document.querySelectorAll(".mdc-menu")) {
             menus[el.id] = new mdc.menu.MDCMenu(el);
         }
@@ -715,7 +732,14 @@
      * @param {string} id ID of a menu to show to the user.
      */
     function openMenu(id) {
-        menus[id].open = true;
+        let menu = menus[id];
+        if (!menu) {
+            const els = document.querySelectorAll(`#${id}`);
+            if (els && els.length) {
+                menu = new mdc.menu.MDCMenu(els[0]);
+            }
+        }
+        menu.open = true;
     }
 
     /**
@@ -853,14 +877,34 @@
     }
 
     /**
-     * Save a test's value to the clipboard and display summary message to user.
+     * Save a test's key and value to the clipboard and display a summary message to the user.
+     *
+     * @param {number} index Test index to load values for.
+     * @param {boolean} asJson Whether to copy the values as JSON instead of plaintext.
+     */
+    function copyAllTestValues(index, asJson = false) {
+        let text = "";
+        const testValues = findTestValues(index);
+        if (asJson) {
+            text = JSON.stringify(testValues, null, 2);
+        } else {
+            for (const [name, value] of Object.entries(testValues)) {
+                text += `${name} ${value}\n`;
+            }
+        }
+        text = text.trimEnd();
+        copyAndToast(text, `Copied all keys and values to clipboard.`);
+    }
+
+    /**
+     * Save a test's key and value to the clipboard and display a summary message to the user.
      *
      * @param {number} index Test index to load values for.
      * @param {string} key Name of the test value to save.
      */
     function copyTestValue(index, key) {
         let values = findTestValues(index);
-        copyAndToast(values[key], `Copied ${key}'s value to clipboard.`)
+        copyAndToast(`${key} ${values[key]}`, `Copied ${key}'s key and value to clipboard.`);
     }
 
     /**
@@ -1036,14 +1080,14 @@
         let rows = "";
         for (const [name, value] of Object.entries(findTestValues(index))) {
             rows += `<tr class="mdc-data-table__row">
-                <td class="mdc-data-table__cell">${name}</td>
-                <td class="mdc-data-table__cell">${escapeHtml(String(value))}</td>
-                <td class="mdc-data-table__cell no-vert-padding">
+                <td class="mdc-data-table__cell no-vert-padding copy-btn-column">
                     <button class="mdc-button copy-btn"
                             onclick="copyTestValue('${index}', '${name}');">
                         <i class="material-icons mdc-button__icon">content_copy</i>
                     </button>
                 </td>
+                <td class="mdc-data-table__cell">${name}</td>
+                <td class="mdc-data-table__cell">${escapeHtml(String(value))}</td>
             </tr>`;
         }
         document.getElementById("test-details-values-table").innerHTML = `
@@ -1052,9 +1096,33 @@
                     <table class="mdc-data-table__table test-info-env-table">
                         <thead>
                             <tr class="mdc-data-table__header-row">
+                                <th class="mdc-data-table__header-cell copy-btn-column" role="columnheader" scope="col">
+                                <div class="mdc-menu-surface--anchor table-anchor">
+                                    <button id="test-details-values-menu-btn"
+                                            class="material-icons mdc-icon-button mdc-card__action mdc-card__action--icon"
+                                            onclick="openMenu('test-details-values-menu')">
+                                        more_vert
+                                    </button>
+                                    <div id="test-details-values-menu" class="mdc-menu mdc-menu-surface"
+                                         style="transform-origin: center bottom; left: 0; bottom: 0;">
+                                        <ul class="mdc-deprecated-list" role="menu" aria-hidden="true"
+                                            aria-orientation="vertical" tabindex="-1">
+                                            <li class="mdc-deprecated-list-item" role="menuitem"
+                                                onclick="copyAllTestValues('${index}');">
+                                                <span class="mdc-deprecated-list-item__ripple"></span>
+                                                <span class="mdc-deprecated-list-item__text">Copy All</span>
+                                            </li>
+                                            <li class="mdc-deprecated-list-item" role="menuitem"
+                                                onclick="copyAllTestValues('${index}', true);">
+                                                <span class="mdc-deprecated-list-item__ripple"></span>
+                                                <span class="mdc-deprecated-list-item__text">Copy All - JSON</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                </th>
                                 <th class="mdc-data-table__header-cell" role="columnheader" scope="col">Name</th>
                                 <th class="mdc-data-table__header-cell" role="columnheader" scope="col">Value</th>
-                                <th class="mdc-data-table__header-cell" role="columnheader" scope="col"></th>
                             </tr>
                         </thead>
                         <tbody class="mdc-data-table__content">
