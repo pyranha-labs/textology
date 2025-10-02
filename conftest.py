@@ -40,7 +40,7 @@ def function_tester() -> Callable[[dict, Callable, Callable | None, bool, pytest
             compare: A function to use for comparing the actual result and expected result.
                 Defaults to a "==" comparison.
             drain: Whether to convert generator results into lists.
-            monkeypatch: Optional pytest monkeypatch fixture to use for temporary patches via "patches"
+            monkeypatch: Optional pytest monkeypatch fixture to use for temporary patches via "patches".
         """
         args, kwargs, raises, patches = _initialize_test(test)
         if patches and monkeypatch:
@@ -76,7 +76,7 @@ def _execute_test(func: Callable | Coroutine, *args: Any, **kwargs: Any) -> Any:
     # and the pytest event loop will not allow new tasks to be run directly.
     if asyncio.iscoroutinefunction(func):
         with ThreadPoolExecutor(1) as pool:
-            result = pool.submit(lambda: asyncio.run(func(*args, **kwargs))).result()
+            result = pool.submit(asyncio.run, func(*args, **kwargs)).result()
     else:
         result = func(*args, **kwargs)
         # If the result of a sync function is an async future, discard and try again with as a full coroutine.
@@ -105,7 +105,7 @@ def _finalize_test(test: dict, result: Any, compare: Callable[[Any, Any], None] 
         assert equals, f"\nResult:\n\t{result}\nExpected:\n\t{expected}"
 
 
-def _patch_test(target: Any, name: str, value: Callable, monkeypatch: pytest.MonkeyPatch) -> None:
+def _patch_test(target: Any, name: str, value: Any, monkeypatch: pytest.MonkeyPatch) -> None:
     """Apply a temporary monkeypatch while a test is running."""
     original = getattr(target, name)
     if inspect.isfunction(original):
