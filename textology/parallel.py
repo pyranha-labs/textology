@@ -123,7 +123,6 @@ class ParallelPoolExecutor:
             Result of a completed future if indexing is disabled, or index and result if enabled.
         """
         if self._completed == self._submitted:
-            self._executor.shutdown()
             return
         if len(self._workers) == 0:
             raise futures.BrokenExecutor("All workers in pool terminated prematurely")
