@@ -216,7 +216,8 @@ class WidgetApp(App):
     ) -> QueryType | Widget | None:
         """Get a widget from this app's children that matches a selector or widget type.
 
-        Matches `textual.app.App.query_one` behavior, except `textual.css.query.NoMatches` are discarded.
+        Matches `textual.app.App.query_one` behavior, except `textual.css.query.NoMatches` are discarded,
+        and searches the entire app screen stack including those under dialogs.
 
         Args:
             selector: A selector or widget type.
@@ -228,10 +229,16 @@ class WidgetApp(App):
         Raises:
             WrongType if the wrong type was found.
         """
+        # Give native search results first priority, then fall back to whole app only if no preferred hits found.
+        result = None
         try:
             result = super().query_one(selector, expect_type=expect_type)
         except NoMatches:
-            result = None
+            for screen in self.screen_stack:
+                try:
+                    result = screen.query_one(selector, expect_type=expect_type)
+                except NoMatches:
+                    continue
         return result
 
 
